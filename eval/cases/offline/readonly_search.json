@@ -1,0 +1,23 @@
+{
+  "id": "readonly_search",
+  "title": "只读资料读取",
+  "category": "只读代码搜索",
+  "tags": ["offline_smoke", "code_reading", "readonly"],
+  "offline_only": true,
+  "prompt": "EVAL_CASE:readonly_search\n请读取 README，确认这个项目的定位。",
+  "permission_mode": "permissive",
+  "setup_files": [
+    {
+      "path": "README.md",
+      "content": "# MewCode\n\nMewCode 是一个终端 AI 编程助手。\n"
+    }
+  ],
+  "expectations": {
+    "final_contains": ["README", "MewCode", "终端 AI 编程助手"],
+    "required_tools": ["read_file"],
+    "forbidden_tools": ["write_file", "edit_file"],
+    "min_tool_successes": 1,
+    "require_usage": true,
+    "max_tool_calls": 2
+  }
+}

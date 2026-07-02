@@ -1,0 +1,30 @@
+{
+  "id": "write_and_verify",
+  "title": "写入并验证",
+  "category": "文件修改与验证",
+  "tags": ["offline_smoke", "file_modification", "verification"],
+  "offline_only": true,
+  "prompt": "EVAL_CASE:write_and_verify\n请修改 app.py，让 answer() 返回 mew-eval-ok，并运行 Python 编译检查。",
+  "permission_mode": "permissive",
+  "max_iterations": 8,
+  "setup_files": [
+    {
+      "path": "app.py",
+      "content": "def answer():\n    return 'old'\n"
+    }
+  ],
+  "expectations": {
+    "final_contains": ["app.py", "py_compile", "mew-eval-ok"],
+    "required_tools": ["read_file", "write_file", "run_command"],
+    "expected_files": [
+      {
+        "path": "app.py",
+        "contains": ["def answer()", "mew-eval-ok"]
+      }
+    ],
+    "verification_commands": ["python -m py_compile app.py"],
+    "min_tool_successes": 3,
+    "require_usage": true,
+    "max_tool_calls": 5
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "basic_qa",
+  "title": "普通问答",
+  "category": "普通问答",
+  "tags": ["offline_smoke", "basic_qa"],
+  "offline_only": true,
+  "prompt": "EVAL_CASE:basic_qa\n请用中文一句话说明 MewCode 是什么，并指出评测关注可靠、安全、可验证。",
+  "permission_mode": "permissive",
+  "max_iterations": 4,
+  "expectations": {
+    "final_contains": ["MewCode", "终端 AI 编程助手", "可靠", "安全", "可验证"],
+    "forbidden_tools": ["write_file", "edit_file", "run_command"],
+    "expected_stop_reason": "completed",
+    "require_usage": true,
+    "max_tool_calls": 0
+  }
+}

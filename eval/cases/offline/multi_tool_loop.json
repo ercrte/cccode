@@ -1,0 +1,23 @@
+{
+  "id": "multi_tool_loop",
+  "title": "多轮工具调用",
+  "category": "多轮工具调用",
+  "tags": ["offline_smoke", "multi_tool_loop"],
+  "offline_only": true,
+  "prompt": "EVAL_CASE:multi_tool_loop\n请先搜索 AgentLoopRunner，再读取相关文件，总结它如何调度模型和工具。",
+  "permission_mode": "permissive",
+  "max_iterations": 6,
+  "setup_files": [
+    {
+      "path": "src/mewcode/agent.py",
+      "content": "class AgentLoopRunner:\n    def run(self):\n        return 'model tools stopped'\n"
+    }
+  ],
+  "expectations": {
+    "final_contains": ["AgentLoopRunner", "模型", "工具", "停止"],
+    "required_tools": ["search_code", "read_file"],
+    "min_tool_successes": 2,
+    "require_usage": true,
+    "max_tool_calls": 4
+  }
+}

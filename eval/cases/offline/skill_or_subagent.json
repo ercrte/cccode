@@ -1,0 +1,23 @@
+{
+  "id": "skill_or_subagent",
+  "title": "Skill 与子 Agent",
+  "category": "Skill 或子 Agent",
+  "tags": ["offline_smoke", "skill", "subagent"],
+  "offline_only": true,
+  "prompt": "EVAL_CASE:skill_or_subagent\n请加载 review Skill，并委派 reviewer 子 Agent 审查 README 的评测说明。",
+  "permission_mode": "permissive",
+  "max_iterations": 8,
+  "setup_files": [
+    {
+      "path": "README.md",
+      "content": "# Eval Target\n\n这个 README 用于评测 Skill 与子 Agent 调用路径。\n"
+    }
+  ],
+  "expectations": {
+    "final_contains": ["review Skill", "reviewer", "子 Agent", "复核"],
+    "required_tools": ["load_skill", "delegate_agent"],
+    "min_tool_successes": 2,
+    "require_usage": true,
+    "max_tool_calls": 4
+  }
+}

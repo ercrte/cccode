@@ -1,0 +1,16 @@
+{
+  "id": "context_compaction",
+  "title": "上下文压缩连续性",
+  "category": "上下文或长任务",
+  "tags": ["offline_smoke", "context_compaction"],
+  "offline_only": true,
+  "prompt": "EVAL_CASE:context_compaction\n请确认上下文压缩后仍保留评测目标，并给出一句中文结论。",
+  "permission_mode": "permissive",
+  "max_iterations": 4,
+  "expectations": {
+    "final_contains": ["上下文", "压缩", "连续性"],
+    "require_context_compaction": true,
+    "require_usage": true,
+    "max_tool_calls": 0
+  }
+}
