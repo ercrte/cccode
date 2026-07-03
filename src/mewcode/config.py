@@ -55,6 +55,14 @@ class PromptCacheConfig:
 
 
 @dataclass(frozen=True)
+class McpOAuthConfig:
+    enabled: bool = True
+    client_id: str | None = None
+    client_secret: str | None = field(default=None, repr=False)
+    scopes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class McpServerConfig:
     name: str
     transport: McpTransportName
@@ -63,6 +71,7 @@ class McpServerConfig:
     env: dict[str, str] = field(default_factory=dict)
     url: str | None = None
     headers: dict[str, str] = field(default_factory=dict)
+    oauth: McpOAuthConfig | None = None
 
 
 @dataclass(frozen=True)
@@ -488,6 +497,8 @@ def _parse_mcp_config(raw: Any) -> McpConfig:
 def _parse_mcp_server(name: str, raw: dict[str, Any]) -> McpServerConfig:
     transport = str(raw.get("type", "")).strip().lower()
     if transport == "stdio":
+        if "oauth" in raw:
+            raise ConfigError(f"mcp_servers.{name}.oauth 仅支持 http Server")
         command = _required_str(raw.get("command"), f"mcp_servers.{name}.command")
         return McpServerConfig(
             name=name,
@@ -503,13 +514,61 @@ def _parse_mcp_server(name: str, raw: dict[str, Any]) -> McpServerConfig:
         )
         if not url.strip():
             raise ConfigError(f"mcp_servers.{name}.url 不能为空")
+        headers = _parse_string_map(raw.get("headers", {}), f"mcp_servers.{name}.headers", expand=True)
+        oauth = _parse_mcp_oauth(raw.get("oauth"), f"mcp_servers.{name}.oauth")
+        if oauth is not None and oauth.enabled and any(key.casefold() == "authorization" for key in headers):
+            raise ConfigError(f"mcp_servers.{name} 启用 OAuth 时不能同时配置 Authorization Header")
         return McpServerConfig(
             name=name,
             transport="http",
             url=url,
-            headers=_parse_string_map(raw.get("headers", {}), f"mcp_servers.{name}.headers", expand=True),
+            headers=headers,
+            oauth=oauth,
         )
     raise ConfigError(f"mcp_servers.{name}.type 必须是 stdio 或 http")
+
+
+def _parse_mcp_oauth(value: Any, field: str) -> McpOAuthConfig | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ConfigError(f"{field} 必须是 YAML 对象")
+    enabled = value.get("enabled", True)
+    if not isinstance(enabled, bool):
+        raise ConfigError(f"{field}.enabled 必须是布尔值")
+
+    client_id = _expand_optional_env(value.get("client_id"), f"{field}.client_id")
+    client_secret = _expand_optional_env(value.get("client_secret"), f"{field}.client_secret")
+    if client_secret is not None and client_id is None:
+        raise ConfigError(f"{field}.client_secret 需要同时配置 client_id")
+
+    scopes = _parse_string_tuple(value.get("scopes"), f"{field}.scopes")
+    for scope in scopes:
+        if not _valid_oauth_scope(scope):
+            raise ConfigError(f"{field}.scopes 包含非法 scope `{scope}`")
+    if len(set(scopes)) != len(scopes):
+        raise ConfigError(f"{field}.scopes 不能包含重复值")
+    return McpOAuthConfig(
+        enabled=enabled,
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=scopes,
+    )
+
+
+def _expand_optional_env(value: Any, field: str) -> str | None:
+    if value is None:
+        return None
+    text = _optional_non_empty_str(value, field)
+    return _expand_env_interpolations(text, field)
+
+
+def _valid_oauth_scope(value: str) -> bool:
+    # RFC 6749 scope-token：可打印 ASCII，排除空格、双引号和反斜杠。
+    return bool(value) and all(
+        (code := ord(char)) == 0x21 or 0x23 <= code <= 0x5B or 0x5D <= code <= 0x7E
+        for char in value
+    )
 
 
 def _required_str(value: Any, field: str) -> str:

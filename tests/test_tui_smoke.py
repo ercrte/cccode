@@ -482,6 +482,57 @@ async def test_tui_lifecycle_initializes_and_closes_mcp_manager(tmp_path: Path) 
 
 
 @pytest.mark.asyncio
+async def test_tui_mcp_oauth_url_is_local_only_and_logout_updates_tools(tmp_path: Path) -> None:
+    events: list[str] = []
+
+    class FakeManager:
+        async def initialize(self) -> None:
+            events.append("initialize")
+
+        def register_tools(self, registry: ToolRegistry) -> None:
+            _ = registry
+
+        def load_report(self) -> McpLoadReport:
+            return McpLoadReport()
+
+        async def authorize_server(self, server_name: str, callback) -> str:
+            events.append(f"auth:{server_name}")
+            await callback("https://auth.test/authorize?state=public-state", False)
+            await callback("https://auth.test/authorize?state=public-state", True)
+            return f"MCP Server {server_name} OAuth 授权成功，工具已加载"
+
+        async def logout_server(self, server_name: str) -> str:
+            events.append(f"logout:{server_name}")
+            return f"MCP Server {server_name} 已退出 OAuth，相关工具已移除"
+
+        async def close(self) -> None:
+            events.append("close")
+
+    session = ChatSession()
+    registry = ToolRegistry()
+    app = MewCodeApp(
+        session,
+        object(),
+        make_config(),
+        registry,
+        ToolExecutor(registry, ToolContext(cwd=tmp_path)),
+        mcp_manager=FakeManager(),  # type: ignore[arg-type]
+    )
+
+    async with app.run_test() as pilot:
+        await app.command_dispatcher.dispatch("/mcp auth github", app)
+        await app.command_dispatcher.dispatch("/mcp logout github", app)
+        await pilot.pause()
+        rendered = "\n".join(str(view.body.content) for view in app.query(MessageView))
+
+    assert events == ["initialize", "auth:github", "logout:github", "close"]
+    assert "https://auth.test/authorize?state=public-state" in rendered
+    assert "未能自动打开浏览器" in rendered
+    assert "工具已移除" in rendered
+    assert session.messages == []
+
+
+@pytest.mark.asyncio
 async def test_tui_emits_session_hook_events() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
     hook_manager = make_hook_manager(

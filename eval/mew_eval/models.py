@@ -178,7 +178,12 @@ class EvalRunOptions:
     mode: EvalRunMode = "online"
     threshold: float = 80.0
     allow_review: bool = False
+    review_sample_rate: float = 0.1
     keep_workspaces: bool = False
     workspace_root: Path | None = None
     provider: LLMProvider | None = None
     provider_info: EvalProviderInfo | None = None
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.review_sample_rate <= 1.0:
+            raise ValueError("review_sample_rate 必须在 0 到 1 之间")

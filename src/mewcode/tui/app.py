@@ -375,6 +375,30 @@ class MewCodeApp(App[None]):
         except ContextLimitError as exc:
             return str(exc)
 
+    async def authorize_mcp_server(self, server_name: str) -> str:
+        if self.mcp_manager is None:
+            return "当前未配置 MCP Manager。"
+        url_displayed = False
+
+        async def show_authorization_url(url: str, browser_failed: bool) -> None:
+            nonlocal url_displayed
+            if not url_displayed:
+                await self.show_assistant(f"请在浏览器完成 MCP OAuth 授权：\n{url}")
+                url_displayed = True
+            if browser_failed:
+                await self.show_assistant("未能自动打开浏览器，请复制上面的地址手动访问。")
+
+        result = await self.mcp_manager.authorize_server(server_name, show_authorization_url)
+        self.refresh_status()
+        return result
+
+    async def logout_mcp_server(self, server_name: str) -> str:
+        if self.mcp_manager is None:
+            return "当前未配置 MCP Manager。"
+        result = await self.mcp_manager.logout_server(server_name)
+        self.refresh_status()
+        return result
+
     async def send_prompt(self, *, visible_text: str, model_text: str, mode: AgentMode) -> None:
         await self._run_agent_command(AgentCommand(mode=mode, visible_text=visible_text, model_text=model_text))
 
@@ -600,6 +624,8 @@ class MewCodeApp(App[None]):
             print(f"MewCode MCP 警告: Server {server_name} 加载失败: {redact_secret(error)}", file=sys.stderr)
         for tool_name, error in report.failed_tools.items():
             print(f"MewCode MCP 警告: 工具 {tool_name} 注册失败: {redact_secret(error)}", file=sys.stderr)
+        for warning in report.warnings:
+            print(f"MewCode MCP 警告: {redact_secret(warning)}", file=sys.stderr)
 
     def _report_worktree_cleanup(self, report: CleanupReport) -> None:
         for item in report.failures:

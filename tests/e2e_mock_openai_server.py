@@ -239,6 +239,8 @@ class Handler(BaseHTTPRequestHandler):
             return [{"name": "local_demo__echo", "arguments": {"text": _mcp_text(last, "hello-mcp")}}]
         if "remote_demo" in last:
             return [{"name": "remote_demo__echo", "arguments": {"text": _mcp_text(last, "http-mcp")}}]
+        if "oauth_demo" in last and _has_tool(body, "oauth_demo__echo"):
+            return [{"name": "oauth_demo__echo", "arguments": {"text": _mcp_text(last, "oauth-mcp")}}]
         if ("review skill" in lowered or "review Skill" in last or "用 review" in last) and _has_tool(body, "load_skill"):
             return [{"name": "load_skill", "arguments": {"name": "review", "input": _last_path(last) or "README.md"}}]
         if _contains_model_text(messages, "当前待执行计划") or "请执行下面这份已确认的计划" in last:

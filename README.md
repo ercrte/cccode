@@ -80,6 +80,38 @@ mcp_servers:
 
 stdio 的 `env` 值、Streamable HTTP 的 `url` 和 `headers` 值支持 `${VAR}` 展开，也支持出现在字符串片段中，例如 `Bearer ${MCP_API_TOKEN}`。引用的环境变量未设置或为空时，MewCode 会在启动阶段报告配置错误。
 
+需要 OAuth 2.1 的远程 MCP Server 可以启用 `oauth`。MewCode 遵循 MCP `2025-06-18` 的 Protected Resource Metadata、Authorization Server Metadata、Authorization Code + PKCE S256 和 Resource Indicators 流程；优先使用动态客户端注册（DCR），Server 不支持 DCR 时回退到配置的预注册客户端：
+
+```yaml
+mcp_servers:
+  remote_oauth:
+    type: http
+    url: https://mcp.example.com/mcp
+    oauth:
+      client_id: ${MCP_OAUTH_CLIENT_ID}          # DCR 不可用时必需
+      client_secret: ${MCP_OAUTH_CLIENT_SECRET}  # 公共客户端可省略
+      scopes: [read, write]
+```
+
+启动时未找到有效 token 或收到 401，MewCode 只把该 Server 标为“需要授权”，不会自动打开浏览器。输入 `/mcp auth remote_oauth` 后，MewCode 才会在 `127.0.0.1` 随机端口启动 `/oauth/callback`，显示授权 URL 并尝试打开浏览器；授权成功后无需重启即可加载工具。输入 `/mcp logout remote_oauth` 会删除本地凭据并移除该 Server 的工具，`/status` 可查看每个 OAuth Server 的公开状态。
+
+OAuth token、refresh token 和动态注册得到的客户端 secret 优先保存在系统 Keyring；Keyring 不可用或锁定时只保存在当前进程内，并显示告警，不会写入明文 token 文件。原有 `Authorization: Bearer ${MCP_API_TOKEN}` 的 PAT 配置继续可用，但同一个 Server 不能同时启用 OAuth 和静态 `Authorization` Header。
+
+GitHub Remote MCP 示例（使用 GitHub App 或 OAuth App 的预注册客户端）：
+
+```yaml
+mcp_servers:
+  github:
+    type: http
+    url: https://api.githubcopilot.com/mcp/
+    oauth:
+      client_id: ${GITHUB_MCP_CLIENT_ID}
+      client_secret: ${GITHUB_MCP_CLIENT_SECRET}
+      scopes: [repo, read:user]
+```
+
+在 GitHub App/OAuth App 中将回调地址注册为 `http://127.0.0.1/oauth/callback`；实际授权时 MewCode 会使用相同 host/path 的随机本机端口。当前版本不实现 Device Flow、SSH 跨机器回调、远端 token revoke、自动 scope step-up，也不实现 MCP `2025-11-25` 的 CIMD/OIDC 扩展。纯 SSH 环境可继续使用 PAT Header，或在浏览器和 MewCode 位于同一台机器时使用 OAuth。
+
 MCP 工具会以 `server__tool` 的全局工具名暴露给模型，例如 `local_demo` Server 的 `echo` 工具会注册为 `local_demo__echo`。这样可以避免远端工具覆盖内置工具或其他 Server 的同名工具。MCP 工具默认按有副作用工具处理，会继续经过现有权限系统。
 
 ## 启动
@@ -113,6 +145,7 @@ mewcode --new-session
 - `/memory`：显示长期记忆启用状态、索引可用状态和自动笔记状态。
 - `/permission`：显示权限模式和各层规则数量，不修改权限规则。
 - `/status`：显示供应商、模型、当前模式、任务状态、最近 Token 用量和 MCP 加载概况。
+- `/mcp auth <server>`、`/mcp logout <server>`：授权或退出启用 OAuth 的远程 MCP Server。
 - `/agents`：显示可用子 Agent 角色和后台任务详情。
 - `/background`：把当前前台等待的子 Agent 任务切到后台，完成后再通知主对话。
 

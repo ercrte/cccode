@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import time
@@ -55,7 +56,13 @@ async def run_case(
         try:
             _prepare_workspace(workspace_path, case)
             trace = await _run_agent_case(case, workspace_path, run_options)
-            scores = score_case(case, metrics, trace, workspace=workspace_path)
+            scores = score_case(
+                case,
+                metrics,
+                trace,
+                workspace=workspace_path,
+                review_sampled=_is_review_sampled(case.id, run_options.review_sample_rate),
+            )
             total = total_score(scores)
             status = case_status(scores, trace, run_options.threshold)
             return EvalCaseResult(
@@ -124,6 +131,16 @@ def _tmp_dir(options: EvalRunOptions) -> str | None:
         return None
     options.workspace_root.mkdir(parents=True, exist_ok=True)
     return str(options.workspace_root)
+
+
+def _is_review_sampled(case_id: str, sample_rate: float) -> bool:
+    if sample_rate <= 0.0:
+        return False
+    if sample_rate >= 1.0:
+        return True
+    digest = hashlib.sha256(case_id.encode("utf-8")).digest()
+    bucket = int.from_bytes(digest, "big") / (1 << (len(digest) * 8))
+    return bucket < sample_rate
 
 
 def _prepare_workspace(workspace: Path, case: EvalCase) -> None:

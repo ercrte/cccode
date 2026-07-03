@@ -24,6 +24,7 @@ from mewcode.commands import (
     create_builtin_command_registry,
 )
 from mewcode.mcp.manager import McpLoadReport
+from mewcode.mcp.oauth.models import McpOAuthStatus
 from mewcode.providers.base import TokenUsage
 from mewcode.skills import LoadSkillTool, SkillManager
 from mewcode.skills.models import SkillRoots
@@ -58,6 +59,7 @@ class FakeContext:
     prompts: list[dict[str, str]] = field(default_factory=list)
     active_cleared: bool = False
     invoked_skills: list[dict[str, str]] = field(default_factory=list)
+    mcp_actions: list[tuple[str, str]] = field(default_factory=list)
 
     @property
     def mode(self):
@@ -78,6 +80,10 @@ class FakeContext:
                 registered_tools=("local__echo",),
                 failed_servers={"bad": "失败"},
                 failed_tools={},
+                oauth_status={
+                    "github": McpOAuthStatus("github", "authorization_required", "需要授权")
+                },
+                warnings=("系统 Keyring 不可用，OAuth 凭据仅在当前进程内保存",),
             ),
         )
 
@@ -146,6 +152,14 @@ class FakeContext:
     async def compact_context(self) -> str:
         self.compact_called = True
         return "已完成手动压缩。"
+
+    async def authorize_mcp_server(self, server_name: str) -> str:
+        self.mcp_actions.append(("auth", server_name))
+        return f"{server_name} 授权成功"
+
+    async def logout_mcp_server(self, server_name: str) -> str:
+        self.mcp_actions.append(("logout", server_name))
+        return f"{server_name} 已退出"
 
     async def send_prompt(self, *, visible_text: str, model_text: str, mode) -> None:
         self.prompts.append({"visible_text": visible_text, "model_text": model_text, "mode": mode})
@@ -301,6 +315,7 @@ def test_builtin_registry_contains_builtin_visible_commands() -> None:
         "memory",
         "permission",
         "status",
+        "mcp",
         "agents",
         "background",
     ]
@@ -382,9 +397,28 @@ async def test_session_memory_permission_and_status_commands_render_snapshots() 
     assert "供应商：openai" in rendered
     assert "Token：5" in rendered
     assert "失败 Server 1 个" in rendered
+    assert "github=需要授权" in rendered
+    assert "Keyring 不可用" in rendered
     assert "子 Agent：功能是，角色 2 个" in rendered
     assert "子 Agent 状态" in rendered
     assert "当前没有可切到后台" in rendered
+
+
+@pytest.mark.asyncio
+async def test_mcp_command_parses_auth_logout_and_rejects_invalid_arguments() -> None:
+    dispatcher = CommandDispatcher(create_builtin_command_registry())
+    context = FakeContext()
+
+    await dispatcher.dispatch("/mcp auth github", context)
+    await dispatcher.dispatch("/mcp logout github", context)
+
+    assert context.mcp_actions == [("auth", "github"), ("logout", "github")]
+    assert context.refreshed == 2
+    assert "已退出" in context.assistant_messages[-1]
+
+    for raw in ("/mcp", "/mcp login github", "/mcp auth", "/mcp auth github extra"):
+        await dispatcher.dispatch(raw, context)
+        assert "用法" in context.assistant_messages[-1]
 
 
 @pytest.mark.asyncio

@@ -62,6 +62,7 @@ class FakeOnlineProvider:
 
 
 def offline_options(**kwargs) -> EvalRunOptions:
+    kwargs.setdefault("review_sample_rate", 0.0)
     return EvalRunOptions(
         mode="offline",
         suite_id="offline",
@@ -93,6 +94,7 @@ def test_eval_models_have_expected_defaults() -> None:
     assert case.online_only is True
     assert EvalExpectations().expected_files == ()
     assert EvalRunOptions().mode == "online"
+    assert EvalRunOptions().review_sample_rate == 0.1
     assert usage.cache_status == "hit"
     assert EvalFile("a.txt", "x").path == "a.txt"
     assert EvalFileExpectation("a.txt", contains=("x",)).contains == ("x",)
@@ -338,9 +340,27 @@ def test_score_case_and_metric_score_success() -> None:
     scores = score_case(case, _metrics_for_scoring(), trace)
 
     assert any(score.metric_id == "task_completion" and score.status == "pass" for score in scores)
-    assert any(score.metric_id == "ux" and score.status == "needs_review" for score in scores)
+    assert any(score.metric_id == "ux" and score.status == "pass" for score in scores)
     assert total_score(scores) > 80
-    assert case_status(scores, trace, 80) == "needs_review"
+    assert case_status(scores, trace, 80) == "pass"
+
+
+def test_ux_metric_only_reviews_anomaly_or_sample() -> None:
+    metric = EvalMetric("ux", "交互体验", "体验", 0, 5, 1, ("人工",), manual_review=True)
+    case = EvalCase("ux", "交互体验", "普通问答", "hi")
+    normal_trace = EvalRunTrace((), "已经完成", "completed", (), (), None, 1)
+    abnormal_trace = EvalRunTrace((), "done", "completed", (), (), None, 1)
+
+    automatic = score_case(case, (metric,), normal_trace)[0]
+    sampled = score_case(case, (metric,), normal_trace, review_sampled=True)[0]
+    abnormal = score_case(case, (metric,), abnormal_trace)[0]
+
+    assert automatic.status == "pass"
+    assert "自动通过" in automatic.evidence[0]
+    assert sampled.status == "needs_review"
+    assert "抽样" in sampled.evidence[0]
+    assert abnormal.status == "needs_review"
+    assert "最终回复不含中文" in abnormal.evidence[0]
 
 
 def test_score_case_missing_required_tool_fails() -> None:
@@ -386,7 +406,7 @@ async def test_run_case_basic_qa_uses_real_runner() -> None:
 
     result = await run_case(case, metrics, offline_options(allow_review=True))
 
-    assert result.status == "needs_review"
+    assert result.status == "pass"
     assert "MewCode" in result.trace.final_message
     assert result.trace.usage is not None
     assert any(event.type == "message_done" for event in result.trace.events)
@@ -401,7 +421,7 @@ async def test_run_case_write_and_verify_does_not_pollute_project_root() -> None
 
     result = await run_case(case, metrics, offline_options(allow_review=True))
 
-    assert result.status == "needs_review"
+    assert result.status == "pass"
     assert [call.name for call in result.trace.tool_calls] == ["read_file", "write_file", "run_command"]
     assert project_target.exists() is before_exists
 
@@ -413,7 +433,7 @@ async def test_run_case_permission_recovery_records_denial() -> None:
 
     result = await run_case(case, metrics, offline_options(allow_review=True))
 
-    assert result.status == "needs_review"
+    assert result.status == "pass"
     assert any(item.error_type == "permission_dangerous_command" for item in result.trace.tool_results)
     assert "安全替代" in result.trace.final_message
 
@@ -427,7 +447,8 @@ async def test_run_suite_summary_and_metric_averages() -> None:
 
     assert result.summary.total_cases == 2
     assert result.provider.mode == "offline"
-    assert result.summary.needs_review == 2
+    assert result.summary.passed == 2
+    assert result.summary.needs_review == 0
     assert result.metric_averages["task_completion"] == 100
 
 
@@ -449,12 +470,13 @@ async def test_run_case_online_provider_records_cache_usage() -> None:
             mode="online",
             suite_id="online",
             allow_review=True,
+            review_sample_rate=0.0,
             provider=provider,
             provider_info=EvalProviderInfo("online", "openai", "fake-model", "fake-online", True),
         ),
     )
 
-    assert result.status == "needs_review"
+    assert result.status == "pass"
     assert provider.requests
     assert result.trace.usage is not None
     assert result.trace.usage.cache_status == "hit"
@@ -538,6 +560,8 @@ def test_run_eval_cli_returns_failure_for_unallowed_review(tmp_path: Path) -> No
             "offline",
             "--case",
             "basic_qa",
+            "--review-sample-rate",
+            "1",
             "--output",
             str(output),
         ],
@@ -550,6 +574,27 @@ def test_run_eval_cli_returns_failure_for_unallowed_review(tmp_path: Path) -> No
     assert completed.returncode == 1
     assert (output / "results.json").exists()
     assert (output / "report.md").exists()
+
+
+def test_run_eval_cli_rejects_invalid_review_sample_rate(tmp_path: Path) -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "eval/run_eval.py",
+            "--offline",
+            "--review-sample-rate",
+            "1.1",
+            "--output",
+            str(tmp_path / "eval-out"),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert "必须在 0 到 1 之间" in completed.stderr
 
 
 def test_run_eval_cli_default_online_reports_config_error(tmp_path: Path) -> None:

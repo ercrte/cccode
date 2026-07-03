@@ -6,9 +6,11 @@ from typing import Any
 
 import pytest
 
-from mewcode.config import AppConfig, McpConfig, McpServerConfig
+from mewcode.config import AppConfig, McpConfig, McpOAuthConfig, McpServerConfig
 from mewcode.errors import ConfigError
+from mewcode.mcp.errors import McpAuthorizationRequired, McpOAuthError
 from mewcode.mcp.manager import McpLoadReport, McpManager
+from mewcode.mcp.oauth.models import McpOAuthStatus
 from mewcode.session import ChatSession
 from mewcode.tools.base import ToolContext
 from mewcode.tools.base import ToolSpec
@@ -238,3 +240,133 @@ def test_cli_reports_mcp_config_error_without_secret(monkeypatch: pytest.MonkeyP
     captured = capsys.readouterr()
     assert secret not in captured.err
     assert "[REDACTED]" in captured.err
+
+
+class FakeOAuthSession:
+    def __init__(self, server: McpServerConfig) -> None:
+        self.server = server
+        self.status = McpOAuthStatus(server.name)
+        self.status_callback = None
+        self.authorized = False
+        self.closed = False
+
+    async def restore(self) -> None:
+        self.status = McpOAuthStatus(self.server.name, "authorization_required", "需要授权")
+
+    async def authorize(self, callback=None) -> None:
+        if callback is not None:
+            await callback("https://auth.test/authorize?public=value", False)
+        self.authorized = True
+        self.status = McpOAuthStatus(self.server.name, "authorized", "授权成功")
+        if self.status_callback is not None:
+            self.status_callback(self.status)
+
+    async def logout(self) -> None:
+        self.authorized = False
+        self.status = McpOAuthStatus(self.server.name, "authorization_required", "已退出")
+        if self.status_callback is not None:
+            self.status_callback(self.status)
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class OAuthGateTransport(FakeTransport):
+    def __init__(self, oauth: FakeOAuthSession) -> None:
+        super().__init__([initialize_result(), tools_result("echo")])
+        self.oauth = oauth
+
+    async def request(self, method: str, params=None):
+        if not self.oauth.authorized:
+            raise McpAuthorizationRequired(self.oauth.server.name)
+        return await super().request(method, params)
+
+
+@pytest.mark.asyncio
+async def test_manager_oauth_authorize_reinitializes_registers_and_logout_isolates_tool() -> None:
+    oauth_holder: dict[str, FakeOAuthSession] = {}
+    remote = McpServerConfig(
+        name="oauth_demo",
+        transport="http",
+        url="https://mcp.test/mcp",
+        oauth=McpOAuthConfig(client_id="client"),
+    )
+
+    def oauth_factory(server: McpServerConfig) -> FakeOAuthSession:
+        oauth = FakeOAuthSession(server)
+        oauth_holder[server.name] = oauth
+        return oauth
+
+    def transport_factory(server: McpServerConfig) -> OAuthGateTransport:
+        return OAuthGateTransport(oauth_holder[server.name])
+
+    manager = McpManager(
+        config(remote),
+        transport_factory,
+        oauth_session_factory=oauth_factory,  # type: ignore[arg-type]
+    )
+    registry = create_default_registry()
+    await manager.initialize()
+    manager.register_tools(registry)
+
+    assert registry.get("oauth_demo__echo") is None
+    assert manager.load_report().failed_servers == {}
+    assert manager.load_report().oauth_status["oauth_demo"].state == "authorization_required"
+
+    urls: list[str] = []
+
+    async def show_url(url: str, failed: bool) -> None:
+        assert failed is False
+        urls.append(url)
+
+    result = await manager.authorize_server("oauth_demo", show_url)
+
+    assert "授权成功" in result
+    assert urls == ["https://auth.test/authorize?public=value"]
+    assert registry.get("oauth_demo__echo") is not None
+    assert registry.get("oauth_demo__echo").spec.origin == "mcp:oauth_demo"  # type: ignore[union-attr]
+
+    result = await manager.logout_server("oauth_demo")
+    assert "工具已移除" in result
+    assert registry.get("oauth_demo__echo") is None
+    assert registry.get("read_file") is not None
+    assert manager.load_report().oauth_status["oauth_demo"].state == "authorization_required"
+    await manager.close()
+
+
+@pytest.mark.asyncio
+async def test_manager_oauth_rejects_unknown_non_oauth_and_duplicate_authorization() -> None:
+    oauth_holder: dict[str, FakeOAuthSession] = {}
+    oauth_server = McpServerConfig(
+        name="oauth_demo",
+        transport="http",
+        url="https://mcp.test/mcp",
+        oauth=McpOAuthConfig(client_id="client"),
+    )
+    plain_server = McpServerConfig(name="plain", transport="http", url="https://plain.test/mcp")
+
+    def oauth_factory(server: McpServerConfig) -> FakeOAuthSession:
+        session = FakeOAuthSession(server)
+        oauth_holder[server.name] = session
+        return session
+
+    def transport_factory(server: McpServerConfig):
+        if server.name == "oauth_demo":
+            return OAuthGateTransport(oauth_holder[server.name])
+        return FakeTransport([initialize_result(), tools_result("echo")])
+
+    manager = McpManager(
+        config(oauth_server, plain_server),
+        transport_factory,
+        oauth_session_factory=oauth_factory,  # type: ignore[arg-type]
+    )
+    await manager.initialize()
+
+    with pytest.raises(McpOAuthError, match="未找到"):
+        await manager.authorize_server("missing")
+    with pytest.raises(McpOAuthError, match="未启用 OAuth"):
+        await manager.authorize_server("plain")
+    await manager.authorize_server("oauth_demo")
+    with pytest.raises(McpOAuthError, match="已授权"):
+        await manager.authorize_server("oauth_demo")
+    await manager.close()

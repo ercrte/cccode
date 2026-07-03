@@ -11,7 +11,12 @@ import httpx
 
 from mewcode.config import McpServerConfig
 from mewcode.errors import redact_secret
-from mewcode.mcp.errors import McpConnectionError, McpProtocolError, McpTimeoutError
+from mewcode.mcp.errors import (
+    McpAuthorizationRequired,
+    McpConnectionError,
+    McpProtocolError,
+    McpTimeoutError,
+)
 from mewcode.providers.sse import iter_sse_lines
 
 
@@ -36,6 +41,15 @@ class McpTransport(Protocol):
         ...
 
     async def close(self) -> None:
+        ...
+
+
+class McpHttpAuthProvider(Protocol):
+    async def authorization_headers(self) -> Mapping[str, str]:
+        ...
+
+    async def handle_unauthorized(self, www_authenticate: str | None) -> bool:
+        """处理 401；返回 True 时允许 Transport 重放一次请求。"""
         ...
 
 
@@ -226,6 +240,7 @@ class StreamableHttpMcpTransport:
         *,
         timeout_seconds: float = 10.0,
         client: httpx.AsyncClient | None = None,
+        auth_provider: McpHttpAuthProvider | None = None,
     ) -> None:
         self.config = config
         self.timeout_seconds = timeout_seconds
@@ -234,6 +249,7 @@ class StreamableHttpMcpTransport:
         self._next_id = 1
         self._client = client
         self._owns_client = client is None
+        self._auth_provider = auth_provider
 
     async def start(self) -> None:
         self._ensure_client()
@@ -260,7 +276,7 @@ class StreamableHttpMcpTransport:
             return
         if self.session_id and self.config.url:
             try:
-                await client.delete(self.config.url, headers=self._headers())
+                await client.delete(self.config.url, headers=await self._headers())
             except Exception:
                 pass
         if self._owns_client:
@@ -283,19 +299,34 @@ class StreamableHttpMcpTransport:
             raise McpConnectionError(f"MCP Server {self.config.name} 缺少 url")
         client = self._ensure_client()
         try:
-            async with client.stream(
-                "POST",
-                self.config.url,
-                headers=self._headers(),
-                json=dict(payload),
-            ) as response:
-                await self._raise_for_status(response)
-                if response.headers.get("Mcp-Session-Id"):
-                    self.session_id = response.headers["Mcp-Session-Id"]
-                content_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
-                if content_type == "text/event-stream":
-                    return await self._read_sse_response(response, expected_id)
-                body = await response.aread()
+            body = b""
+            for attempt in range(2):
+                async with client.stream(
+                    "POST",
+                    self.config.url,
+                    headers=await self._headers(),
+                    json=dict(payload),
+                ) as response:
+                    if response.status_code == 401 and self._auth_provider is not None:
+                        should_retry = attempt == 0 and await self._auth_provider.handle_unauthorized(
+                            response.headers.get("WWW-Authenticate")
+                        )
+                        await response.aread()
+                        if should_retry:
+                            continue
+                        if attempt > 0:
+                            failed = getattr(self._auth_provider, "authorization_failed", None)
+                            if failed is not None:
+                                await failed()
+                        raise McpAuthorizationRequired(self.config.name)
+                    await self._raise_for_status(response)
+                    if response.headers.get("Mcp-Session-Id"):
+                        self.session_id = response.headers["Mcp-Session-Id"]
+                    content_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+                    if content_type == "text/event-stream":
+                        return await self._read_sse_response(response, expected_id)
+                    body = await response.aread()
+                    break
         except McpProtocolError:
             raise
         except httpx.HTTPError as exc:
@@ -312,9 +343,27 @@ class StreamableHttpMcpTransport:
             raise McpConnectionError(f"MCP Server {self.config.name} 缺少 url")
         client = self._ensure_client()
         try:
-            response = await client.post(self.config.url, headers=self._headers(), json=dict(payload))
-            await self._raise_for_status(response)
-            await response.aclose()
+            for attempt in range(2):
+                response = await client.post(
+                    self.config.url,
+                    headers=await self._headers(),
+                    json=dict(payload),
+                )
+                if response.status_code == 401 and self._auth_provider is not None:
+                    should_retry = attempt == 0 and await self._auth_provider.handle_unauthorized(
+                        response.headers.get("WWW-Authenticate")
+                    )
+                    await response.aclose()
+                    if should_retry:
+                        continue
+                    if attempt > 0:
+                        failed = getattr(self._auth_provider, "authorization_failed", None)
+                        if failed is not None:
+                            await failed()
+                    raise McpAuthorizationRequired(self.config.name)
+                await self._raise_for_status(response)
+                await response.aclose()
+                break
         except httpx.HTTPError as exc:
             raise McpConnectionError(self._redact(f"MCP HTTP 通知失败: {exc}")) from exc
 
@@ -338,8 +387,10 @@ class StreamableHttpMcpTransport:
         detail = body.decode("utf-8", errors="replace")
         raise McpConnectionError(self._redact(f"MCP HTTP {response.status_code}: {detail}"))
 
-    def _headers(self) -> dict[str, str]:
+    async def _headers(self) -> dict[str, str]:
         headers = dict(self.config.headers)
+        if self._auth_provider is not None:
+            headers.update(await self._auth_provider.authorization_headers())
         headers["Accept"] = "application/json, text/event-stream"
         headers["Content-Type"] = "application/json"
         if self.session_id:
@@ -352,6 +403,10 @@ class StreamableHttpMcpTransport:
         redacted = text
         for value in self.config.headers.values():
             redacted = redact_secret(redacted, value)
+        if self._auth_provider is not None:
+            provider_redact = getattr(self._auth_provider, "redact", None)
+            if provider_redact is not None:
+                redacted = provider_redact(redacted)
         return redact_secret(redacted)
 
 

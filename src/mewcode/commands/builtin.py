@@ -105,6 +105,15 @@ def create_builtin_command_registry() -> CommandRegistry:
             handler=_status_handler,
         ),
         CommandDefinition(
+            name="mcp",
+            aliases=(),
+            description="管理 MCP Server 的 OAuth 授权。",
+            usage="/mcp auth|logout <server>",
+            kind="local",
+            argument_hint="auth 或 logout，以及 Server 名",
+            handler=_mcp_handler,
+        ),
+        CommandDefinition(
             name="agents",
             aliases=("agent",),
             description="显示子 Agent 角色和后台任务。",
@@ -192,6 +201,20 @@ async def _status_handler(invocation: CommandInvocation, context: CommandContext
     if sub_agent_getter is not None:
         sub_agent_snapshot = sub_agent_getter()
     await context.show_assistant(_format_status(snapshot, skill_snapshot, sub_agent_snapshot))
+
+
+async def _mcp_handler(invocation: CommandInvocation, context: CommandContext) -> None:
+    parts = invocation.argument.split()
+    if len(parts) != 2 or parts[0].casefold() not in {"auth", "logout"}:
+        await context.show_assistant("用法：`/mcp auth <server>` 或 `/mcp logout <server>`。")
+        return
+    action, server_name = parts[0].casefold(), parts[1]
+    if action == "auth":
+        result = await context.authorize_mcp_server(server_name)
+    else:
+        result = await context.logout_mcp_server(server_name)
+    context.refresh_status()
+    await context.show_assistant(result)
 
 
 async def _agents_handler(invocation: CommandInvocation, context: CommandContext) -> None:
@@ -321,6 +344,14 @@ def _format_status(
             f"已加载 Server {len(mcp_report.loaded_servers)} 个，注册工具 {len(mcp_report.registered_tools)} 个，"
             f"失败 Server {len(mcp_report.failed_servers)} 个，失败工具 {len(mcp_report.failed_tools)} 个"
         )
+        if mcp_report.oauth_status:
+            oauth_items = ", ".join(
+                f"{name}={_oauth_state_label(status.state)}"
+                for name, status in sorted(mcp_report.oauth_status.items())
+            )
+            mcp += f"；OAuth：{oauth_items}"
+        if mcp_report.warnings:
+            mcp += f"；告警：{'；'.join(mcp_report.warnings)}"
     skill_line = "未启用"
     if skill_snapshot is not None:
         active = ", ".join(skill_snapshot.active) if skill_snapshot.active else "无"
@@ -385,6 +416,16 @@ def _format_usage(usage: TokenUsage | None) -> str:
         f"in={usage.input_tokens if usage.input_tokens is not None else '?'} "
         f"out={usage.output_tokens if usage.output_tokens is not None else '?'}"
     )
+
+
+def _oauth_state_label(state: str) -> str:
+    return {
+        "authorization_required": "需要授权",
+        "authorizing": "授权中",
+        "authorized": "已授权",
+        "refreshing": "刷新中",
+        "refresh_failed": "刷新失败",
+    }.get(state, state)
 
 
 def _mode_label(mode: str) -> str:

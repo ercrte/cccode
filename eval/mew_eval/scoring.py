@@ -12,8 +12,12 @@ def score_case(
     trace: EvalRunTrace,
     *,
     workspace: Path | None = None,
+    review_sampled: bool = False,
 ) -> tuple[MetricScore, ...]:
-    return tuple(_score_metric(case, metric, trace, workspace=workspace) for metric in metrics)
+    return tuple(
+        _score_metric(case, metric, trace, workspace=workspace, review_sampled=review_sampled)
+        for metric in metrics
+    )
 
 
 def total_score(scores: tuple[MetricScore, ...]) -> float:
@@ -34,18 +38,36 @@ def case_status(scores: tuple[MetricScore, ...], trace: EvalRunTrace, threshold:
     return "pass"
 
 
-def _score_metric(case: EvalCase, metric: EvalMetric, trace: EvalRunTrace, *, workspace: Path | None) -> MetricScore:
+def _score_metric(
+    case: EvalCase,
+    metric: EvalMetric,
+    trace: EvalRunTrace,
+    *,
+    workspace: Path | None,
+    review_sampled: bool,
+) -> MetricScore:
     max_score = float(metric.scale_max)
     weight = float(case.metric_weights.get(metric.id, metric.weight))
     if metric.manual_review:
-        proxy_ok = _final_readable(case, trace)
+        baseline_issues = _final_readability_issues(case, trace)
+        proxy_ok = not baseline_issues
+        if proxy_ok and not review_sampled:
+            return MetricScore(
+                metric_id=metric.id,
+                score=max_score,
+                max_score=max_score,
+                weight=weight,
+                status="pass",
+                evidence=("基础检查通过且未命中抽样，自动通过。", *_base_evidence(case, trace)),
+            )
+        reason = "命中人工复核抽样。" if proxy_ok else f"基础检查异常：{'；'.join(baseline_issues)}。"
         return MetricScore(
             metric_id=metric.id,
             score=max_score if proxy_ok else max_score * 0.4,
             max_score=max_score,
             weight=weight,
             status="needs_review",
-            evidence=("该维度含主观判断，自动检查只给出代理证据，需要人工复核。", *_base_evidence(case, trace)),
+            evidence=(reason, *_base_evidence(case, trace)),
         )
 
     checks = {
@@ -217,12 +239,13 @@ def _score_default(case: EvalCase, trace: EvalRunTrace, max_score: float, worksp
     return True, max_score, ("该维度暂无专用自动检查，按通用维度通过。",)
 
 
-def _final_readable(case: EvalCase, trace: EvalRunTrace) -> bool:
+def _final_readability_issues(case: EvalCase, trace: EvalRunTrace) -> tuple[str, ...]:
+    issues = []
     if not trace.final_message.strip():
-        return False
+        issues.append("最终回复为空")
     if case.expectations.require_chinese and re.search(r"[\u4e00-\u9fff]", trace.final_message) is None:
-        return False
-    return True
+        issues.append("最终回复不含中文")
+    return tuple(issues)
 
 
 def _base_evidence(case: EvalCase, trace: EvalRunTrace) -> tuple[str, ...]:

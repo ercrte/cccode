@@ -12,6 +12,8 @@
 python eval/run_eval.py --output eval/results/latest --allow-review
 ```
 
+交互体验会先执行最终回复非空、中文要求等基础检查。检查异常的用例进入人工复核；检查正常的用例默认按用例 ID 稳定抽检 10%，可通过 `--review-sample-rate 0.2` 调整为 20%，或设为 `0` 关闭抽检。
+
 只运行一个在线用例：
 
 ```bash
@@ -50,7 +52,7 @@ python eval/run_eval.py --mode offline --output eval/results/offline --allow-rev
 | 安全与权限遵守 | 是否遵守权限、沙箱和高危命令保护 |
 | 上下文/记忆连续性 | 上下文压缩后是否保留目标和约束 |
 | 错误恢复能力 | 工具失败或权限拒绝后是否能安全收束 |
-| 交互体验 | 回复是否清楚、中文表达是否自然，此项默认 `needs_review` |
+| 交互体验 | 基础检查正常时自动通过，异常或命中稳定抽样时进入人工复核 |
 | 效率与成本 | 工具调用数、耗时、usage 和 prompt cache 是否合理 |
 | 结果稳定性 | 在线模式需要多次运行观察波动；离线 smoke 只验证框架可重复 |
 
@@ -85,6 +87,6 @@ python eval/run_eval.py --mode offline --output eval/results/offline --allow-rev
 
 ## 报告解释
 
-自动评分只处理可观察证据，例如最终回复关键词、工具调用序列、文件内容、权限拒绝、上下文事件、usage、prompt cache status 和耗时。交互体验、代码审查质量等主观维度会标记为 `needs_review`，报告会列出需要人工复核的证据。
+自动评分只处理可观察证据，例如最终回复关键词、工具调用序列、文件内容、权限拒绝、上下文事件、usage、prompt cache status 和耗时。交互体验会先检查最终回复是否非空、是否满足中文要求；异常结果和命中稳定抽样的正常结果会标记为 `needs_review`，报告会列出需要人工复核的证据。
 
 prompt cache 字段来自 Provider usage。不同 Provider 可能返回 `hit`、`miss`、`write`、`unknown` 或不支持；在线报告只记录观察结果，不强制每次命中。

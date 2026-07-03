@@ -8,6 +8,7 @@ from mewcode.config import (
     AgentConfig,
     AppConfig,
     McpConfig,
+    McpOAuthConfig,
     McpServerConfig,
     PromptCacheConfig,
     load_config,
@@ -1019,6 +1020,107 @@ base_url: https://example.test/v1
 api_key: plain-key
 teams:
   {teams_yaml}
+""",
+    )
+
+    with pytest.raises(ConfigError, match=expected):
+        load_config(tmp_path)
+
+
+def test_mcp_http_oauth_config_expands_preregistered_client(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    monkeypatch.setenv("GITHUB_MCP_CLIENT_ID", "client-id")
+    monkeypatch.setenv("GITHUB_MCP_CLIENT_SECRET", "client-secret-value")
+    write_yaml(
+        tmp_path / ".mewcode.yaml",
+        """
+protocol: openai
+model: test-model
+base_url: https://example.test/v1
+api_key: plain-key
+mcp_servers:
+  github:
+    type: http
+    url: https://api.githubcopilot.com/mcp/
+    oauth:
+      client_id: ${GITHUB_MCP_CLIENT_ID}
+      client_secret: ${GITHUB_MCP_CLIENT_SECRET}
+      scopes: [repo, read:user]
+""",
+    )
+
+    server = load_config(tmp_path).mcp.servers["github"]
+
+    assert server.oauth == McpOAuthConfig(
+        enabled=True,
+        client_id="client-id",
+        client_secret="client-secret-value",
+        scopes=("repo", "read:user"),
+    )
+    assert "client-secret-value" not in repr(server)
+
+
+def test_mcp_http_disabled_oauth_keeps_static_authorization_header(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    write_yaml(
+        tmp_path / ".mewcode.yaml",
+        """
+protocol: openai
+model: test-model
+base_url: https://example.test/v1
+api_key: plain-key
+mcp_servers:
+  github:
+    type: http
+    url: https://api.githubcopilot.com/mcp/
+    headers:
+      Authorization: Bearer pat-value
+    oauth:
+      enabled: false
+""",
+    )
+
+    server = load_config(tmp_path).mcp.servers["github"]
+
+    assert server.oauth == McpOAuthConfig(enabled=False)
+    assert server.headers["Authorization"] == "Bearer pat-value"
+
+
+@pytest.mark.parametrize(
+    "server_yaml, expected",
+    (
+        (
+            "type: http\n    url: https://mcp.test/mcp\n    headers:\n      authorization: Bearer token\n    oauth: {}",
+            "Authorization Header",
+        ),
+        ("type: stdio\n    command: python\n    oauth: {}", "仅支持 http"),
+        ("type: http\n    url: https://mcp.test/mcp\n    oauth:\n      scopes: ['bad scope']", "非法 scope"),
+        ("type: http\n    url: https://mcp.test/mcp\n    oauth:\n      client_secret: secret", "需要同时配置"),
+    ),
+)
+def test_mcp_oauth_config_rejects_conflicts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    server_yaml: str,
+    expected: str,
+) -> None:
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    write_yaml(
+        tmp_path / ".mewcode.yaml",
+        f"""
+protocol: openai
+model: test-model
+base_url: https://example.test/v1
+api_key: plain-key
+mcp_servers:
+  demo:
+    {server_yaml}
 """,
     )
 

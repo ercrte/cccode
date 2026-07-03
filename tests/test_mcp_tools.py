@@ -58,6 +58,7 @@ def test_remote_mcp_tool_exposes_tool_spec() -> None:
     assert "Echo text" in tool.spec.description
     assert tool.spec.parameters_schema["properties"]["text"]["type"] == "string"
     assert tool.spec.safety == "side_effect"
+    assert tool.spec.origin == "mcp:demo"
 
 
 @pytest.mark.asyncio

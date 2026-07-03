@@ -42,6 +42,7 @@ class RemoteMcpTool:
             description=self._description(definition),
             parameters_schema=dict(definition.input_schema),
             safety="side_effect",
+            origin=f"mcp:{definition.server_name}",
         )
 
     async def execute(self, arguments: Mapping[str, Any], context: ToolContext) -> Mapping[str, Any]:

@@ -30,6 +30,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", default=None, help="在线模式下覆盖配置中的模型名")
     parser.add_argument("--threshold", type=float, default=80.0, help="单用例通过分数阈值")
     parser.add_argument("--allow-review", action="store_true", help="允许存在 needs_review 时仍以 0 退出")
+    parser.add_argument(
+        "--review-sample-rate",
+        type=_review_sample_rate,
+        default=0.1,
+        help="基础检查通过后进入人工复核的稳定抽样比例，范围 0 到 1，默认 0.1",
+    )
     parser.add_argument("--keep-workspaces", action="store_true", help="保留临时 workspace 便于排查")
     args = parser.parse_args(argv)
     mode = "offline" if args.offline else args.mode
@@ -50,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
             mode=mode,
             threshold=args.threshold,
             allow_review=args.allow_review,
+            review_sample_rate=args.review_sample_rate,
             keep_workspaces=args.keep_workspaces,
             model_override=args.model,
         )
@@ -87,6 +94,7 @@ def _run_options(
     mode: str,
     threshold: float,
     allow_review: bool,
+    review_sample_rate: float,
     keep_workspaces: bool,
     model_override: str | None,
 ) -> EvalRunOptions:
@@ -96,6 +104,7 @@ def _run_options(
             mode="offline",
             threshold=threshold,
             allow_review=allow_review,
+            review_sample_rate=review_sample_rate,
             keep_workspaces=keep_workspaces,
             provider_info=EvalProviderInfo(
                 mode="offline",
@@ -113,6 +122,7 @@ def _run_options(
         mode="online",
         threshold=threshold,
         allow_review=allow_review,
+        review_sample_rate=review_sample_rate,
         keep_workspaces=keep_workspaces,
         provider=provider,
         provider_info=EvalProviderInfo(
@@ -123,6 +133,16 @@ def _run_options(
             prompt_cache_enabled=config.prompt_cache.enabled,
         ),
     )
+
+
+def _review_sample_rate(value: str) -> float:
+    try:
+        rate = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("人工复核抽样比例必须是数字") from exc
+    if not 0.0 <= rate <= 1.0:
+        raise argparse.ArgumentTypeError("人工复核抽样比例必须在 0 到 1 之间")
+    return rate
 
 
 if __name__ == "__main__":
