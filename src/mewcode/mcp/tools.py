@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from mewcode.mcp.errors import McpConnectionError, McpProtocolError, McpTimeoutError, McpToolError
+from mewcode.mcp.search import McpToolSearchProvider
 from mewcode.tools.base import ToolContext, ToolExecutionError, ToolSpec
+
+
+SEARCH_MCP_TOOLS_NAME = "search_mcp_tools"
 
 
 @dataclass(frozen=True)
@@ -42,6 +46,7 @@ class RemoteMcpTool:
             description=self._description(definition),
             parameters_schema=dict(definition.input_schema),
             safety="side_effect",
+            visibility="deferred",
             origin=f"mcp:{definition.server_name}",
         )
 
@@ -107,3 +112,60 @@ class RemoteMcpTool:
         if exc.data is not None:
             data["data"] = exc.data
         return data
+
+
+class SearchMcpToolsTool:
+    def __init__(self, provider: McpToolSearchProvider) -> None:
+        self.provider = provider
+        self.spec = ToolSpec(
+            name=SEARCH_MCP_TOOLS_NAME,
+            description=(
+                "按自然语言意图检索已配置 MCP Server 的工具。"
+                "需要 MCP 能力时先调用本工具；命中工具会在下一次模型迭代按需加载。"
+                "跨语言检索时可在 query 中补充英文能力关键词。"
+            ),
+            parameters_schema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "要查找的 MCP 能力或任务意图；跨语言时可补充英文关键词",
+                    },
+                    "server": {
+                        "type": "string",
+                        "description": "可选的 MCP Server 名称",
+                    },
+                },
+                "required": ["query"],
+                "additionalProperties": False,
+            },
+            timeout_seconds=5.0,
+            safety="read_only",
+            visibility="system",
+            origin="mcp:discovery",
+        )
+
+    async def execute(self, arguments: Mapping[str, Any], context: ToolContext) -> Mapping[str, Any]:
+        _ = context
+        query = str(arguments.get("query", "")).strip()
+        raw_server = arguments.get("server")
+        server_name = str(raw_server).strip() if raw_server is not None else None
+        if server_name == "":
+            server_name = None
+        result = self.provider.search_tools(query, server_name)
+        return {
+            "status": result.status,
+            "query": result.query,
+            "server": result.server_name,
+            "matches": [
+                {
+                    "name": match.global_name,
+                    "server": match.server_name,
+                    "title": match.title,
+                    "summary": match.summary,
+                }
+                for match in result.matches
+            ],
+            "activated_tools": list(result.activated_tools),
+            "message": result.message,
+        }

@@ -77,6 +77,7 @@ class FakeContext:
             last_usage=TokenUsage(input_tokens=2, output_tokens=3, total_tokens=5),
             mcp_report=McpLoadReport(
                 loaded_servers=("local",),
+                discovered_tools=("local__echo", "local__other"),
                 registered_tools=("local__echo",),
                 failed_servers={"bad": "失败"},
                 failed_tools={},
@@ -85,6 +86,7 @@ class FakeContext:
                 },
                 warnings=("系统 Keyring 不可用，OAuth 凭据仅在当前进程内保存",),
             ),
+            mcp_active_tools=("local__echo",),
         )
 
     def session_snapshot(self) -> CommandSessionSnapshot:
@@ -397,6 +399,8 @@ async def test_session_memory_permission_and_status_commands_render_snapshots() 
     assert "供应商：openai" in rendered
     assert "Token：5" in rendered
     assert "失败 Server 1 个" in rendered
+    assert "发现工具 2 个" in rendered
+    assert "当前轮次暴露 1 个" in rendered
     assert "github=需要授权" in rendered
     assert "Keyring 不可用" in rendered
     assert "子 Agent：功能是，角色 2 个" in rendered

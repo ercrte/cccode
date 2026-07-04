@@ -5,6 +5,7 @@ from pathlib import Path
 from mewcode.context.models import ContextSummary
 from mewcode.hooks.models import HookPromptInjection
 from mewcode.memory.models import InstructionBlock, InstructionBundle, KnowledgeContext, MemoryIndex, RestoreReport
+from mewcode.mcp.search import McpPromptContext, McpServerToolSummary
 from mewcode.prompting.builder import PromptBuilder, runtime_instruction_level
 from mewcode.prompting.base import RuntimePromptContext
 from mewcode.prompting.modules import stable_prompt_modules
@@ -38,6 +39,7 @@ def runtime_context(
     hook_injections: tuple[HookPromptInjection, ...] = (),
     sub_agent_context: SubAgentPromptContext | None = None,
     team_context: TeamPromptContext | None = None,
+    mcp_context: McpPromptContext | None = None,
 ) -> RuntimePromptContext:
     return RuntimePromptContext(
         cwd=cwd,
@@ -51,6 +53,7 @@ def runtime_context(
         hook_injections=hook_injections,
         sub_agent_context=sub_agent_context,
         team_context=team_context,
+        mcp_context=mcp_context,
     )
 
 
@@ -133,6 +136,27 @@ def test_runtime_prompt_uses_tagged_context() -> None:
     assert "模式状态：normal full 1/8" in block.text
     assert "允许工具：read_file(read_only), write_file(side_effect)" in prefix.text
     assert "允许工具：" not in block.text
+
+
+def test_runtime_prompt_includes_compact_mcp_server_summary() -> None:
+    text = runtime_dynamic_text(
+        runtime_context(
+            mcp_context=McpPromptContext(
+                connected_servers=(McpServerToolSummary("github", 45), McpServerToolSummary("demo", 2)),
+            )
+        )
+    )
+
+    assert "<mewcode_mcp>" in text
+    assert "search_mcp_tools" in text
+    assert "github(45)" in text
+    assert "demo(2)" in text
+    assert "github__get_me" not in text
+    assert "inputSchema" not in text
+
+
+def test_runtime_prompt_omits_mcp_block_without_context() -> None:
+    assert "<mewcode_mcp>" not in runtime_dynamic_text(runtime_context())
 
 
 def test_runtime_prompt_uses_full_refresh_and_brief_levels() -> None:

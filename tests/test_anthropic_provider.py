@@ -57,6 +57,8 @@ def mcp_echo_spec() -> ToolSpec:
             "required": ["text"],
             "additionalProperties": False,
         },
+        visibility="deferred",
+        origin="mcp:demo",
     )
 
 

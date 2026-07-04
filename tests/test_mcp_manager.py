@@ -11,6 +11,7 @@ from mewcode.errors import ConfigError
 from mewcode.mcp.errors import McpAuthorizationRequired, McpOAuthError
 from mewcode.mcp.manager import McpLoadReport, McpManager
 from mewcode.mcp.oauth.models import McpOAuthStatus
+from mewcode.mcp.tools import SEARCH_MCP_TOOLS_NAME
 from mewcode.session import ChatSession
 from mewcode.tools.base import ToolContext
 from mewcode.tools.base import ToolSpec
@@ -96,8 +97,44 @@ async def test_manager_initializes_servers_and_registers_tools() -> None:
     report = manager.load_report()
     assert report.loaded_servers == ("local", "remote")
     assert set(report.registered_tools) == {"local__echo", "remote__echo"}
+    assert set(report.discovered_tools) == {"local__echo", "remote__echo"}
     assert registry.get("local__echo") is not None
     assert registry.get("remote__echo") is not None
+    assert registry.get("local__echo").spec.visibility == "deferred"  # type: ignore[union-attr]
+    assert registry.get(SEARCH_MCP_TOOLS_NAME) is not None
+
+
+@pytest.mark.asyncio
+async def test_manager_search_reports_ok_no_match_unknown_and_unavailable() -> None:
+    transports = {
+        "github": FakeTransport([initialize_result(), tools_result("search_code", "get_me")]),
+        "broken": FakeTransport([initialize_result(tools=False)]),
+    }
+    manager = McpManager(
+        config(server("github"), server("broken")),
+        lambda item: transports[item.name],
+    )
+    registry = create_default_registry()
+    await manager.initialize()
+    manager.register_tools(registry)
+
+    matched = manager.search_tools("search code", "github")
+
+    assert matched.status == "ok"
+    assert [item.global_name for item in matched.matches] == ["github__search_code"]
+    assert manager.search_tools("missing capability", "github").status == "no_match"
+    assert manager.search_tools("echo", "missing").status == "server_not_found"
+    assert manager.search_tools("echo", "broken").status == "server_unavailable"
+    assert manager.prompt_context().connected_servers[0].name == "github"
+
+
+def test_manager_without_mcp_does_not_register_search_tool() -> None:
+    manager = McpManager(McpConfig())
+    registry = create_default_registry()
+
+    manager.register_tools(registry)
+
+    assert registry.get(SEARCH_MCP_TOOLS_NAME) is None
 
 
 @pytest.mark.asyncio
@@ -312,6 +349,7 @@ async def test_manager_oauth_authorize_reinitializes_registers_and_logout_isolat
     assert registry.get("oauth_demo__echo") is None
     assert manager.load_report().failed_servers == {}
     assert manager.load_report().oauth_status["oauth_demo"].state == "authorization_required"
+    assert manager.search_tools("echo", "oauth_demo").status == "server_unavailable"
 
     urls: list[str] = []
 
@@ -325,11 +363,14 @@ async def test_manager_oauth_authorize_reinitializes_registers_and_logout_isolat
     assert urls == ["https://auth.test/authorize?public=value"]
     assert registry.get("oauth_demo__echo") is not None
     assert registry.get("oauth_demo__echo").spec.origin == "mcp:oauth_demo"  # type: ignore[union-attr]
+    assert manager.search_tools("echo", "oauth_demo").status == "ok"
 
     result = await manager.logout_server("oauth_demo")
     assert "工具已移除" in result
     assert registry.get("oauth_demo__echo") is None
     assert registry.get("read_file") is not None
+    assert registry.get(SEARCH_MCP_TOOLS_NAME) is not None
+    assert manager.search_tools("echo", "oauth_demo").status == "server_unavailable"
     assert manager.load_report().oauth_status["oauth_demo"].state == "authorization_required"
     await manager.close()
 

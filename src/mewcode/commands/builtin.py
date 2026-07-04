@@ -341,7 +341,8 @@ def _format_status(
         mcp = "未配置或未初始化"
     else:
         mcp = (
-            f"已加载 Server {len(mcp_report.loaded_servers)} 个，注册工具 {len(mcp_report.registered_tools)} 个，"
+            f"已连接 Server {len(mcp_report.loaded_servers)} 个，发现工具 {len(mcp_report.discovered_tools)} 个，"
+            f"当前轮次暴露 {len(snapshot.mcp_active_tools)} 个，"
             f"失败 Server {len(mcp_report.failed_servers)} 个，失败工具 {len(mcp_report.failed_tools)} 个"
         )
         if mcp_report.oauth_status:

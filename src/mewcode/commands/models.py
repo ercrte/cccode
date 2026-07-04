@@ -74,6 +74,7 @@ class CommandStatusSnapshot:
     agent_running: bool
     last_usage: TokenUsage | None
     mcp_report: McpLoadReport | None
+    mcp_active_tools: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

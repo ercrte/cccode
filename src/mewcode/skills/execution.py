@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 from mewcode.config import AppConfig
 from mewcode.context.manager import ContextManager
@@ -15,6 +15,9 @@ from mewcode.skills.manager import SkillManager
 from mewcode.subagents.cache import FileReadCache
 from mewcode.tools.executor import ToolExecutor
 from mewcode.tools.registry import ToolRegistry
+
+if TYPE_CHECKING:
+    from mewcode.mcp.manager import McpManager
 
 
 ProviderResolver = Callable[[str | None], LLMProvider]
@@ -39,6 +42,7 @@ def create_isolated_skill_runner(
     skill_manager: SkillManager,
     provider_resolver: ProviderResolver,
     hook_manager: object | None = None,
+    mcp_manager: McpManager | None = None,
 ):
     from mewcode.agent import AgentLoopRunner
 
@@ -62,4 +66,5 @@ def create_isolated_skill_runner(
         provider_resolver=provider_resolver,
         hook_manager=child_hook_manager,
         file_read_cache=read_cache,
+        mcp_manager=mcp_manager,
     )

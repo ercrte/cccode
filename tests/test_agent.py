@@ -17,7 +17,9 @@ from mewcode.errors import ProviderError
 from mewcode.hooks import parse_hook_config
 from mewcode.hooks.manager import create_hook_manager
 from mewcode.memory.models import KnowledgeContext, MemoryIndex, MemoryUpdateJob
-from mewcode.mcp.tools import McpToolDefinition, RemoteMcpTool
+from mewcode.mcp.scope import McpTurnState
+from mewcode.mcp.search import McpPromptContext, McpToolMatch, McpToolSearchResult
+from mewcode.mcp.tools import McpToolDefinition, RemoteMcpTool, SearchMcpToolsTool
 from mewcode.permissions import PermissionConfig
 from mewcode.permissions.controller import create_permission_controller
 from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent, TokenUsage
@@ -56,16 +58,25 @@ class SlowProvider:
 
 
 class FakeContextManager:
-    def __init__(self, *, report: ContextCompactionReport | None = None, fail: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        report: ContextCompactionReport | None = None,
+        fail: bool = False,
+        fail_after: int | None = None,
+    ) -> None:
         self.report = report
         self.fail = fail
+        self.fail_after = fail_after
+        self.prepare_calls = 0
         self.prepare_called = False
         self.recorded_usage: TokenUsage | None = None
 
     async def prepare_request(self, *, session, provider, tools, prompt_factory, mode="auto"):
         _ = provider, mode
         self.prepare_called = True
-        if self.fail:
+        self.prepare_calls += 1
+        if self.fail or (self.fail_after is not None and self.prepare_calls >= self.fail_after):
             raise ContextLimitError("上下文超出预算")
         prompt = prompt_factory()
         return PreparedChatRequest(
@@ -97,7 +108,14 @@ class FakeMemoryManager:
 
 
 class FakeTool:
-    def __init__(self, name: str, *, safety: str = "read_only", log: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        *,
+        safety: str = "read_only",
+        visibility: str = "model",
+        log: list[str] | None = None,
+    ) -> None:
         self.spec = ToolSpec(
             name=name,
             description=name,
@@ -108,6 +126,7 @@ class FakeTool:
                 "additionalProperties": False,
             },
             safety=safety,  # type: ignore[arg-type]
+            visibility=visibility,  # type: ignore[arg-type]
         )
         self.log = log
 
@@ -131,6 +150,39 @@ class FakeMcpSession:
         }
 
 
+class FakeMcpManager:
+    def __init__(self, matches_by_query: Mapping[str, tuple[str, ...]] | None = None) -> None:
+        self.matches_by_query = matches_by_query or {"echo": ("demo__echo",)}
+
+    def search_tools(self, query: str, server_name: str | None = None) -> McpToolSearchResult:
+        names = next(
+            (names for key, names in self.matches_by_query.items() if key in query),
+            (),
+        )
+        return McpToolSearchResult(
+            status="ok" if names else "no_match",
+            query=query,
+            server_name=server_name,
+            matches=tuple(
+                McpToolMatch(
+                    global_name=name,
+                    server_name="demo",
+                    remote_name=name.partition("__")[2],
+                    title=name,
+                    summary=name,
+                    score=1000,
+                )
+                for name in names
+            ),
+        )
+
+    def prompt_context(self) -> McpPromptContext:
+        return McpPromptContext()
+
+    def create_turn_state(self) -> McpTurnState:
+        return McpTurnState(self.prompt_context)
+
+
 def make_registry(*tools: FakeTool) -> ToolRegistry:
     registry = ToolRegistry()
     for tool in tools:
@@ -149,6 +201,7 @@ def make_runner(
     context_manager=None,
     memory_manager=None,
     hook_manager=None,
+    mcp_manager=None,
 ) -> AgentLoopRunner:
     tool_registry = registry or make_registry(FakeTool("read"))
     return AgentLoopRunner(
@@ -161,6 +214,7 @@ def make_runner(
         context_manager=context_manager,
         memory_manager=memory_manager,
         hook_manager=hook_manager,
+        mcp_manager=mcp_manager,
     )
 
 
@@ -791,6 +845,7 @@ async def test_runner_does_not_execute_dangerous_command(tmp_path: Path, monkeyp
 @pytest.mark.asyncio
 async def test_runner_can_execute_remote_mcp_tool_from_registry(tmp_path: Path) -> None:
     mcp_session = FakeMcpSession()
+    mcp_manager = FakeMcpManager()
     mcp_tool = RemoteMcpTool(
         McpToolDefinition(
             server_name="demo",
@@ -809,8 +864,18 @@ async def test_runner_can_execute_remote_mcp_tool_from_registry(tmp_path: Path) 
     )
     registry = ToolRegistry()
     registry.register(mcp_tool)
+    registry.register(SearchMcpToolsTool(mcp_manager))
     provider = FakeProvider(
         [
+            [
+                StreamEvent(
+                    type="message_done",
+                    message=ChatMessage(
+                        role="assistant",
+                        tool_calls=(ToolCall("search-1", "search_mcp_tools", {"query": "echo", "server": "demo"}),),
+                    ),
+                )
+            ],
             [
                 StreamEvent(
                     type="message_done",
@@ -824,14 +889,106 @@ async def test_runner_can_execute_remote_mcp_tool_from_registry(tmp_path: Path) 
         ]
     )
 
-    events = await collect(make_runner(provider, tmp_path, registry=registry))
+    runner = make_runner(provider, tmp_path, registry=registry, mcp_manager=mcp_manager)
+    events = await collect(runner)
 
-    assert [event.type for event in events].count("tool_started") == 1
-    assert [event.type for event in events].count("tool_finished") == 1
+    assert [event.type for event in events].count("tool_started") == 2
+    assert [event.type for event in events].count("tool_finished") == 2
     assert mcp_session.calls == [("echo", {"text": "hello-mcp"})]
-    assert len(provider.requests) == 2
-    assert provider.requests[1].messages[-1].role == "tool"
-    assert "hello-mcp" in provider.requests[1].messages[-1].content
+    assert len(provider.requests) == 3
+    assert {tool.name for tool in provider.requests[0].tools} == {"search_mcp_tools"}
+    assert {tool.name for tool in provider.requests[1].tools} == {"search_mcp_tools", "demo__echo"}
+    assert provider.requests[2].messages[-1].role == "tool"
+    assert "hello-mcp" in provider.requests[2].messages[-1].content
+    assert runner.active_mcp_tools == frozenset()
+
+
+@pytest.mark.asyncio
+async def test_mcp_lazy_replacement_keeps_only_latest_candidates(tmp_path: Path) -> None:
+    manager = FakeMcpManager({"echo": ("demo__echo",), "issue": ("demo__issue_read",)})
+    registry = make_registry(
+        FakeTool("demo__echo", safety="side_effect", visibility="deferred"),
+        FakeTool("demo__issue_read", safety="side_effect", visibility="deferred"),
+    )
+    registry.register(SearchMcpToolsTool(manager))
+    provider = FakeProvider(
+        [
+            [
+                StreamEvent(
+                    type="message_done",
+                    message=ChatMessage(
+                        role="assistant",
+                        tool_calls=(ToolCall("search-1", "search_mcp_tools", {"query": "echo"}),),
+                    ),
+                )
+            ],
+            [
+                StreamEvent(
+                    type="message_done",
+                    message=ChatMessage(
+                        role="assistant",
+                        tool_calls=(ToolCall("search-2", "search_mcp_tools", {"query": "issue"}),),
+                    ),
+                )
+            ],
+            [StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="done"))],
+        ]
+    )
+    runner = make_runner(provider, tmp_path, registry=registry, mcp_manager=manager)
+
+    await collect(runner)
+
+    assert {tool.name for tool in provider.requests[0].tools} == {"search_mcp_tools"}
+    assert {tool.name for tool in provider.requests[1].tools} == {"search_mcp_tools", "demo__echo"}
+    assert {tool.name for tool in provider.requests[2].tools} == {"search_mcp_tools", "demo__issue_read"}
+
+
+@pytest.mark.asyncio
+async def test_mcp_lazy_cleanup_after_provider_error_and_context_limit(tmp_path: Path) -> None:
+    manager = FakeMcpManager()
+    registry = make_registry(FakeTool("demo__echo", safety="side_effect", visibility="deferred"))
+    registry.register(SearchMcpToolsTool(manager))
+
+    error_provider = FakeProvider(
+        [
+            [
+                StreamEvent(
+                    type="message_done",
+                    message=ChatMessage(
+                        role="assistant",
+                        tool_calls=(ToolCall("search-1", "search_mcp_tools", {"query": "echo"}),),
+                    ),
+                )
+            ],
+            [ProviderError("bad")],
+        ]
+    )
+    error_runner = make_runner(error_provider, tmp_path, registry=registry, mcp_manager=manager)
+    await collect(error_runner)
+    assert error_runner.active_mcp_tools == frozenset()
+
+    limit_provider = FakeProvider(
+        [
+            [
+                StreamEvent(
+                    type="message_done",
+                    message=ChatMessage(
+                        role="assistant",
+                        tool_calls=(ToolCall("search-2", "search_mcp_tools", {"query": "echo"}),),
+                    ),
+                )
+            ]
+        ]
+    )
+    limit_runner = make_runner(
+        limit_provider,
+        tmp_path,
+        registry=registry,
+        mcp_manager=manager,
+        context_manager=FakeContextManager(fail_after=2),
+    )
+    await collect(limit_runner)
+    assert limit_runner.active_mcp_tools == frozenset()
 
 
 @pytest.mark.asyncio

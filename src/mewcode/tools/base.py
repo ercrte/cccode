@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 ToolSafety = Literal["read_only", "side_effect"]
-ToolVisibility = Literal["model", "system"]
+ToolVisibility = Literal["model", "system", "deferred"]
 RuntimePrincipalKind = Literal["main", "sub_agent", "team_member"]
 
 

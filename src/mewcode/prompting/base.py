@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from mewcode.context.models import ContextSummary
     from mewcode.hooks.models import HookPromptInjection
     from mewcode.memory.models import KnowledgeContext
+    from mewcode.mcp.search import McpPromptContext
     from mewcode.session import PendingPlan
     from mewcode.skills.models import SkillPromptContext
     from mewcode.subagents.models import SubAgentPromptContext
@@ -49,4 +50,5 @@ class RuntimePromptContext:
     skill_context: SkillPromptContext | None = None
     sub_agent_context: SubAgentPromptContext | None = None
     team_context: TeamPromptContext | None = None
+    mcp_context: McpPromptContext | None = None
     hook_injections: Sequence[HookPromptInjection] = ()

@@ -38,6 +38,7 @@ from mewcode.tools.registry import ToolRegistry
 from mewcode.worktrees import WorktreeLease, WorktreeManager
 
 if TYPE_CHECKING:
+    from mewcode.mcp.manager import McpManager
     from mewcode.teams.manager import TeamManager
 
 
@@ -51,6 +52,7 @@ class TeamMemberRunnerFactory:
         provider: LLMProvider,
         provider_resolver: ProviderResolver,
         hook_manager: HookManager | None = None,
+        mcp_manager: McpManager | None = None,
     ) -> None:
         self.registry = registry
         self.executor = executor
@@ -58,6 +60,7 @@ class TeamMemberRunnerFactory:
         self.provider = provider
         self.provider_resolver = provider_resolver
         self.hook_manager = hook_manager
+        self.mcp_manager = mcp_manager
 
     def create_runner(
         self,
@@ -105,6 +108,7 @@ class TeamMemberRunnerFactory:
             tool_gates=manager.member_tool_gates(principal, role, approval_state),
             loop_controller=controller,
             team_prompt_provider=lambda: manager.prompt_context(principal),
+            mcp_manager=self.mcp_manager,
         )
 
     def _model(self, role: SubAgentRoleDefinition) -> str | None:

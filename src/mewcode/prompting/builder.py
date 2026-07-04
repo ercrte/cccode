@@ -29,6 +29,7 @@ class PromptBuilder:
             lines.append(f"用户原始目标：{context.source_request}")
 
         lines.extend(_skill_context_lines(context))
+        lines.extend(_mcp_context_lines(context))
         lines.extend(_sub_agent_context_lines(context))
         lines.extend(_team_context_lines(context))
         lines.extend(_mode_lines(context, level))
@@ -125,6 +126,26 @@ def _skill_context_lines(context: RuntimePromptContext) -> list[str]:
         for warning in skill_context.warnings:
             lines.append(f"- {warning.source_path}: {warning.message}")
     lines.append("</mewcode_skills>")
+    return lines
+
+
+def _mcp_context_lines(context: RuntimePromptContext) -> list[str]:
+    mcp_context = context.mcp_context
+    if mcp_context is None:
+        return []
+    lines = [
+        "<mewcode_mcp>",
+        "MCP 工具按需加载；需要 MCP 能力时先调用 search_mcp_tools。",
+    ]
+    if mcp_context.connected_servers:
+        servers = ", ".join(
+            f"{server.name}({server.tool_count})"
+            for server in mcp_context.connected_servers
+        )
+        lines.append(f"已连接 Server：{servers}")
+    else:
+        lines.append("已连接 Server：无")
+    lines.append("</mewcode_mcp>")
     return lines
 
 

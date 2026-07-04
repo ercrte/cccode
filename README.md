@@ -112,7 +112,9 @@ mcp_servers:
 
 在 GitHub App/OAuth App 中将回调地址注册为 `http://127.0.0.1/oauth/callback`；实际授权时 MewCode 会使用相同 host/path 的随机本机端口。当前版本不实现 Device Flow、SSH 跨机器回调、远端 token revoke、自动 scope step-up，也不实现 MCP `2025-11-25` 的 CIMD/OIDC 扩展。纯 SSH 环境可继续使用 PAT Header，或在浏览器和 MewCode 位于同一台机器时使用 OAuth。
 
-MCP 工具会以 `server__tool` 的全局工具名暴露给模型，例如 `local_demo` Server 的 `echo` 工具会注册为 `local_demo__echo`。这样可以避免远端工具覆盖内置工具或其他 Server 的同名工具。MCP 工具默认按有副作用工具处理，会继续经过现有权限系统。
+MCP 工具使用按需加载，避免大型工具目录持续占用上下文。MewCode 启动时仍会连接 Server 并发现完整工具目录，但新用户轮次默认只向模型暴露轻量的 `search_mcp_tools`。模型需要 MCP 能力时先按自然语言意图检索，下一次模型迭代只加载相关候选的完整定义；单次最多 5 个候选，同一轮再次检索会替换上一批，轮次结束后全部清空。
+
+实际 MCP 工具继续使用 `server__tool` 全局名，例如 `local_demo` Server 的 `echo` 工具为 `local_demo__echo`，从而避免覆盖内置工具或其他 Server 的同名工具。检索只读取本地已发现目录，不触发远端业务操作或权限确认；实际 MCP 工具仍按有副作用工具处理，并继续经过 Plan Mode、权限、调度和 Hook。未配置 MCP Server 时不会注册 `search_mcp_tools`，因此不会增加额外上下文开销。
 
 ## 启动
 
@@ -363,7 +365,7 @@ sub_agents:
 
 ## Agent Loop 与工具
 
-MewCode 会把核心工具暴露给当前模型；如果配置了 MCP Server，启动时发现到的 MCP 工具也会一起暴露：
+MewCode 会把核心工具暴露给当前模型；如果配置了 MCP Server，则额外暴露 `search_mcp_tools`，远端工具在检索命中后按当前用户轮次加载：
 
 - `read_file`：读取 UTF-8 文本文件内容。
 - `write_file`：创建或覆盖写入 UTF-8 文本文件。
@@ -371,9 +373,12 @@ MewCode 会把核心工具暴露给当前模型；如果配置了 MCP Server，�
 - `run_command`：在当前项目目录执行本地命令，返回退出码、标准输出和标准错误。
 - `find_files`：按 glob 模式查找文件路径。
 - `search_code`：搜索代码内容并返回匹配文件、行列和文本摘要。
+- `search_mcp_tools`：按任务意图检索 MCP 工具，下一迭代加载最多 5 个候选。
 - `delegate_agent`：把独立子任务委派给子 Agent；主 Agent 中稳定暴露，子 Agent 中默认不可用以防无限嵌套。
 
 Agent Loop 会按 ReAct 风格工作：模型先输出文本或工具调用，MewCode 执行工具并把结果回灌给模型，然后继续下一轮，直到模型不再请求工具并给出最终回复。一次模型响应中包含多个工具调用时，读类工具可以并发执行；写入、修改和命令工具会按顺序串行执行。
+
+`/status` 的 MCP 摘要会区分已发现工具数和当前轮次暴露工具数。前者表示启动时从 Server 获取的目录规模，后者最多为本轮最近一次检索命中的 5 个候选；任务结束后当前轮次暴露数恢复为 0。
 
 Agent Loop 有几类停止条件：
 

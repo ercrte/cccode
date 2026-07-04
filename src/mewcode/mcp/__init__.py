@@ -15,6 +15,14 @@ from mewcode.mcp.errors import (
     McpOAuthStorageError,
 )
 from mewcode.mcp.oauth import McpOAuthStatus, OAuthTokenSet
+from mewcode.mcp.scope import McpTurnState
+from mewcode.mcp.search import (
+    McpPromptContext,
+    McpServerToolSummary,
+    McpToolCatalog,
+    McpToolMatch,
+    McpToolSearchResult,
+)
 
 __all__ = [
     "McpAuthorizationRequired",
@@ -30,5 +38,11 @@ __all__ = [
     "McpOAuthError",
     "McpOAuthStatus",
     "McpOAuthStorageError",
+    "McpPromptContext",
+    "McpServerToolSummary",
+    "McpToolCatalog",
+    "McpToolMatch",
+    "McpToolSearchResult",
+    "McpTurnState",
     "OAuthTokenSet",
 ]

@@ -4,6 +4,7 @@ import asyncio
 import copy
 from dataclasses import replace
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from mewcode.agent import AgentLoopRunner, TurnEvent
 from mewcode.commands import AgentCommand
@@ -31,6 +32,9 @@ from mewcode.tools.base import RuntimePrincipal
 from mewcode.tools.executor import ToolExecutor
 from mewcode.tools.registry import ToolRegistry
 
+if TYPE_CHECKING:
+    from mewcode.mcp.manager import McpManager
+
 
 class SubAgentRunnerFactory:
     def __init__(
@@ -42,6 +46,7 @@ class SubAgentRunnerFactory:
         provider: LLMProvider,
         provider_resolver: ProviderResolver,
         hook_manager: HookManager | None = None,
+        mcp_manager: McpManager | None = None,
     ) -> None:
         self.registry = registry
         self.executor = executor
@@ -49,6 +54,7 @@ class SubAgentRunnerFactory:
         self.provider = provider
         self.provider_resolver = provider_resolver
         self.hook_manager = hook_manager
+        self.mcp_manager = mcp_manager
 
     def create_runner(
         self,
@@ -93,6 +99,7 @@ class SubAgentRunnerFactory:
             tool_filter=tool_filter,
             sub_agent_prompt=active_prompt,
             file_read_cache=FileReadCache(),
+            mcp_manager=self.mcp_manager,
         )
         command = AgentCommand(mode=parent.mode, visible_text=invocation.task, model_text=invocation.task)
         return runner, command, session

@@ -127,6 +127,13 @@ class Handler(BaseHTTPRequestHandler):
         if team_calls is not None:
             return team_calls
         if messages[-1].get("role") == "tool":
+            if _last_tool_is(messages, "search_mcp_tools"):
+                if _contains_user_text(messages, "local_demo") and _has_tool(body, "local_demo__echo"):
+                    return [{"name": "local_demo__echo", "arguments": {"text": "hello-mcp"}}]
+                if _contains_user_text(messages, "remote_demo") and _has_tool(body, "remote_demo__echo"):
+                    return [{"name": "remote_demo__echo", "arguments": {"text": "lazy-mcp"}}]
+                if _contains_user_text(messages, "oauth_demo") and _has_tool(body, "oauth_demo__echo"):
+                    return [{"name": "oauth_demo__echo", "arguments": {"text": "oauth-mcp"}}]
             if _contains_user_text(messages, "迭代上限"):
                 return [{"name": "read_file", "arguments": {"path": "README.md"}}]
             if _contains_user_text(messages, "连续未知工具"):
@@ -236,11 +243,20 @@ class Handler(BaseHTTPRequestHandler):
         if "连续未知工具" in last:
             return [{"name": "missing_tool", "arguments": {}}]
         if "local_demo" in last:
-            return [{"name": "local_demo__echo", "arguments": {"text": _mcp_text(last, "hello-mcp")}}]
+            if _has_tool(body, "local_demo__echo"):
+                return [{"name": "local_demo__echo", "arguments": {"text": _mcp_text(last, "hello-mcp")}}]
+            if _has_tool(body, "search_mcp_tools"):
+                return [{"name": "search_mcp_tools", "arguments": {"query": "echo", "server": "local_demo"}}]
         if "remote_demo" in last:
-            return [{"name": "remote_demo__echo", "arguments": {"text": _mcp_text(last, "http-mcp")}}]
-        if "oauth_demo" in last and _has_tool(body, "oauth_demo__echo"):
-            return [{"name": "oauth_demo__echo", "arguments": {"text": _mcp_text(last, "oauth-mcp")}}]
+            if _has_tool(body, "remote_demo__echo"):
+                return [{"name": "remote_demo__echo", "arguments": {"text": _mcp_text(last, "http-mcp")}}]
+            if _has_tool(body, "search_mcp_tools"):
+                return [{"name": "search_mcp_tools", "arguments": {"query": "echo", "server": "remote_demo"}}]
+        if "oauth_demo" in last:
+            if _has_tool(body, "oauth_demo__echo"):
+                return [{"name": "oauth_demo__echo", "arguments": {"text": _mcp_text(last, "oauth-mcp")}}]
+            if _has_tool(body, "search_mcp_tools"):
+                return [{"name": "search_mcp_tools", "arguments": {"query": "echo", "server": "oauth_demo"}}]
         if ("review skill" in lowered or "review Skill" in last or "用 review" in last) and _has_tool(body, "load_skill"):
             return [{"name": "load_skill", "arguments": {"name": "review", "input": _last_path(last) or "README.md"}}]
         if _contains_model_text(messages, "当前待执行计划") or "请执行下面这份已确认的计划" in last:
@@ -371,6 +387,12 @@ def _has_tool(body: dict[str, Any], name: str) -> bool:
         if tool.get("name") == name:
             return True
     return False
+
+
+def _last_tool_is(messages: list[dict[str, Any]], name: str) -> bool:
+    if not messages or messages[-1].get("role") != "tool":
+        return False
+    return f'"tool_name": "{name}"' in str(messages[-1].get("content", ""))
 
 
 def _last_path(text: str) -> str | None:

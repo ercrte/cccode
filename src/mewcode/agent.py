@@ -29,6 +29,7 @@ from mewcode.hooks.models import HookEvent, HookExecutionResult, HookRuntimeCont
 
 if TYPE_CHECKING:
     from mewcode.memory.manager import SessionMemoryManager
+    from mewcode.mcp.manager import McpManager
     from mewcode.skills.manager import SkillManager
     from mewcode.teams.models import TeamPromptContext
 
@@ -166,6 +167,7 @@ class AgentLoopRunner:
         tool_gates: tuple[ToolGate, ...] = (),
         loop_controller: AgentLoopController | None = None,
         team_prompt_provider: Callable[[], TeamPromptContext | None] | None = None,
+        mcp_manager: McpManager | None = None,
     ) -> None:
         self.session = session
         self.provider = provider
@@ -196,9 +198,21 @@ class AgentLoopRunner:
         self.tool_gates = tool_gates
         self.loop_controller = loop_controller
         self.team_prompt_provider = team_prompt_provider
+        self.mcp_manager = mcp_manager
+        self.mcp_turn_state = mcp_manager.create_turn_state() if mcp_manager is not None else None
         self._cancel_requested = False
 
     async def run(self, command: AgentCommand, *, append_user_message: bool = True) -> AsyncIterator[TurnEvent]:
+        if self.mcp_turn_state is not None:
+            self.mcp_turn_state.begin_turn()
+        try:
+            async for event in self._run_turn(command, append_user_message=append_user_message):
+                yield event
+        finally:
+            if self.mcp_turn_state is not None:
+                self.mcp_turn_state.end_turn()
+
+    async def _run_turn(self, command: AgentCommand, *, append_user_message: bool = True) -> AsyncIterator[TurnEvent]:
         self._cancel_requested = False
         turn_start = len(self.session.messages)
         if append_user_message:
@@ -237,7 +251,13 @@ class AgentLoopRunner:
                     await self.loop_controller.before_iteration(self.session)
 
                 tool_whitelist = self.skill_manager.active_tool_whitelist() if self.skill_manager is not None else None
-                policy = ToolPolicy(command.mode, tool_whitelist, self.tool_filter, self.tool_gates)
+                policy = ToolPolicy(
+                    command.mode,
+                    tool_whitelist,
+                    self.tool_filter,
+                    self.tool_gates,
+                    self.mcp_turn_state.active_tools if self.mcp_turn_state is not None else frozenset(),
+                )
                 allowed_tools = policy.allowed_specs(self.registry)
                 hook_context = self._hook_context(command.mode, tool_whitelist)
                 provider = self.provider_resolver(
@@ -268,6 +288,11 @@ class AgentLoopRunner:
                             skill_context=skill_context,
                             sub_agent_context=sub_agent_context,
                             team_context=(self.team_prompt_provider() if self.team_prompt_provider is not None else None),
+                            mcp_context=(
+                                self.mcp_turn_state.prompt_context()
+                                if self.mcp_turn_state is not None
+                                else None
+                            ),
                             hook_injections=hook_injections,
                         )
                     )
@@ -406,6 +431,12 @@ class AgentLoopRunner:
                     self._clear_parent_context()
 
                 results = scheduler.results()
+                if self.mcp_turn_state is not None:
+                    results = self.mcp_turn_state.apply_search_results(
+                        results,
+                        policy=policy,
+                        registry=self.registry,
+                    )
                 for result in results:
                     self.session.append_tool_result(result)
                 previous_unknown_tool = any(result.error_type == "unknown_tool" for result in results)
@@ -451,6 +482,12 @@ class AgentLoopRunner:
 
     def cancel(self) -> None:
         self._cancel_requested = True
+
+    @property
+    def active_mcp_tools(self) -> frozenset[str]:
+        if self.mcp_turn_state is None:
+            return frozenset()
+        return self.mcp_turn_state.active_tools
 
     def _schedule_memory_update(
         self,
@@ -603,8 +640,16 @@ class ToolAwareTurnRunner:
         provider: LLMProvider,
         registry: ToolRegistry,
         executor: ToolExecutor,
+        mcp_manager: McpManager | None = None,
     ) -> None:
-        self._runner = AgentLoopRunner(session, provider, registry, executor, AgentConfig())
+        self._runner = AgentLoopRunner(
+            session,
+            provider,
+            registry,
+            executor,
+            AgentConfig(),
+            mcp_manager=mcp_manager,
+        )
 
     @property
     def session(self) -> ChatSession:

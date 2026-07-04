@@ -30,16 +30,18 @@ class ToolPolicy:
     whitelist: frozenset[str] | None = None
     filter: SubAgentToolFilter | None = None
     gates: tuple[ToolGate, ...] = ()
+    activated_deferred_tools: frozenset[str] = frozenset()
 
     def allowed_specs(self, registry: ToolRegistry) -> tuple[ToolSpec, ...]:
+        visible_specs = self._filter_deferred(registry.specs())
         if self.mode == "plan":
             specs = tuple(
                 spec
-                for spec in registry.specs()
+                for spec in visible_specs
                 if spec.safety == "read_only" or spec.visibility == "system"
             )
         else:
-            specs = registry.specs()
+            specs = visible_specs
         return self._filter_gates(self._filter_sub_agent(self._filter_whitelist(specs)))
 
     def validate_call(self, call: ToolCall, registry: ToolRegistry) -> ToolResult | None:
@@ -52,6 +54,16 @@ class ToolPolicy:
                 data={},
                 error_type="unknown_tool",
                 error=f"未知工具: {call.name}",
+                elapsed_ms=0,
+            )
+        if tool.spec.visibility == "deferred" and call.name not in self.activated_deferred_tools:
+            return ToolResult(
+                tool_call_id=call.id,
+                tool_name=call.name,
+                success=False,
+                data={"visibility": "deferred"},
+                error_type="tool_not_loaded",
+                error=f"工具尚未按需加载: {call.name}",
                 elapsed_ms=0,
             )
         if self.mode == "plan" and tool.spec.safety != "read_only" and tool.spec.visibility != "system":
@@ -96,6 +108,13 @@ class ToolPolicy:
         if self.whitelist is None:
             return specs
         return tuple(spec for spec in specs if spec.visibility == "system" or spec.name in self.whitelist)
+
+    def _filter_deferred(self, specs: tuple[ToolSpec, ...]) -> tuple[ToolSpec, ...]:
+        return tuple(
+            spec
+            for spec in specs
+            if spec.visibility != "deferred" or spec.name in self.activated_deferred_tools
+        )
 
     def _filter_sub_agent(self, specs: tuple[ToolSpec, ...]) -> tuple[ToolSpec, ...]:
         if self.filter is None:

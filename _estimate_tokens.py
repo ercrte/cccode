@@ -143,3 +143,31 @@ print(f"  GitHub MCP 定义总占用: ~{total + total_tools*20:.0f} tokens")
 print()
 print(f"  作为对比：内置工具 6个 × ~200 = {6*200} tokens")
 print(f"  全量工具定义总计: ~{total + total_tools*20 + 1200:.0f} tokens")
+
+# 延迟加载对比：空闲轮次只暴露固定检索入口；活跃轮次最多再暴露 5 个候选。
+search_description = (
+    "按自然语言意图检索已配置 MCP Server 的工具。"
+    "需要 MCP 能力时先调用本工具；命中工具会在下一次模型迭代按需加载。"
+    "跨语言检索时可在 query 中补充英文能力关键词。"
+)
+search_schema = {
+    "type": "object",
+    "properties": {
+        "query": {"type": "string", "description": "要查找的 MCP 能力或任务意图；跨语言时可补充英文关键词"},
+        "server": {"type": "string", "description": "可选的 MCP Server 名称"},
+    },
+    "required": ["query"],
+    "additionalProperties": False,
+}
+search_tokens = (len(search_description) + len(json.dumps(search_schema, ensure_ascii=False, separators=(",", ":")))) / 4 + 20
+full_mcp_tokens = total + total_tools * 20
+idle_lazy_tokens = search_tokens
+active_lazy_tokens = search_tokens + simple_total + medium_total * 3 + complex_total + 5 * 20
+idle_reduction = (1 - idle_lazy_tokens / full_mcp_tokens) * 100
+
+print("\n=== 延迟加载对比 ===")
+print(f"  full:        ~{full_mcp_tokens:.0f} tokens（45 个 GitHub 工具）")
+print(f"  idle lazy:   ~{idle_lazy_tokens:.0f} tokens（仅 search_mcp_tools）")
+print(f"  active lazy: ~{active_lazy_tokens:.0f} tokens（检索入口 + 5 个候选）")
+print(f"  idle lazy 降幅: {idle_reduction:.1f}%")
+print(f"  是否达到 >= 90%: {'是' if idle_reduction >= 90 else '否'}")

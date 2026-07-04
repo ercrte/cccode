@@ -7,7 +7,15 @@ from typing import Any
 import pytest
 
 from mewcode.mcp.errors import McpProtocolError, McpToolError
-from mewcode.mcp.tools import McpToolDefinition, RemoteMcpTool, make_global_tool_name, parse_global_tool_name
+from mewcode.mcp.search import McpToolMatch, McpToolSearchResult
+from mewcode.mcp.tools import (
+    SEARCH_MCP_TOOLS_NAME,
+    McpToolDefinition,
+    RemoteMcpTool,
+    SearchMcpToolsTool,
+    make_global_tool_name,
+    parse_global_tool_name,
+)
 from mewcode.tools.base import ToolContext, ToolExecutionError
 
 
@@ -58,7 +66,58 @@ def test_remote_mcp_tool_exposes_tool_spec() -> None:
     assert "Echo text" in tool.spec.description
     assert tool.spec.parameters_schema["properties"]["text"]["type"] == "string"
     assert tool.spec.safety == "side_effect"
+    assert tool.spec.visibility == "deferred"
     assert tool.spec.origin == "mcp:demo"
+
+
+class FakeSearchProvider:
+    def __init__(self, result: McpToolSearchResult) -> None:
+        self.result = result
+        self.calls: list[tuple[str, str | None]] = []
+
+    def search_tools(self, query: str, server_name: str | None = None) -> McpToolSearchResult:
+        self.calls.append((query, server_name))
+        return self.result
+
+
+@pytest.mark.asyncio
+async def test_search_mcp_tool_is_lightweight_system_read_tool(tmp_path: Path) -> None:
+    provider = FakeSearchProvider(
+        McpToolSearchResult(
+            status="ok",
+            query="pull request",
+            server_name="github",
+            matches=(
+                McpToolMatch(
+                    global_name="github__pull_request_read",
+                    server_name="github",
+                    remote_name="pull_request_read",
+                    title="Read pull request",
+                    summary="Read a pull request",
+                    score=900,
+                ),
+            ),
+        )
+    )
+    tool = SearchMcpToolsTool(provider)
+
+    result = await tool.execute({"query": " pull request ", "server": "github"}, context(tmp_path))
+
+    assert tool.spec.name == SEARCH_MCP_TOOLS_NAME
+    assert tool.spec.safety == "read_only"
+    assert tool.spec.visibility == "system"
+    assert set(tool.spec.parameters_schema["properties"]) == {"query", "server"}
+    assert provider.calls == [("pull request", "github")]
+    assert result["matches"] == [
+        {
+            "name": "github__pull_request_read",
+            "server": "github",
+            "title": "Read pull request",
+            "summary": "Read a pull request",
+        }
+    ]
+    assert "score" not in str(result)
+    assert "input_schema" not in str(result)
 
 
 @pytest.mark.asyncio

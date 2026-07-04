@@ -145,6 +145,7 @@ class MewCodeApp(App[None]):
             main_session=session,
             notify=self.show_sub_agent_notification,
             cleanup_reporter=self._report_worktree_cleanup,
+            mcp_manager=self.mcp_manager,
         )
         self.team_manager = team_manager or TeamManager(
             self.executor.context.cwd,
@@ -159,6 +160,7 @@ class MewCodeApp(App[None]):
                 provider=provider,
                 provider_resolver=self.provider_resolver,
                 hook_manager=self.hook_manager,
+                mcp_manager=self.mcp_manager,
             )
             team_runtime = TeamRuntimeSupervisor(
                 manager=self.team_manager,
@@ -269,6 +271,7 @@ class MewCodeApp(App[None]):
 
     def status_snapshot(self) -> CommandStatusSnapshot:
         mcp_report = self.mcp_manager.load_report() if self.mcp_manager is not None else None
+        active_mcp_tools = tuple(sorted(self._runner.active_mcp_tools)) if self._runner is not None else ()
         return CommandStatusSnapshot(
             protocol=self.config.protocol,
             model=self.config.model,
@@ -276,6 +279,7 @@ class MewCodeApp(App[None]):
             agent_running=self._runner is not None,
             last_usage=self.last_usage,
             mcp_report=mcp_report,
+            mcp_active_tools=active_mcp_tools,
         )
 
     def session_snapshot(self) -> CommandSessionSnapshot:
@@ -462,6 +466,7 @@ class MewCodeApp(App[None]):
             tool_gates=self.team_manager.tool_gates(self.executor.context.principal),
             loop_controller=self.team_manager.loop_controller(self.executor.context.principal),
             team_prompt_provider=lambda: self.team_manager.prompt_context(self.executor.context.principal),
+            mcp_manager=self.mcp_manager,
         )
         self._runner = runner
         try:
@@ -493,6 +498,7 @@ class MewCodeApp(App[None]):
             skill_manager=self.skill_manager,
             provider_resolver=self.provider_resolver,
             hook_manager=self.hook_manager,
+            mcp_manager=self.mcp_manager,
         )
         self._runner = runner
         final_message: ChatMessage | None = None

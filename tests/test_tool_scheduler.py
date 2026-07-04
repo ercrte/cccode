@@ -25,6 +25,7 @@ class FakeTool:
         name: str,
         *,
         safety: str,
+        visibility: str = "model",
         delay: float = 0.0,
         log: list[str] | None = None,
     ) -> None:
@@ -33,6 +34,7 @@ class FakeTool:
             description=name,
             parameters_schema={"type": "object", "properties": {}, "required": [], "additionalProperties": False},
             safety=safety,  # type: ignore[arg-type]
+            visibility=visibility,  # type: ignore[arg-type]
         )
         self.delay = delay
         self.log = log
@@ -120,6 +122,43 @@ def test_tool_policy_reports_unknown_tool() -> None:
 
     assert result is not None
     assert result.error_type == "unknown_tool"
+
+
+def test_tool_policy_hides_deferred_until_activated() -> None:
+    registry = make_registry(
+        FakeTool("read", safety="read_only"),
+        FakeTool("github__search_code", safety="side_effect", visibility="deferred"),
+        FakeTool("search_mcp_tools", safety="read_only", visibility="system"),
+    )
+
+    initial = {spec.name for spec in ToolPolicy("normal").allowed_specs(registry)}
+    active = {
+        spec.name
+        for spec in ToolPolicy(
+            "normal",
+            activated_deferred_tools=frozenset({"github__search_code"}),
+        ).allowed_specs(registry)
+    }
+
+    assert initial == {"read", "search_mcp_tools"}
+    assert active == {"read", "search_mcp_tools", "github__search_code"}
+
+
+def test_tool_policy_rejects_unloaded_deferred_call() -> None:
+    registry = make_registry(FakeTool("github__search_code", safety="side_effect", visibility="deferred"))
+
+    unloaded = ToolPolicy("normal").validate_call(
+        ToolCall(id="c1", name="github__search_code"),
+        registry,
+    )
+    loaded = ToolPolicy(
+        "normal",
+        activated_deferred_tools=frozenset({"github__search_code"}),
+    ).validate_call(ToolCall(id="c2", name="github__search_code"), registry)
+
+    assert unloaded is not None
+    assert unloaded.error_type == "tool_not_loaded"
+    assert loaded is None
 
 
 def test_make_batches_groups_consecutive_read_tools_and_splits_side_effects(tmp_path: Path) -> None:

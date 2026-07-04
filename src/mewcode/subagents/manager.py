@@ -5,7 +5,7 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mewcode.config import AppConfig
 from mewcode.errors import MewCodeError, redact_secret
@@ -38,6 +38,9 @@ from mewcode.worktrees import (
     WorktreeManager,
 )
 
+if TYPE_CHECKING:
+    from mewcode.mcp.manager import McpManager
+
 
 class SubAgentConfigurationError(MewCodeError):
     pass
@@ -59,6 +62,7 @@ class SubAgentManager:
         worktree_manager: WorktreeManager | None = None,
         worktree_janitor: WorktreeJanitor | None = None,
         cleanup_reporter: Callable[[CleanupReport], None] | None = None,
+        mcp_manager: McpManager | None = None,
     ) -> None:
         self.roots = roots
         self.tool_registry = tool_registry
@@ -69,6 +73,7 @@ class SubAgentManager:
         self.hook_manager = hook_manager
         self.main_session = main_session
         self.notify = notify
+        self.mcp_manager = mcp_manager
         self.loader = SubAgentRoleLoader(roots)
         self.catalog = SubAgentRoleCatalog(definitions={})
         self.parent_context: ParentAgentContext | None = None
@@ -209,6 +214,7 @@ class SubAgentManager:
                 provider=self.provider,
                 provider_resolver=self.provider_resolver,
                 hook_manager=self.hook_manager,
+                mcp_manager=self.mcp_manager,
             )
             runner, command, _session = factory.create_runner(
                 task_id=record.task_id,
