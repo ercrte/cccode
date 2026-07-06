@@ -18,6 +18,7 @@ from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
 from mewcode.session import ChatSession
 from mewcode.session_id import SessionId
 from mewcode.tools.base import ToolCall
+from tests.test_memory_notes import note
 
 
 class FakeProvider:
@@ -107,7 +108,11 @@ async def test_bootstrap_can_start_new_empty_session(tmp_path: Path) -> None:
     session = store.create_session(SessionId("20260612-080910-abcd"))
     session.append_user_message("old")
 
-    result = await _bootstrapper(tmp_path, store).bootstrap(
+    bootstrapper = _bootstrapper(tmp_path, store)
+    bootstrapper.note_store.write_note(note("user-rule", scope="user", category="preference", body="默认中文"))
+    bootstrapper.note_store.write_note(note("project-rule", body="使用 pytest"))
+
+    result = await bootstrapper.bootstrap(
         options=BootstrapOptions(new_session=True),
         provider=FakeProvider(),
         context_manager=FakeContextManager(),
@@ -116,6 +121,11 @@ async def test_bootstrap_can_start_new_empty_session(tmp_path: Path) -> None:
     assert result.restore_report.restored is False
     assert result.session.messages == []
     assert result.session.context_state.session_id != "20260612-080910-abcd"
+    assert result.knowledge_context.user_memory_index is not None
+    assert "默认中文" in result.knowledge_context.user_memory_index.content
+    assert result.knowledge_context.project_memory_index is not None
+    assert "使用 pytest" in result.knowledge_context.project_memory_index.content
+    assert "old" not in result.knowledge_context.user_memory_index.content
 
 
 @pytest.mark.asyncio

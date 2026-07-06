@@ -442,6 +442,10 @@ MewCode 启动时会加载三层项目指令文件，并按优先级注入模型
 
 每条记忆是一份带 frontmatter 的 Markdown 文件，分类为 `preference`、`correction`、`project_knowledge`、`reference`。系统会维护各自的 `index.md`，并控制在 200 行和 25KB 内。每轮 Agent Loop 自然结束后，MewCode 会在后台用一次无工具模型请求更新自动笔记；失败只记录告警，不影响当前对话。
 
+自动提取采用保守策略：只有用户明确表达或确认、且跨任务持续有效的信息才会落盘。新笔记会记录用户原话证据、作用域、类别和置信度；关键偏好还必须包含“以后、始终、默认、必须、禁止”等明确长期约束，并达到配置的置信阈值。临时要求、模型猜测、助手或工具单独提供的内容以及敏感凭据不会成为长期记忆。旧格式笔记仍可兼容读取。
+
+`mewcode --new-session` 只关闭最近会话消息恢复，不会关闭长期记忆：新会话的普通消息历史为空，但首个模型请求仍会加载同一项目和用户的长期记忆。因此可以严格验证跨会话继承，而不是依赖旧对话历史。
+
 可以通过配置关闭或调整记忆功能：
 
 ```yaml
@@ -453,7 +457,20 @@ memory:
   time_gap_hours: 24
   index_max_lines: 200
   index_max_bytes: 25000
+  critical_preference_min_confidence: 0.95
 ```
+
+记忆提取质量和空白新会话继承可运行专项评测：
+
+```bash
+# 确定性流程回归，不代表真实模型质量
+python eval/run_memory_eval.py --mode offline --output eval/results/memory-quality/offline
+
+# 真实模型发布验收
+python eval/run_memory_eval.py --mode online --output eval/results/memory-quality/latest
+```
+
+完整在线评测约发起 200 次模型请求，会消耗真实额度。报告包含整体 Precision/Recall/F1、关键偏好 Precision/Recall、首轮理解正确率和背景重复说明减少率。
 
 `.mewcode/context/`、`.mewcode/sessions/` 和 `.mewcode/memory/` 都是本地自动产物，默认已在 `.gitignore` 中忽略。
 

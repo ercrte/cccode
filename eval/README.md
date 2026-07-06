@@ -90,3 +90,21 @@ python eval/run_eval.py --mode offline --output eval/results/offline --allow-rev
 自动评分只处理可观察证据，例如最终回复关键词、工具调用序列、文件内容、权限拒绝、上下文事件、usage、prompt cache status 和耗时。交互体验会先检查最终回复是否非空、是否满足中文要求；异常结果和命中稳定抽样的正常结果会标记为 `needs_review`，报告会列出需要人工复核的证据。
 
 prompt cache 字段来自 Provider usage。不同 Provider 可能返回 `hit`、`miss`、`write`、`unknown` 或不支持；在线报告只记录观察结果，不强制每次命中。
+
+## 跨会话记忆质量专项评测
+
+记忆专项使用独立命令和集合级指标：
+
+```bash
+# 默认也是 offline；验证提取、指标、报告和成对跨会话流程
+python eval/run_memory_eval.py --mode offline --output eval/results/memory-quality/offline
+
+# 使用当前 MewCode Provider 和模型做发布验收
+python eval/run_memory_eval.py --mode online --output eval/results/memory-quality/latest
+```
+
+专项数据位于 `eval/cases/memory_quality/`，包含 120 条人工标注提取用例和 20 条空白新会话成对用例。online 模式完整运行约产生 200 次真实模型请求，可能较慢并产生费用；可用 `--model` 覆盖当前模型。
+
+报告输出 `results.json` 和 `report.md`，记录数据集版本、Provider、模型、运行时间、整体 Precision/Recall/F1、关键偏好 Precision/Recall、首轮理解正确率、关闭/开启记忆时的背景重述次数及减少率。门槛未达标退出 1，配置或框架错误退出 2，全部达标退出 0。
+
+offline 使用 scripted Provider，只验证评测流程和回归稳定性，不代表真实模型质量，也不能作为发布质量门槛的证据。

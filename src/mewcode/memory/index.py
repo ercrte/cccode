@@ -31,8 +31,11 @@ class MemoryIndexBuilder:
             if not grouped:
                 continue
             lines.append(f"## {_CATEGORY_TITLES[category]}")
-            for note in sorted(grouped, key=lambda item: item.updated_at, reverse=True):
-                lines.append(f"- {note.title}: {note.body}")
+            by_time = sorted(grouped, key=lambda item: item.updated_at, reverse=True)
+            for note in sorted(by_time, key=lambda item: not item.critical):
+                marker = "**[关键]** " if note.critical else ""
+                tags_suffix = "  `tags: " + ", ".join(note.tags) + "`" if note.tags else ""
+                lines.append(f"- {marker}{note.title}: {note.body}{tags_suffix}")
             lines.append("")
         content = "\n".join(lines).strip() + "\n"
         content, warnings = self._limit(content)

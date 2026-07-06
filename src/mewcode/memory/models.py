@@ -17,6 +17,8 @@ InstructionScope = Literal["project_private", "project_root", "user"]
 SessionRecordKind = Literal["message", "checkpoint"]
 MemoryScope = Literal["user", "project"]
 MemoryCategory = Literal["preference", "correction", "project_knowledge", "reference"]
+MemoryAction = Literal["create", "update", "skip"]
+MemoryDurability = Literal["persistent", "temporary", "uncertain"]
 
 
 @dataclass(frozen=True)
@@ -31,9 +33,10 @@ class SessionMemoryConfig:
     auto_restore: bool = True
     retention_days: int = 30
     time_gap_hours: int = 24
-    index_max_lines: int = 200
-    index_max_bytes: int = 25_000
+    index_max_lines: int = 400
+    index_max_bytes: int = 50_000
     auto_notes_enabled: bool = True
+    critical_preference_min_confidence: float = 0.95
 
 
 @dataclass(frozen=True)
@@ -113,6 +116,46 @@ class MemoryNote:
     created_at: str
     updated_at: str
     tags: tuple[str, ...] = ()
+    source_evidence: tuple[str, ...] = ()
+    critical: bool = False
+    confidence: float | None = None
+
+
+@dataclass(frozen=True)
+class MemoryCandidate:
+    action: MemoryAction
+    scope: MemoryScope | str = ""
+    category: MemoryCategory | str = ""
+    note_id: str = ""
+    title: str = ""
+    body: str = ""
+    evidence: tuple[str, ...] = ()
+    durability: MemoryDurability | str = ""
+    critical: bool = False
+    confidence: float = 0.0
+    tags: tuple[str, ...] = ()
+    supersedes: tuple[str, ...] = ()
+    schema_errors: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ValidatedMemoryOperation:
+    action: Literal["create", "update"]
+    note: MemoryNote
+    supersedes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class MemoryRejection:
+    candidate: MemoryCandidate
+    code: str
+    message: str
+
+
+@dataclass(frozen=True)
+class MemoryExtractionResult:
+    accepted: tuple[ValidatedMemoryOperation, ...] = ()
+    rejected: tuple[MemoryRejection, ...] = ()
 
 
 @dataclass(frozen=True)

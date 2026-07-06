@@ -1,0 +1,1215 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "inheritance_001",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目测试框架统一使用 pytest。以后始终用中文回答。",
+      "source_expected": [
+        {
+          "key": "inheritance-001-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目测试框架统一使用 pytest。"
+          ],
+          "content_term_groups": [
+            [
+              "pytest"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-001-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后始终用中文回答。"
+          ],
+          "content_term_groups": [
+            [
+              "中文"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的测试框架和我的回答语言；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "pytest"
+          ],
+          [
+            "中文"
+          ]
+        ],
+        "forbidden_terms": [
+          "unittest",
+          "英文"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_002",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目生产数据库使用 PostgreSQL。以后禁止自动提交代码。",
+      "source_expected": [
+        {
+          "key": "inheritance-002-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目生产数据库使用 PostgreSQL。"
+          ],
+          "content_term_groups": [
+            [
+              "PostgreSQL"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-002-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后禁止自动提交代码。"
+          ],
+          "content_term_groups": [
+            [
+              "禁止自动提交",
+              "不自动提交"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的生产数据库和我的提交偏好；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "PostgreSQL"
+          ],
+          [
+            "禁止自动提交",
+            "不自动提交"
+          ]
+        ],
+        "forbidden_terms": [
+          "MySQL",
+          "可以自动提交"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_003",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目 Web 框架使用 FastAPI。以后始终保持回答简洁。",
+      "source_expected": [
+        {
+          "key": "inheritance-003-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目 Web 框架使用 FastAPI。"
+          ],
+          "content_term_groups": [
+            [
+              "FastAPI"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-003-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后始终保持回答简洁。"
+          ],
+          "content_term_groups": [
+            [
+              "简洁"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的Web 框架和我的回答风格；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "FastAPI"
+          ],
+          [
+            "简洁"
+          ]
+        ],
+        "forbidden_terms": [
+          "Django",
+          "冗长"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_004",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目最低 Python 版本是 3.11。以后代码注释必须使用中文。",
+      "source_expected": [
+        {
+          "key": "inheritance-004-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目最低 Python 版本是 3.11。"
+          ],
+          "content_term_groups": [
+            [
+              "Python 3.11",
+              "3.11"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-004-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后代码注释必须使用中文。"
+          ],
+          "content_term_groups": [
+            [
+              "中文注释",
+              "中文"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的Python 版本和我的注释语言；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "Python 3.11",
+            "3.11"
+          ],
+          [
+            "中文注释",
+            "中文"
+          ]
+        ],
+        "forbidden_terms": [
+          "Python 3.10",
+          "英文注释"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_005",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目包管理器统一使用 uv。今后默认解释关键技术取舍。",
+      "source_expected": [
+        {
+          "key": "inheritance-005-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目包管理器统一使用 uv。"
+          ],
+          "content_term_groups": [
+            [
+              "uv"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-005-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后默认解释关键技术取舍。"
+          ],
+          "content_term_groups": [
+            [
+              "技术取舍",
+              "取舍"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的包管理器和我的解释偏好；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "uv"
+          ],
+          [
+            "技术取舍",
+            "取舍"
+          ]
+        ],
+        "forbidden_terms": [
+          "pip",
+          "不解释"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_006",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目缓存服务使用 Redis。以后删除文件前必须先询问我。",
+      "source_expected": [
+        {
+          "key": "inheritance-006-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目缓存服务使用 Redis。"
+          ],
+          "content_term_groups": [
+            [
+              "Redis"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-006-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后删除文件前必须先询问我。"
+          ],
+          "content_term_groups": [
+            [
+              "删除",
+              "询问"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的缓存服务和我的删除确认；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "Redis"
+          ],
+          [
+            "删除",
+            "询问"
+          ]
+        ],
+        "forbidden_terms": [
+          "Memcached",
+          "直接删除"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_007",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "Please remember permanently: this project's API prefix is /api/v2.From now on, always reply in English.",
+      "source_expected": [
+        {
+          "key": "inheritance-007-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: this project's API prefix is /api/v2."
+          ],
+          "content_term_groups": [
+            [
+              "/api/v2"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-007-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "From now on, always reply in English."
+          ],
+          "content_term_groups": [
+            [
+              "English"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的API 前缀和我的response language；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "/api/v2"
+          ],
+          [
+            "English"
+          ]
+        ],
+        "forbidden_terms": [
+          "/api/v1",
+          "中文回答"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_008",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目事件存储采用 JSONL 追加写入。今后每次回答必须先给结论。",
+      "source_expected": [
+        {
+          "key": "inheritance-008-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目事件存储采用 JSONL 追加写入。"
+          ],
+          "content_term_groups": [
+            [
+              "JSONL"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-008-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后每次回答必须先给结论。"
+          ],
+          "content_term_groups": [
+            [
+              "先给结论",
+              "结论"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的事件存储和我的回复顺序；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "JSONL"
+          ],
+          [
+            "先给结论",
+            "结论"
+          ]
+        ],
+        "forbidden_terms": [
+          "覆盖写入",
+          "最后给结论"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_009",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目时间戳统一存储为 UTC。以后禁止在回复中使用 emoji。",
+      "source_expected": [
+        {
+          "key": "inheritance-009-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目时间戳统一存储为 UTC。"
+          ],
+          "content_term_groups": [
+            [
+              "UTC"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-009-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后禁止在回复中使用 emoji。"
+          ],
+          "content_term_groups": [
+            [
+              "禁止 emoji",
+              "不使用 emoji"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的时间格式和我的表情偏好；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "UTC"
+          ],
+          [
+            "禁止 emoji",
+            "不使用 emoji"
+          ]
+        ],
+        "forbidden_terms": [
+          "本地时间",
+          "😀"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_010",
+      "tags": [
+        "inheritance",
+        "zh"
+      ],
+      "source_prompt": "请长期记住：本项目架构决策记录位于 docs/adr。今后默认使用绝对路径报告文件位置。",
+      "source_expected": [
+        {
+          "key": "inheritance-010-project",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目架构决策记录位于 docs/adr。"
+          ],
+          "content_term_groups": [
+            [
+              "docs/adr"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-010-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后默认使用绝对路径报告文件位置。"
+          ],
+          "content_term_groups": [
+            [
+              "绝对路径"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的决策记录和我的路径偏好；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "docs/adr"
+          ],
+          [
+            "绝对路径"
+          ]
+        ],
+        "forbidden_terms": [
+          "docs/design",
+          "相对路径"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_011",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目部署到 Kubernetes。以后每次必须说明安全风险。",
+      "source_expected": [
+        {
+          "key": "inheritance-011-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目部署到 Kubernetes。"
+          ],
+          "content_term_groups": [
+            [
+              "Kubernetes"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-011-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后每次必须说明安全风险。"
+          ],
+          "content_term_groups": [
+            [
+              "安全风险"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的部署平台和我的风险说明；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "Kubernetes"
+          ],
+          [
+            "安全风险"
+          ]
+        ],
+        "forbidden_terms": [
+          "Docker Compose",
+          "忽略风险"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_012",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目 HTTP 错误统一使用 problem+json。以后默认用中文解释错误。",
+      "source_expected": [
+        {
+          "key": "inheritance-012-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目 HTTP 错误统一使用 problem+json。"
+          ],
+          "content_term_groups": [
+            [
+              "problem+json"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-012-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后默认用中文解释错误。"
+          ],
+          "content_term_groups": [
+            [
+              "中文",
+              "错误"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的错误格式和我的错误语言；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "problem+json"
+          ],
+          [
+            "中文",
+            "错误"
+          ]
+        ],
+        "forbidden_terms": [
+          "普通 JSON",
+          "英文解释"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_013",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目测试统一放在 tests 目录。以后搜索源码必须优先使用 rg。",
+      "source_expected": [
+        {
+          "key": "inheritance-013-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目测试统一放在 tests 目录。"
+          ],
+          "content_term_groups": [
+            [
+              "tests"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-013-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后搜索源码必须优先使用 rg。"
+          ],
+          "content_term_groups": [
+            [
+              "rg"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的测试目录和我的搜索工具；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "tests"
+          ],
+          [
+            "rg"
+          ]
+        ],
+        "forbidden_terms": [
+          "spec",
+          "grep"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_014",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目用户数据使用软删除。以后禁止使用破坏性的 git reset。",
+      "source_expected": [
+        {
+          "key": "inheritance-014-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目用户数据使用软删除。"
+          ],
+          "content_term_groups": [
+            [
+              "软删除"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-014-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后禁止使用破坏性的 git reset。"
+          ],
+          "content_term_groups": [
+            [
+              "禁止 git reset",
+              "不使用 git reset"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的删除策略和我的Git 安全；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "软删除"
+          ],
+          [
+            "禁止 git reset",
+            "不使用 git reset"
+          ]
+        ],
+        "forbidden_terms": [
+          "硬删除",
+          "git reset --hard"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_015",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目日志使用结构化 JSON。今后禁止在日志中输出密钥。",
+      "source_expected": [
+        {
+          "key": "inheritance-015-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目日志使用结构化 JSON。"
+          ],
+          "content_term_groups": [
+            [
+              "结构化 JSON"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-015-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后禁止在日志中输出密钥。"
+          ],
+          "content_term_groups": [
+            [
+              "禁止输出密钥",
+              "不输出密钥"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的日志格式和我的密钥保护；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "结构化 JSON"
+          ],
+          [
+            "禁止输出密钥",
+            "不输出密钥"
+          ]
+        ],
+        "forbidden_terms": [
+          "纯文本日志",
+          "允许输出密钥"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_016",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目 API 合同文件是 openapi.yaml。以后最终回复必须包含验证命令。",
+      "source_expected": [
+        {
+          "key": "inheritance-016-project",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目 API 合同文件是 openapi.yaml。"
+          ],
+          "content_term_groups": [
+            [
+              "openapi.yaml"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-016-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后最终回复必须包含验证命令。"
+          ],
+          "content_term_groups": [
+            [
+              "验证命令"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的API 合同和我的验证偏好；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "openapi.yaml"
+          ],
+          [
+            "验证命令"
+          ]
+        ],
+        "forbidden_terms": [
+          "swagger.json",
+          "不提供验证"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_017",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "Please remember permanently: this project's migrations must be reversible.By default, prefer standard-library solutions.",
+      "source_expected": [
+        {
+          "key": "inheritance-017-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: this project's migrations must be reversible."
+          ],
+          "content_term_groups": [
+            [
+              "reversible"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-017-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "By default, prefer standard-library solutions."
+          ],
+          "content_term_groups": [
+            [
+              "standard-library",
+              "标准库"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的迁移策略和我的solution preference；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "reversible"
+          ],
+          [
+            "standard-library",
+            "标准库"
+          ]
+        ],
+        "forbidden_terms": [
+          "irreversible",
+          "third-party only"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_018",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目前端代码位于 web 目录。今后禁止修改任务无关文件。",
+      "source_expected": [
+        {
+          "key": "inheritance-018-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目前端代码位于 web 目录。"
+          ],
+          "content_term_groups": [
+            [
+              "web"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-018-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后禁止修改任务无关文件。"
+          ],
+          "content_term_groups": [
+            [
+              "不修改无关文件",
+              "禁止修改"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的前端目录和我的修改范围；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "web"
+          ],
+          [
+            "不修改无关文件",
+            "禁止修改"
+          ]
+        ],
+        "forbidden_terms": [
+          "frontend",
+          "允许修改无关文件"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_019",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "Please remember permanently: this project targets Node.js 22.Always ask me before installing dependencies.",
+      "source_expected": [
+        {
+          "key": "inheritance-019-project",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: this project targets Node.js 22."
+          ],
+          "content_term_groups": [
+            [
+              "Node.js 22"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-019-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Always ask me before installing dependencies."
+          ],
+          "content_term_groups": [
+            [
+              "ask",
+              "询问",
+              "依赖"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的Node 版本和我的dependency approval；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            "Node.js 22"
+          ],
+          [
+            "ask",
+            "询问",
+            "依赖"
+          ]
+        ],
+        "forbidden_terms": [
+          "Node.js 20",
+          "自动安装"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    },
+    {
+      "id": "inheritance_020",
+      "tags": [
+        "inheritance",
+        "mixed"
+      ],
+      "source_prompt": "请长期记住：本项目配置文件名是 .mewcode.yaml。以后禁止猜测配置，必须读取文件确认。",
+      "source_expected": [
+        {
+          "key": "inheritance-020-project",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目配置文件名是 .mewcode.yaml。"
+          ],
+          "content_term_groups": [
+            [
+              ".mewcode.yaml"
+            ]
+          ]
+        },
+        {
+          "key": "inheritance-020-preference",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后禁止猜测配置，必须读取文件确认。"
+          ],
+          "content_term_groups": [
+            [
+              "读取",
+              "配置"
+            ]
+          ]
+        }
+      ],
+      "target_prompt": "请明确列出既定的配置文件和我的配置核验；如果缺少已确认背景，请明确向我询问，不要猜测。",
+      "expectation": {
+        "required_term_groups": [
+          [
+            ".mewcode.yaml"
+          ],
+          [
+            "读取",
+            "配置"
+          ]
+        ],
+        "forbidden_terms": [
+          "config.json",
+          "猜测配置"
+        ],
+        "restatement_terms": [
+          "请提供",
+          "请说明",
+          "需要你补充",
+          "无法确定"
+        ]
+      }
+    }
+  ]
+}

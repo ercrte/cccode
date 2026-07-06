@@ -400,6 +400,10 @@ def test_runtime_prompt_includes_memory_indexes() -> None:
     block_text = runtime_dynamic_text(runtime_context(knowledge_context=knowledge))
 
     assert "<mewcode_memory_index>" in block_text
+    assert "跨会话长期记忆" in block_text
+    assert "不是用户在当前会话刚刚发送" in block_text
+    assert "直接使用" in block_text
+    assert "禁止要求用户确认" in block_text
     assert "scope=user" in block_text
     assert "默认中文" in block_text
     assert "scope=project" in block_text

@@ -1,0 +1,3045 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "critical_001",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后始终用中文回答。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-001",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后始终用中文回答。"
+          ],
+          "content_term_groups": [
+            [
+              "中文"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_002",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后默认用英文回答。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-002",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后默认用英文回答。"
+          ],
+          "content_term_groups": [
+            [
+              "英文",
+              "English"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_003",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后每次回答必须先给结论。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-003",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后每次回答必须先给结论。"
+          ],
+          "content_term_groups": [
+            [
+              "结论"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_004",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后始终保持回答简洁。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-004",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后始终保持回答简洁。"
+          ],
+          "content_term_groups": [
+            [
+              "简洁"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_005",
+      "tags": [
+        "critical",
+        "zh",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后禁止在回复里使用 emoji。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-005",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后禁止在回复里使用 emoji。"
+          ],
+          "content_term_groups": [
+            [
+              "emoji",
+              "表情"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_006",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后默认解释关键技术取舍。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-006",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后默认解释关键技术取舍。"
+          ],
+          "content_term_groups": [
+            [
+              "取舍"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_007",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后执行破坏性操作前必须先询问我。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-007",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后执行破坏性操作前必须先询问我。"
+          ],
+          "content_term_groups": [
+            [
+              "破坏性",
+              "询问"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_008",
+      "tags": [
+        "critical",
+        "zh",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后禁止自动提交代码。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-008",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后禁止自动提交代码。"
+          ],
+          "content_term_groups": [
+            [
+              "提交",
+              "commit"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_009",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后测试必须使用 pytest。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-009",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后测试必须使用 pytest。"
+          ],
+          "content_term_groups": [
+            [
+              "pytest"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_010",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后代码注释必须使用中文。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-010",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后代码注释必须使用中文。"
+          ],
+          "content_term_groups": [
+            [
+              "中文",
+              "注释"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_011",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "From now on, always reply in English."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-011",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "From now on, always reply in English."
+          ],
+          "content_term_groups": [
+            [
+              "English",
+              "英文"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_012",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Always show the final command before running it."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-012",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Always show the final command before running it."
+          ],
+          "content_term_groups": [
+            [
+              "command",
+              "命令"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_013",
+      "tags": [
+        "critical",
+        "en",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Never push changes automatically."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-013",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Never push changes automatically."
+          ],
+          "content_term_groups": [
+            [
+              "push",
+              "推送"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_014",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "By default, use pytest for tests."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-014",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "By default, use pytest for tests."
+          ],
+          "content_term_groups": [
+            [
+              "pytest"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_015",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "You must explain security risks every time."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-015",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "You must explain security risks every time."
+          ],
+          "content_term_groups": [
+            [
+              "security",
+              "安全"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_016",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "From now on, always use Chinese comments in code."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-016",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "From now on, always use Chinese comments in code."
+          ],
+          "content_term_groups": [
+            [
+              "Chinese comments",
+              "中文注释"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_017",
+      "tags": [
+        "critical",
+        "en",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Never delete files unless I explicitly approve."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-017",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Never delete files unless I explicitly approve."
+          ],
+          "content_term_groups": [
+            [
+              "delete",
+              "删除"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_018",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "By default, keep responses under ten lines."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-018",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "By default, keep responses under ten lines."
+          ],
+          "content_term_groups": [
+            [
+              "ten lines",
+              "十行"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_019",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Always prefer rg when searching source code."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-019",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Always prefer rg when searching source code."
+          ],
+          "content_term_groups": [
+            [
+              "rg"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_020",
+      "tags": [
+        "critical",
+        "en",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Remember that you must not create commits for me."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-020",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Remember that you must not create commits for me."
+          ],
+          "content_term_groups": [
+            [
+              "commits",
+              "提交"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_021",
+      "tags": [
+        "critical",
+        "zh",
+        "correction",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "不要再用英文回答，以后始终改用中文。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-021",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "不要再用英文回答，以后始终改用中文。"
+          ],
+          "content_term_groups": [
+            [
+              "中文"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_022",
+      "tags": [
+        "critical",
+        "zh",
+        "correction"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "纠正一下，今后默认先写测试再改实现。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-022",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "纠正一下，今后默认先写测试再改实现。"
+          ],
+          "content_term_groups": [
+            [
+              "测试"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_023",
+      "tags": [
+        "critical",
+        "zh",
+        "correction",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后不要再自动安装依赖，必须先询问。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-023",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "以后不要再自动安装依赖，必须先询问。"
+          ],
+          "content_term_groups": [
+            [
+              "依赖",
+              "询问"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_024",
+      "tags": [
+        "critical",
+        "zh",
+        "correction",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "纠正之前的偏好，今后禁止使用表情符号。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-024",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "纠正之前的偏好，今后禁止使用表情符号。"
+          ],
+          "content_term_groups": [
+            [
+              "表情",
+              "emoji"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_025",
+      "tags": [
+        "critical",
+        "zh",
+        "correction"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "不要再省略验证步骤，以后每次必须报告测试结果。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-025",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "不要再省略验证步骤，以后每次必须报告测试结果。"
+          ],
+          "content_term_groups": [
+            [
+              "验证",
+              "测试结果"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_026",
+      "tags": [
+        "critical",
+        "en",
+        "correction",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "From now on, do not use unittest; always use pytest."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-026",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "From now on, do not use unittest; always use pytest."
+          ],
+          "content_term_groups": [
+            [
+              "pytest"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_027",
+      "tags": [
+        "critical",
+        "en",
+        "correction",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Never auto-format files again; ask me first."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-027",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "Never auto-format files again; ask me first."
+          ],
+          "content_term_groups": [
+            [
+              "format",
+              "格式化"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_028",
+      "tags": [
+        "critical",
+        "en",
+        "correction"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Correction: by default, explain errors in Chinese."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-028",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "Correction: by default, explain errors in Chinese."
+          ],
+          "content_term_groups": [
+            [
+              "Chinese",
+              "中文"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_029",
+      "tags": [
+        "critical",
+        "en",
+        "correction"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Do not skip type checks again; always run them."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-029",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "Do not skip type checks again; always run them."
+          ],
+          "content_term_groups": [
+            [
+              "type checks",
+              "类型检查"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_030",
+      "tags": [
+        "critical",
+        "en",
+        "correction",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "From now on, never amend an existing commit."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-030",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "From now on, never amend an existing commit."
+          ],
+          "content_term_groups": [
+            [
+              "amend"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_031",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后读取代码时必须先搜索再打开文件。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-031",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后读取代码时必须先搜索再打开文件。"
+          ],
+          "content_term_groups": [
+            [
+              "搜索"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_032",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后默认使用绝对路径报告文件位置。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-032",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后默认使用绝对路径报告文件位置。"
+          ],
+          "content_term_groups": [
+            [
+              "绝对路径"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_033",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后始终把风险和假设分开说明。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-033",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后始终把风险和假设分开说明。"
+          ],
+          "content_term_groups": [
+            [
+              "风险",
+              "假设"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_034",
+      "tags": [
+        "critical",
+        "zh",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后禁止修改与任务无关的文件。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-034",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后禁止修改与任务无关的文件。"
+          ],
+          "content_term_groups": [
+            [
+              "无关文件"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_035",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后每次完成开发必须运行端到端测试。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-035",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后每次完成开发必须运行端到端测试。"
+          ],
+          "content_term_groups": [
+            [
+              "端到端测试"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_036",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后默认使用最小可行改动。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-036",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后默认使用最小可行改动。"
+          ],
+          "content_term_groups": [
+            [
+              "最小",
+              "改动"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_037",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后必须保留用户已有的未提交改动。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-037",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后必须保留用户已有的未提交改动。"
+          ],
+          "content_term_groups": [
+            [
+              "未提交改动"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_038",
+      "tags": [
+        "critical",
+        "zh",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后禁止在日志中输出密钥。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-038",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后禁止在日志中输出密钥。"
+          ],
+          "content_term_groups": [
+            [
+              "密钥",
+              "日志"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_039",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Always use explicit error messages from now on."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-039",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Always use explicit error messages from now on."
+          ],
+          "content_term_groups": [
+            [
+              "error messages",
+              "错误信息"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_040",
+      "tags": [
+        "critical",
+        "en",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Never hide a failing test; always report it."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-040",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Never hide a failing test; always report it."
+          ],
+          "content_term_groups": [
+            [
+              "failing test",
+              "失败测试"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_041",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "By default, prefer standard-library solutions."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-041",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "By default, prefer standard-library solutions."
+          ],
+          "content_term_groups": [
+            [
+              "standard-library",
+              "标准库"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_042",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "You must keep public APIs backward compatible."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-042",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "You must keep public APIs backward compatible."
+          ],
+          "content_term_groups": [
+            [
+              "backward compatible",
+              "向后兼容"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_043",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Always include a verification command in the final answer."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-043",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Always include a verification command in the final answer."
+          ],
+          "content_term_groups": [
+            [
+              "verification command",
+              "验证命令"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_044",
+      "tags": [
+        "critical",
+        "en",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "From now on, never use destructive git reset commands."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-044",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "From now on, never use destructive git reset commands."
+          ],
+          "content_term_groups": [
+            [
+              "git reset"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_045",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后默认先说明阻塞原因，再向我提问。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-045",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后默认先说明阻塞原因，再向我提问。"
+          ],
+          "content_term_groups": [
+            [
+              "阻塞原因"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_046",
+      "tags": [
+        "critical",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今后必须用中文写新增代码注释，但标识符保持英文。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-046",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "今后必须用中文写新增代码注释，但标识符保持英文。"
+          ],
+          "content_term_groups": [
+            [
+              "中文",
+              "标识符"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_047",
+      "tags": [
+        "critical",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Always answer in Chinese, but keep code identifiers in English."
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-047",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "Always answer in Chinese, but keep code identifiers in English."
+          ],
+          "content_term_groups": [
+            [
+              "Chinese",
+              "英文标识符"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_048",
+      "tags": [
+        "critical",
+        "zh",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后禁止猜测项目配置，必须读取配置文件确认。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-048",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后禁止猜测项目配置，必须读取配置文件确认。"
+          ],
+          "content_term_groups": [
+            [
+              "配置文件"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_049",
+      "tags": [
+        "critical",
+        "zh",
+        "correction",
+        "conflict",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后默认使用 unittest。"
+        },
+        {
+          "role": "user",
+          "content": "纠正一下，不要再用 unittest，今后必须默认使用 pytest。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-049",
+          "scope": "user",
+          "category": "correction",
+          "critical": true,
+          "evidence": [
+            "纠正一下，不要再用 unittest，今后必须默认使用 pytest。"
+          ],
+          "content_term_groups": [
+            [
+              "pytest"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critical_050",
+      "tags": [
+        "critical",
+        "zh",
+        "duplicate"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "以后每次新增代码必须写中文注释。"
+        },
+        {
+          "role": "user",
+          "content": "以后每次新增代码必须写中文注释。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "critical-050",
+          "scope": "user",
+          "category": "preference",
+          "critical": true,
+          "evidence": [
+            "以后每次新增代码必须写中文注释。"
+          ],
+          "content_term_groups": [
+            [
+              "中文注释",
+              "中文"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_001",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：本项目使用 Python 3.11。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-001",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：本项目使用 Python 3.11。"
+          ],
+          "content_term_groups": [
+            [
+              "Python 3.11"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_002",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：Web 框架是 FastAPI。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-002",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：Web 框架是 FastAPI。"
+          ],
+          "content_term_groups": [
+            [
+              "FastAPI"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_003",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：生产数据库使用 PostgreSQL。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-003",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：生产数据库使用 PostgreSQL。"
+          ],
+          "content_term_groups": [
+            [
+              "PostgreSQL"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_004",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：缓存服务使用 Redis。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-004",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：缓存服务使用 Redis。"
+          ],
+          "content_term_groups": [
+            [
+              "Redis"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_005",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：前端代码位于 web 目录。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-005",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：前端代码位于 web 目录。"
+          ],
+          "content_term_groups": [
+            [
+              "web"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_006",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: this project targets Node.js 22."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-006",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: this project targets Node.js 22."
+          ],
+          "content_term_groups": [
+            [
+              "Node.js 22"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_007",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: the API prefix is /api/v2."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-007",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: the API prefix is /api/v2."
+          ],
+          "content_term_groups": [
+            [
+              "/api/v2"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_008",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：部署环境是 Kubernetes。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-008",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：部署环境是 Kubernetes。"
+          ],
+          "content_term_groups": [
+            [
+              "Kubernetes"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_009",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：包管理器统一使用 uv。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-009",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：包管理器统一使用 uv。"
+          ],
+          "content_term_groups": [
+            [
+              "uv"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_010",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: source files use UTF-8."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-010",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: source files use UTF-8."
+          ],
+          "content_term_groups": [
+            [
+              "UTF-8"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_011",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：单元测试统一放在 tests 目录。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-011",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：单元测试统一放在 tests 目录。"
+          ],
+          "content_term_groups": [
+            [
+              "tests"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_012",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：HTTP 错误统一返回 problem+json。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-012",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：HTTP 错误统一返回 problem+json。"
+          ],
+          "content_term_groups": [
+            [
+              "problem+json"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_013",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：公共 API 必须保持向后兼容。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-013",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：公共 API 必须保持向后兼容。"
+          ],
+          "content_term_groups": [
+            [
+              "向后兼容"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_014",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：事件存储采用 JSONL 追加写入。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-014",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：事件存储采用 JSONL 追加写入。"
+          ],
+          "content_term_groups": [
+            [
+              "JSONL"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_015",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: timestamps are stored in UTC."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-015",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: timestamps are stored in UTC."
+          ],
+          "content_term_groups": [
+            [
+              "UTC"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_016",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：依赖注入使用构造函数注入。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-016",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：依赖注入使用构造函数注入。"
+          ],
+          "content_term_groups": [
+            [
+              "构造函数"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_017",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：命令行错误码 2 表示配置错误。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-017",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：命令行错误码 2 表示配置错误。"
+          ],
+          "content_term_groups": [
+            [
+              "错误码 2",
+              "配置错误"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_018",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: migrations must be reversible."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-018",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: migrations must be reversible."
+          ],
+          "content_term_groups": [
+            [
+              "reversible"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_019",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：默认日志格式是结构化 JSON。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-019",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：默认日志格式是结构化 JSON。"
+          ],
+          "content_term_groups": [
+            [
+              "结构化 JSON"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_020",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：用户数据删除采用软删除。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-020",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：用户数据删除采用软删除。"
+          ],
+          "content_term_groups": [
+            [
+              "软删除"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_021",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：架构说明入口是 docs/architecture.md。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-021",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：架构说明入口是 docs/architecture.md。"
+          ],
+          "content_term_groups": [
+            [
+              "docs/architecture.md"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_022",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: the API contract is documented in openapi.yaml."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-022",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: the API contract is documented in openapi.yaml."
+          ],
+          "content_term_groups": [
+            [
+              "openapi.yaml"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_023",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：常用测试命令是 pytest -q。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-023",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：常用测试命令是 pytest -q。"
+          ],
+          "content_term_groups": [
+            [
+              "pytest -q"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_024",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：发布流程参考 docs/release.md。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-024",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：发布流程参考 docs/release.md。"
+          ],
+          "content_term_groups": [
+            [
+              "docs/release.md"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_025",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: ADRs live under docs/adr."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-025",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: ADRs live under docs/adr."
+          ],
+          "content_term_groups": [
+            [
+              "docs/adr"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_026",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：项目中的“任务循环”指 Agent Loop。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-026",
+          "scope": "project",
+          "category": "project_knowledge",
+          "critical": false,
+          "evidence": [
+            "请长期记住：项目中的“任务循环”指 Agent Loop。"
+          ],
+          "content_term_groups": [
+            [
+              "Agent Loop"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_027",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：配置文件名是 .mewcode.yaml。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-027",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：配置文件名是 .mewcode.yaml。"
+          ],
+          "content_term_groups": [
+            [
+              ".mewcode.yaml"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_028",
+      "tags": [
+        "memory",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please remember permanently: troubleshooting starts at docs/troubleshooting.md."
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-028",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "Please remember permanently: troubleshooting starts at docs/troubleshooting.md."
+          ],
+          "content_term_groups": [
+            [
+              "docs/troubleshooting.md"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_029",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：安全规范入口是 SECURITY.md。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-029",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：安全规范入口是 SECURITY.md。"
+          ],
+          "content_term_groups": [
+            [
+              "SECURITY.md"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memory_030",
+      "tags": [
+        "memory",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请长期记住：代码风格依据 pyproject.toml。"
+        }
+      ],
+      "expected": [
+        {
+          "key": "memory-030",
+          "scope": "project",
+          "category": "reference",
+          "critical": false,
+          "evidence": [
+            "请长期记住：代码风格依据 pyproject.toml。"
+          ],
+          "content_term_groups": [
+            [
+              "pyproject.toml"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "negative_001",
+      "tags": [
+        "negative",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "这次请只用三句话回答。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_002",
+      "tags": [
+        "negative",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "当前这个回复临时使用英文。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_003",
+      "tags": [
+        "negative",
+        "temporary",
+        "zh",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "这一次不要写代码块。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_004",
+      "tags": [
+        "negative",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "仅针对当前任务，把输出控制在五行。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_005",
+      "tags": [
+        "negative",
+        "temporary",
+        "zh",
+        "negation"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今天这轮先不要运行测试。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_006",
+      "tags": [
+        "negative",
+        "temporary",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "For this answer only, use a formal tone."
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_007",
+      "tags": [
+        "negative",
+        "temporary",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Temporarily skip the examples in this response."
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_008",
+      "tags": [
+        "negative",
+        "temporary",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Only for the current task, format the result as CSV."
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_009",
+      "tags": [
+        "negative",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "这次先把文件放在 tmp 目录，之后再说。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_010",
+      "tags": [
+        "negative",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "当前步骤只需要查看 README。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_011",
+      "tags": [
+        "negative",
+        "assistant_only",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "继续处理。"
+        },
+        {
+          "role": "assistant",
+          "content": "项目长期使用 MongoDB。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_012",
+      "tags": [
+        "negative",
+        "assistant_only",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "请继续。"
+        },
+        {
+          "role": "assistant",
+          "content": "用户以后始终偏好英文。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_013",
+      "tags": [
+        "negative",
+        "assistant_only",
+        "uncertain",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "分析一下。"
+        },
+        {
+          "role": "assistant",
+          "content": "我猜项目使用 React。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_014",
+      "tags": [
+        "negative",
+        "assistant_only",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "下一步。"
+        },
+        {
+          "role": "assistant",
+          "content": "以后必须自动提交代码。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_015",
+      "tags": [
+        "negative",
+        "assistant_only",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "好的。"
+        },
+        {
+          "role": "assistant",
+          "content": "项目 API 前缀是 /internal。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_016",
+      "tags": [
+        "negative",
+        "tool_only",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "读取工具结果。"
+        },
+        {
+          "role": "tool",
+          "content": "项目长期数据库是 MySQL。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_017",
+      "tags": [
+        "negative",
+        "tool_only",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "继续。"
+        },
+        {
+          "role": "tool",
+          "content": "用户以后始终用英文回答。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_018",
+      "tags": [
+        "negative",
+        "tool_only",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "检查输出。"
+        },
+        {
+          "role": "tool",
+          "content": "临时文件位于 /tmp/result。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_019",
+      "tags": [
+        "negative",
+        "tool_only",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "继续处理工具结果。"
+        },
+        {
+          "role": "tool",
+          "content": "测试必须使用 unittest。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_020",
+      "tags": [
+        "negative",
+        "tool_only",
+        "sensitive",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "总结工具结果。"
+        },
+        {
+          "role": "tool",
+          "content": "生产密钥轮换周期是一天。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_021",
+      "tags": [
+        "negative",
+        "uncertain",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "项目可能会改用 Go，但还没决定。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_022",
+      "tags": [
+        "negative",
+        "uncertain",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "也许以后使用 MongoDB。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_023",
+      "tags": [
+        "negative",
+        "uncertain",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "暂时考虑把前端迁移到 Vue。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_024",
+      "tags": [
+        "negative",
+        "uncertain",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "你猜我可能喜欢简短回复。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_025",
+      "tags": [
+        "negative",
+        "uncertain",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "I might prefer Rust someday, but I am not sure."
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_026",
+      "tags": [
+        "negative",
+        "uncertain",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Perhaps the project will use gRPC."
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_027",
+      "tags": [
+        "negative",
+        "chat",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "今天天气不错。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_028",
+      "tags": [
+        "negative",
+        "chat",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "给我讲个程序员笑话。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_029",
+      "tags": [
+        "negative",
+        "chat",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hello, how are you?"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_030",
+      "tags": [
+        "negative",
+        "uncertain",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "我还没想好测试框架。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_031",
+      "tags": [
+        "negative",
+        "sensitive",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "临时令牌是 sk-test-memory-12345678。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_032",
+      "tags": [
+        "negative",
+        "sensitive",
+        "temporary",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use Bearer abcdefghijklmnop for this request."
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_033",
+      "tags": [
+        "negative",
+        "sensitive",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "测试密码 password=hunter22。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_034",
+      "tags": [
+        "negative",
+        "sensitive",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "私钥头是 -----BEGIN PRIVATE KEY-----。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_035",
+      "tags": [
+        "negative",
+        "sensitive",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "临时访问串 abcdefghijklmnopqrstuvwxyz123456。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_036",
+      "tags": [
+        "negative",
+        "sensitive",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "API key: sk-example-secret-87654321"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_037",
+      "tags": [
+        "negative",
+        "sensitive",
+        "temporary",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "passwd=temporary88 只用于本次调试。"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_038",
+      "tags": [
+        "negative",
+        "sensitive",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "Authorization Bearer zyxwvutsrqponmlk"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_039",
+      "tags": [
+        "negative",
+        "sensitive",
+        "en"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "pwd=not-a-real-password"
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "negative_040",
+      "tags": [
+        "negative",
+        "sensitive",
+        "zh"
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": "-----BEGIN RSA PRIVATE KEY----- 只是测试文本。"
+        }
+      ],
+      "expected": []
+    }
+  ]
+}
+

@@ -30,5 +30,5 @@ def test_memory_config_defaults() -> None:
     config = SessionMemoryConfig()
 
     assert config.retention_days == 30
-    assert config.index_max_lines == 200
-    assert config.index_max_bytes == 25_000
+    assert config.index_max_lines == 400
+    assert config.index_max_bytes == 50_000

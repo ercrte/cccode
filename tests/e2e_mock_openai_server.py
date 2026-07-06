@@ -95,7 +95,10 @@ class Handler(BaseHTTPRequestHandler):
                 "## 待办事项和阻塞\n无明确阻塞。\n\n"
                 "## 验证状态与风险\n需要继续按工具结果验证。</final_summary>"
             )
-        if "你正在为 MewCode 更新长期记忆" in str(last):
+        if (
+            "你正在为 MewCode 更新长期记忆" in str(last)
+            or "你正在为 MewCode 提取可跨会话使用的长期记忆" in str(last)
+        ):
             return _memory_operations(str(last))
         if str(last).strip() == "慢速审查":
             time.sleep(8)
@@ -111,6 +114,12 @@ class Handler(BaseHTTPRequestHandler):
             return "本项目新增测试命名必须以 test_memory_ 开头。"
         if "什么语言" in last and _contains_model_text(messages, "默认用中文"):
             return "我应该默认用中文回答。"
+        if "既定项目约定" in last or "既定的测试框架" in last:
+            if _contains_model_text(messages, "pytest") and _contains_model_text(messages, "中文"):
+                return "既定测试框架是 pytest；我会按长期偏好使用中文回答。"
+            return "请提供既定项目背景。"
+        if "本项目统一使用 pytest" in last and "以后始终用中文" in last:
+            return "已确认项目使用 pytest，并会长期使用中文回答。"
         if "请先制定执行计划" in last:
             return "计划：先读取相关文件，再总结需要执行的步骤。"
         if "我的代号" in last or "what is my code" in last.lower():
@@ -411,6 +420,42 @@ def _mcp_text(text: str, default: str) -> str:
 
 
 def _memory_operations(text: str) -> str:
+    if "本项目统一使用 pytest" in text and "以后始终用中文回答" in text:
+        return json.dumps(
+            {
+                "operations": [
+                    {
+                        "action": "create",
+                        "scope": "project",
+                        "category": "project_knowledge",
+                        "note_id": "project-test-framework",
+                        "title": "项目测试框架",
+                        "body": "本项目统一使用 pytest。",
+                        "evidence": ["本项目统一使用 pytest"],
+                        "durability": "persistent",
+                        "critical": False,
+                        "confidence": 0.99,
+                        "tags": ["test"],
+                        "supersedes": [],
+                    },
+                    {
+                        "action": "create",
+                        "scope": "user",
+                        "category": "preference",
+                        "note_id": "always-chinese",
+                        "title": "长期中文偏好",
+                        "body": "用户要求以后始终用中文回答。",
+                        "evidence": ["以后始终用中文回答"],
+                        "durability": "persistent",
+                        "critical": True,
+                        "confidence": 0.99,
+                        "tags": ["language"],
+                        "supersedes": [],
+                    },
+                ]
+            },
+            ensure_ascii=False,
+        )
     if "默认用中文" in text:
         return json.dumps(
             {
@@ -422,7 +467,12 @@ def _memory_operations(text: str) -> str:
                         "note_id": "default-chinese-replies",
                         "title": "默认中文回复",
                         "body": "用户偏好：以后回答默认用中文。",
+                        "evidence": ["默认用中文"],
+                        "durability": "persistent",
+                        "critical": True,
+                        "confidence": 0.99,
                         "tags": ["language"],
+                        "supersedes": [],
                     }
                 ]
             },
@@ -439,7 +489,12 @@ def _memory_operations(text: str) -> str:
                         "note_id": "test-memory-naming",
                         "title": "测试命名约定",
                         "body": "本项目新增测试命名必须以 test_memory_ 开头。",
+                        "evidence": ["本项目新增测试命名必须以 test_memory_ 开头"],
+                        "durability": "persistent",
+                        "critical": False,
+                        "confidence": 0.99,
                         "tags": ["test", "naming"],
+                        "supersedes": [],
                     }
                 ]
             },

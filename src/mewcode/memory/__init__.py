@@ -7,9 +7,14 @@ from mewcode.memory.models import (
     InstructionBundle,
     InstructionScope,
     KnowledgeContext,
+    MemoryAction,
+    MemoryCandidate,
     MemoryCategory,
+    MemoryDurability,
+    MemoryExtractionResult,
     MemoryIndex,
     MemoryNote,
+    MemoryRejection,
     MemoryScope,
     MemoryUpdateJob,
     ProtocolValidationResult,
@@ -18,6 +23,7 @@ from mewcode.memory.models import (
     SessionJsonlRecord,
     SessionMemoryConfig,
     SessionRecordKind,
+    ValidatedMemoryOperation,
 )
 
 __all__ = [
@@ -27,9 +33,14 @@ __all__ = [
     "InstructionBundle",
     "InstructionScope",
     "KnowledgeContext",
+    "MemoryAction",
+    "MemoryCandidate",
     "MemoryCategory",
+    "MemoryDurability",
+    "MemoryExtractionResult",
     "MemoryIndex",
     "MemoryNote",
+    "MemoryRejection",
     "MemoryScope",
     "MemoryUpdateJob",
     "ProtocolValidationResult",
@@ -38,4 +49,5 @@ __all__ = [
     "SessionJsonlRecord",
     "SessionMemoryConfig",
     "SessionRecordKind",
+    "ValidatedMemoryOperation",
 ]

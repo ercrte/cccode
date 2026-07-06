@@ -46,3 +46,15 @@ def test_memory_index_is_limited_by_lines_and_bytes(tmp_path: Path) -> None:
     assert built.line_count <= 10
     assert built.byte_count <= 300
     assert built.warnings
+
+
+def test_critical_memory_is_indexed_before_regular_memory(tmp_path: Path) -> None:
+    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode")))
+    store.write_note(note("regular", scope="user", category="preference", body="普通偏好"))
+    store.write_note(note("critical", scope="user", category="preference", body="关键偏好", critical=True))
+
+    index = MemoryIndexBuilder(store).build("user")
+
+    assert "**[关键]**" in index.content
+    assert "`tags:" in index.content
+    assert index.content.index("关键偏好") < index.content.index("普通偏好")

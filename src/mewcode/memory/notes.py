@@ -11,6 +11,8 @@ from mewcode.errors import redact_secret
 from mewcode.memory.models import MemoryCategory, MemoryNote, MemoryScope, SessionMemoryConfig
 
 _BEARER_RE = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{8,}")
+_PRIVATE_KEY_RE = re.compile(r"-----BEGIN(?: [A-Z0-9]+)? PRIVATE KEY-----", re.IGNORECASE)
+_PASSWORD_RE = re.compile(r"(?i)\b(?:password|passwd|pwd)\s*[:=]\s*\S{6,}")
 
 
 class MemoryNoteStore:
@@ -62,10 +64,30 @@ class MemoryNoteStore:
             "created_at": clean.created_at,
             "updated_at": clean.updated_at,
             "tags": list(clean.tags),
+            "source_evidence": list(clean.source_evidence),
+            "critical": clean.critical,
+            "confidence": clean.confidence,
         }
         text = "---\n" + yaml.safe_dump(frontmatter, allow_unicode=True, sort_keys=True) + "---\n" + clean.body + "\n"
         path.write_text(text, encoding="utf-8")
         return path
+
+    def delete_note(self, scope: MemoryScope, note_id: str) -> bool:
+        safe_id = _safe_filename(note_id)
+        deleted = False
+        for category in ("preference", "correction", "project_knowledge", "reference"):
+            path = self._root(scope) / category / f"{safe_id}.md"
+            if path.exists():
+                path.unlink()
+                deleted = True
+        return deleted
+
+    def contains_sensitive(self, text: str) -> bool:
+        if any(secret and secret in text for secret in self.secrets):
+            return True
+        if redact_secret(text) != text:
+            return True
+        return bool(_BEARER_RE.search(text) or _PRIVATE_KEY_RE.search(text) or _PASSWORD_RE.search(text))
 
     def _read_path(self, scope: MemoryScope, path: Path) -> MemoryNote | None:
         if not path.exists():
@@ -85,6 +107,13 @@ class MemoryNoteStore:
             return None
         raw_tags = meta.get("tags", ())
         tags = tuple(str(item) for item in raw_tags) if isinstance(raw_tags, list) else ()
+        raw_evidence = meta.get("source_evidence", ())
+        evidence = tuple(str(item) for item in raw_evidence) if isinstance(raw_evidence, list) else ()
+        raw_confidence = meta.get("confidence")
+        try:
+            confidence = None if raw_confidence is None else float(raw_confidence)
+        except (TypeError, ValueError):
+            confidence = None
         return MemoryNote(
             note_id=str(meta.get("note_id", path.stem)),
             scope=scope,
@@ -95,6 +124,9 @@ class MemoryNoteStore:
             created_at=str(meta.get("created_at", "")),
             updated_at=str(meta.get("updated_at", "")),
             tags=tags,
+            source_evidence=evidence,
+            critical=bool(meta.get("critical", False)),
+            confidence=confidence,
         )
 
     def _root(self, scope: MemoryScope) -> Path:
@@ -104,14 +136,17 @@ class MemoryNoteStore:
         title = self._redact(note.title)
         body = self._redact(note.body)
         tags = tuple(self._redact(tag) for tag in note.tags)
-        return replace(note, title=title, body=body, tags=tags)
+        evidence = tuple(self._redact(item) for item in note.source_evidence)
+        return replace(note, title=title, body=body, tags=tags, source_evidence=evidence)
 
     def _redact(self, text: str) -> str:
         redacted = text
         for secret in self.secrets:
             redacted = redact_secret(redacted, secret)
         redacted = redact_secret(redacted)
-        return _BEARER_RE.sub("Bearer [REDACTED]", redacted)
+        redacted = _BEARER_RE.sub("Bearer [REDACTED]", redacted)
+        redacted = _PRIVATE_KEY_RE.sub("-----BEGIN [REDACTED] PRIVATE KEY-----", redacted)
+        return _PASSWORD_RE.sub("password=[REDACTED]", redacted)
 
 
 def _safe_filename(value: str) -> str:

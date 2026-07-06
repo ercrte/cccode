@@ -48,10 +48,38 @@ def make_job(tmp_path: Path) -> MemoryUpdateJob:
     return MemoryUpdateJob(
         session_id=SessionId("20260612-080910-abcd"),
         cwd=tmp_path,
-        turn_messages=(ChatMessage(role="user", content="以后默认中文"),),
+        turn_messages=(ChatMessage(role="user", content="以后默认中文；本项目测试以 test_memory_ 开头"),),
         final_message=ChatMessage(role="assistant", content="已记住"),
         knowledge_context=KnowledgeContext(),
     )
+
+
+def operation(
+    *,
+    action: str = "create",
+    scope: str = "user",
+    category: str = "preference",
+    note_id: str = "language",
+    title: str = "语言偏好",
+    body: str = "默认中文",
+    evidence: str = "以后默认中文",
+    critical: bool = True,
+    supersedes: list[str] | None = None,
+) -> dict[str, object]:
+    return {
+        "action": action,
+        "scope": scope,
+        "category": category,
+        "note_id": note_id,
+        "title": title,
+        "body": body,
+        "evidence": [evidence],
+        "durability": "persistent",
+        "critical": critical,
+        "confidence": 0.99,
+        "tags": [],
+        "supersedes": supersedes or [],
+    }
 
 
 @pytest.mark.asyncio
@@ -76,7 +104,8 @@ async def test_updater_prompt_contains_categories_and_scopes(tmp_path: Path) -> 
     assert "correction" in prompt
     assert "project_knowledge" in prompt
     assert "reference" in prompt
-    assert "scope 只能是 user 或 project" in prompt
+    assert "scope 只能是 user 或 project" not in prompt  # 旧文本已被新指南替代
+    assert "## 作用域（scope）判断规则" in prompt
 
 
 @pytest.mark.asyncio
@@ -85,22 +114,16 @@ async def test_updater_creates_and_updates_notes(tmp_path: Path) -> None:
     store.write_note(note("language", scope="user", category="preference", body="旧"))
     operations = {
         "operations": [
-            {
-                "action": "create",
-                "scope": "project",
-                "category": "project_knowledge",
-                "note_id": "rule",
-                "title": "测试规则",
-                "body": "测试以 test_memory_ 开头",
-            },
-            {
-                "action": "update",
-                "scope": "user",
-                "category": "preference",
-                "note_id": "language",
-                "title": "语言偏好",
-                "body": "默认中文",
-            },
+            operation(
+                scope="project",
+                category="project_knowledge",
+                note_id="rule",
+                title="测试规则",
+                body="测试以 test_memory_ 开头",
+                evidence="本项目测试以 test_memory_ 开头",
+                critical=False,
+            ),
+            operation(action="update"),
         ]
     }
 
@@ -126,14 +149,7 @@ async def test_updater_deduplicates_by_model_operations(tmp_path: Path) -> None:
     updater, store = make_updater(tmp_path)
     operations = {
         "operations": [
-            {
-                "action": "create",
-                "scope": "user",
-                "category": "preference",
-                "note_id": "language",
-                "title": "语言偏好",
-                "body": "默认中文",
-            },
+            operation(),
             {"action": "skip"},
         ]
     }
@@ -147,9 +163,12 @@ async def test_updater_deduplicates_by_model_operations(tmp_path: Path) -> None:
 async def test_updater_fails_without_partial_writes(tmp_path: Path) -> None:
     updater, store = make_updater(tmp_path)
 
-    with pytest.raises(MemoryUpdateError):
-        await updater.update(job=make_job(tmp_path), provider=FakeProvider('{"operations": [{"action": "create"}]}'))
+    result = await updater.extract(
+        job=make_job(tmp_path),
+        provider=FakeProvider('{"operations": [{"action": "create"}]}'),
+    )
 
+    assert result.rejected[0].code == "invalid_schema"
     assert store.list_notes("project") == ()
 
     with pytest.raises(MemoryUpdateError):
@@ -160,6 +179,34 @@ async def test_updater_fails_without_partial_writes(tmp_path: Path) -> None:
 
     with pytest.raises(MemoryUpdateError):
         await updater.update(job=make_job(tmp_path), provider=FakeProvider("{}", fail=True))
+
+
+@pytest.mark.asyncio
+async def test_updater_extract_does_not_write_and_apply_rebuilds_index(tmp_path: Path) -> None:
+    updater, store = make_updater(tmp_path)
+    result = await updater.extract(
+        job=make_job(tmp_path),
+        provider=FakeProvider(json.dumps({"operations": [operation()]})),
+    )
+
+    assert store.list_notes("user") == ()
+
+    [index] = updater.apply(result)
+
+    assert store.read_note("user", "language") is not None
+    assert index.scope == "user"
+
+
+@pytest.mark.asyncio
+async def test_updater_supersedes_old_note_after_new_write(tmp_path: Path) -> None:
+    updater, store = make_updater(tmp_path)
+    store.write_note(note("old-language", scope="user", category="preference", body="默认英文"))
+    payload = {"operations": [operation(supersedes=["old-language"])]}
+
+    await updater.update(job=make_job(tmp_path), provider=FakeProvider(json.dumps(payload)))
+
+    assert store.read_note("user", "old-language") is None
+    assert store.read_note("user", "language") is not None
 
 
 @pytest.mark.asyncio

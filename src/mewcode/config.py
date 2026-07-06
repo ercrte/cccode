@@ -357,6 +357,10 @@ def _parse_memory(raw: Any) -> SessionMemoryConfig:
         raw.get("instruction_filename", "AGENTS.md"),
         "memory.instruction_filename",
     )
+    critical_confidence = _parse_probability(
+        raw.get("critical_preference_min_confidence", 0.95),
+        "memory.critical_preference_min_confidence",
+    )
 
     return SessionMemoryConfig(
         enabled=bool(raw.get("enabled", True)),
@@ -372,6 +376,7 @@ def _parse_memory(raw: Any) -> SessionMemoryConfig:
         index_max_lines=_parse_int(raw.get("index_max_lines", 200), "memory.index_max_lines"),
         index_max_bytes=_parse_int(raw.get("index_max_bytes", 25_000), "memory.index_max_bytes"),
         auto_notes_enabled=bool(raw.get("auto_notes_enabled", True)),
+        critical_preference_min_confidence=critical_confidence,
     )
 
 
@@ -649,4 +654,16 @@ def _parse_float(value: Any, field: str) -> float:
         raise ConfigError(f"{field} 必须是数字") from exc
     if parsed <= 0:
         raise ConfigError(f"{field} 必须大于 0")
+    return parsed
+
+
+def _parse_probability(value: Any, field: str) -> float:
+    if isinstance(value, bool):
+        raise ConfigError(f"{field} 必须是 0 到 1 之间的数字")
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(f"{field} 必须是 0 到 1 之间的数字") from exc
+    if not 0.0 <= parsed <= 1.0:
+        raise ConfigError(f"{field} 必须在 0 到 1 之间")
     return parsed

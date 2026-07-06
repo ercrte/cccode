@@ -191,6 +191,7 @@ memory:
   index_max_lines: 100
   index_max_bytes: 12000
   auto_notes_enabled: false
+  critical_preference_min_confidence: 0.98
 """,
     )
 
@@ -210,6 +211,7 @@ memory:
         index_max_lines=100,
         index_max_bytes=12_000,
         auto_notes_enabled=False,
+        critical_preference_min_confidence=0.98,
     )
 
 
@@ -227,6 +229,10 @@ memory:
         "memory:\n  time_gap_hours: 0",
         "memory:\n  index_max_lines: 0",
         "memory:\n  index_max_bytes: 0",
+        "memory:\n  critical_preference_min_confidence: -0.1",
+        "memory:\n  critical_preference_min_confidence: 1.1",
+        "memory:\n  critical_preference_min_confidence: nope",
+        "memory:\n  critical_preference_min_confidence: true",
     ],
 )
 def test_rejects_invalid_memory_config(
