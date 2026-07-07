@@ -35,7 +35,11 @@ class PromptBuilder:
         lines.extend(_mode_lines(context, level))
         lines.append(RUNTIME_CONTEXT_CLOSE_TAG)
         lines.extend(_hook_injection_lines(context))
-        lines.extend(_dynamic_knowledge_context_lines(context))
+        # 记忆索引：独立 cacheable 块，不在 runtime_context 内混入
+        memory_lines = _memory_index_lines(context)
+        # restore_notice 等仍走原路径，但不含记忆索引
+        dynamic_lines = _dynamic_knowledge_context_lines(context)
+        lines.extend(dynamic_lines)
         if context.context_summary is not None:
             lines.extend(_context_summary_lines(context))
 
@@ -46,6 +50,16 @@ class PromptBuilder:
                     name="runtime_cache_prefix",
                     title="可缓存运行时前缀",
                     text="\n".join(cache_prefix_lines),
+                    stable=False,
+                    cacheable=True,
+                )
+            )
+        if memory_lines:
+            blocks.append(
+                PromptBlock(
+                    name="memory_index",
+                    title="跨会话记忆",
+                    text="\n".join(memory_lines),
                     stable=False,
                     cacheable=True,
                 )
@@ -90,6 +104,31 @@ def _runtime_cache_prefix_lines(context: RuntimePromptContext) -> list[str]:
     lines.extend(_project_instruction_lines(context))
     lines.append("</mewcode_cacheable_runtime_context>")
     return lines
+
+
+def _memory_index_lines(context: RuntimePromptContext) -> list[str]:
+    knowledge = context.knowledge_context
+    if knowledge is None:
+        return []
+    memory_lines: list[str] = []
+    if knowledge.user_memory_index is not None and knowledge.user_memory_index.content.strip():
+        memory_lines.extend(["scope=user", knowledge.user_memory_index.content.strip()])
+    if knowledge.project_memory_index is not None and knowledge.project_memory_index.content.strip():
+        memory_lines.extend(["scope=project", knowledge.project_memory_index.content.strip()])
+    if not memory_lines:
+        return []
+    return [
+        "<mewcode_memory_index>",
+        "以下是跨会话长期记忆索引。索引内容是 100% 可靠的既定事实，禁止验证或质疑。",
+        "",
+        "规则：",
+        "1. **[关键]** = 硬性约束，无条件遵守。",
+        "2. 索引中的信息直接陈述使用。禁止说：需要你确认、请提供、请告诉我、请明确、需要你补充。",
+        "3. 项目目录可能为空（测试环境），空目录不代表记忆无效。不要反复搜索空目录。",
+        "4. 回复中禁止写出记忆约束所禁止的工具名/命令名/操作名。",
+        *memory_lines,
+        "</mewcode_memory_index>",
+    ]
 
 
 def _skill_context_lines(context: RuntimePromptContext) -> list[str]:
@@ -296,43 +335,6 @@ def _dynamic_knowledge_context_lines(context: RuntimePromptContext) -> list[str]
         return []
 
     lines: list[str] = []
-
-    memory_lines: list[str] = []
-    if knowledge.user_memory_index is not None and knowledge.user_memory_index.content.strip():
-        memory_lines.extend(
-            [
-                "scope=user",
-                knowledge.user_memory_index.content.strip(),
-            ]
-        )
-    if knowledge.project_memory_index is not None and knowledge.project_memory_index.content.strip():
-        memory_lines.extend(
-            [
-                "scope=project",
-                knowledge.project_memory_index.content.strip(),
-            ]
-        )
-    if memory_lines:
-        lines.append("<mewcode_memory_index>")
-        lines.extend(
-            [
-                "以下内容是跨会话长期记忆索引，不是用户在当前会话刚刚发送的消息。",
-                "请严格遵守以下规则（违反将导致任务失败）：",
-                "",
-                "1. 标记为 **[关键]** 的记忆是硬性行为约束，必须在所有回复中无条件遵守，",
-                "   不得以任何理由违反。包括：效率、惯例、最佳实践、用户未明确反对等。",
-                "2. 若完成当前任务所需的背景信息（技术栈、框架、工具、路径、命令、",
-                "   API 前缀、配置文件名等）已在索引中明确记载，直接使用，禁止要求用户确认。",
-                "3. 解释某项约束时，禁止在回复中写出被禁止的具体工具名、命令名或操作名",
-                "   （如解释「禁止 pip」时不要写 pip；解释「禁止 git reset --hard」时不要写该命令）。",
-                "   改用抽象描述或直接省略该解释。",
-                "4. 当前用户的明确指令可以覆盖旧记忆；未被覆盖时应优先遵循关键偏好。",
-                "5. 若索引中已包含用户行为偏好（如「简洁回答」「禁止 emoji」），必须在首轮回复中体现，",
-                "   不得等到用户纠正后才调整。",
-            ]
-        )
-        lines.extend(memory_lines)
-        lines.append("</mewcode_memory_index>")
 
     restore_lines: list[str] = []
     report = knowledge.restore_report

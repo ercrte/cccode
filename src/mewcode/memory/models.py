@@ -36,7 +36,7 @@ class SessionMemoryConfig:
     index_max_lines: int = 400
     index_max_bytes: int = 50_000
     auto_notes_enabled: bool = True
-    critical_preference_min_confidence: float = 0.95
+    critical_preference_min_confidence: float = 0.90
 
 
 @dataclass(frozen=True)

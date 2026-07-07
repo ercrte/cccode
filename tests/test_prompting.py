@@ -397,17 +397,32 @@ def test_runtime_prompt_includes_memory_indexes() -> None:
         project_memory_index=MemoryIndex("project", Path("/repo/.mewcode/memory/index.md"), "测试规则", 1, 12),
     )
 
-    block_text = runtime_dynamic_text(runtime_context(knowledge_context=knowledge))
+    # 记忆索引现在是独立的 cacheable block（name="memory_index"），不再在 runtime_context 中
+    blocks = runtime_blocks(runtime_context(knowledge_context=knowledge))
+    memory_block = next(b for b in blocks if b.name == "memory_index")
+    block_text = memory_block.text
 
+    assert memory_block.cacheable is True
     assert "<mewcode_memory_index>" in block_text
     assert "跨会话长期记忆" in block_text
-    assert "不是用户在当前会话刚刚发送" in block_text
-    assert "直接使用" in block_text
-    assert "禁止要求用户确认" in block_text
+    assert "100% 可靠" in block_text
+    assert "禁止验证或质疑" in block_text
+    assert "需要你确认" in block_text  # 出现在禁止列表中
     assert "scope=user" in block_text
     assert "默认中文" in block_text
     assert "scope=project" in block_text
     assert "测试规则" in block_text
+
+
+def test_memory_index_is_cacheable() -> None:
+    """记忆索引块应标记为 cacheable=True。"""
+    knowledge = KnowledgeContext(
+        user_memory_index=MemoryIndex("user", Path("/home/u/.mewcode/memory/index.md"), "默认中文", 1, 12),
+    )
+    blocks = runtime_blocks(runtime_context(knowledge_context=knowledge))
+    memory_block = next(b for b in blocks if b.name == "memory_index")
+    assert memory_block.cacheable is True
+    assert "<mewcode_memory_index>" in memory_block.text
 
 
 def test_runtime_prompt_includes_restore_notice() -> None:
@@ -441,11 +456,12 @@ def test_runtime_prompt_keeps_memory_and_context_summary_separate() -> None:
         project_memory_index=MemoryIndex("project", Path("/repo/.mewcode/memory/index.md"), "长期记忆", 1, 12),
     )
 
-    block_text = runtime_dynamic_text(runtime_context(context_summary=summary, knowledge_context=knowledge))
+    ctx = runtime_context(context_summary=summary, knowledge_context=knowledge)
+    memory_block = next(b for b in runtime_blocks(ctx) if b.name == "memory_index")
+    dynamic_text = runtime_dynamic_text(ctx)
 
-    assert "<mewcode_memory_index>" in block_text
-    assert "<mewcode_context_summary>" in block_text
-    assert block_text.index("<mewcode_memory_index>") < block_text.index("<mewcode_context_summary>")
+    assert "<mewcode_memory_index>" in memory_block.text  # 记忆在独立 cacheable 块
+    assert "<mewcode_context_summary>" in dynamic_text  # 上下文摘要在动态区
 
 
 def test_prompt_builder_includes_hook_injections() -> None:

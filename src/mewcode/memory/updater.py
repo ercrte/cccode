@@ -106,13 +106,14 @@ class MemoryNoteUpdater:
             "正例：\n"
             '- "纠正之前的偏好，今后禁止使用表情符号" → correction（纠正信号+持续性标记）\n'
             '- "不要再用英文回答，以后始终改用中文" → correction（不要再用+以后始终）\n'
-            '- "From now on, do not use unittest; always use pytest" → correction（含"From now on"暗示转换）\n'
-            '- "Never auto-format files again" → correction（含"again"纠正信号）\n'
-            '- "Do not skip type checks again; always run them" → correction（含"again"）\n'
+            '- "From now on, do not use unittest; always use pytest" → correction（From now on+never表示行为转换）\n'
+            '- "Never auto-format files again" → correction（never+again=纠正）\n'
+            '- "Do not skip type checks again; always run them" → correction（again=纠正）\n'
+            '- "From now on, never amend an existing commit" → correction（From now on+never=行为转换）\n'
             "反例（不是 correction）：\n"
             '- "以后禁止在回复里使用 emoji" → preference（首次表达，无纠正信号词）\n'
-            '- "今后默认使用绝对路径报告文件位置" → preference（首次表达）\n'
-            '- "Always use pytest for tests" → preference（无纠正信号词，只是陈述偏好）\n\n'
+            '- "今后默认使用绝对路径报告文件位置" → preference（首次表达，无纠正信号词）\n'
+            '- "Always use pytest for tests" → preference（无纠正信号词，首次表达）\n\n'
             "### project_knowledge（项目知识）\n"
             "定义：项目的事实性信息、技术决策、版本要求、架构约定。描述「是什么」。\n"
             "正例：\n"
@@ -120,59 +121,77 @@ class MemoryNoteUpdater:
             '- "生产数据库使用 PostgreSQL" → scope=project, project_knowledge, critical=False\n'
             '- "所有数据库迁移必须可逆" → scope=project, project_knowledge, critical=True（含「必须」的硬约束）\n\n'
             "### reference（参考资料）\n"
-            "定义：指向文件/文档/外部资源的路径或位置指针。描述「在哪里」。\n"
+            "定义：指向文件/文档/外部资源的路径或位置指针。描述「在哪里能找到」。\n"
             "正例：\n"
-            '- "架构说明入口是 docs/architecture.md" → reference\n'
-            '- "ADR 存放在 docs/adr 目录下" → reference\n'
-            '- "API 合约文档在 openapi.yaml" → reference\n'
-            '- "常用测试命令是 pytest -q" → reference（指向具体命令/路径）\n'
-            '- "配置文件名是 .mewcode.yaml" → reference（指向具体文件名）\n'
-            '- "代码风格依据 pyproject.toml" → reference（指向具体文件）\n'
-            '区分：「X 的文档/命令/配置在 Y」是 reference，「本项目使用 X」是 project_knowledge。\n\n'
+            '- "架构说明入口是 docs/architecture.md" → reference（指向文件路径）\n'
+            '- "ADR 存放在 docs/adr 目录下" → reference（指向目录路径）\n'
+            '- "API 合约文档在 openapi.yaml" → reference（指向文件名）\n'
+            '- "常用测试命令是 pytest -q" → reference（指向具体命令）\n'
+            '- "安全规范入口是 SECURITY.md" → reference（指向文件路径）\n'
+            '- "代码风格依据 pyproject.toml" → reference（指向配置文件）\n'
+            "**判断口诀：说「X 在哪里」→ reference；说「X 是什么/用什么」→ project_knowledge。**\n"
+            "常见的 reference 模式：「入口是 X」「文档在 X」「参考 X」「配置在 X」「命令是 X」\n\n"
             # ── scope 分类指南 ──
             "## 作用域（scope）判断规则\n\n"
             "### user\n"
             "跨项目通用的个人偏好和纠正反馈。跟人走，不跟项目走。\n"
-            "正例：「以后始终使用中文回答」「默认使用 pytest」「禁止自动提交代码」\n\n"
+            "判断：约束的是「AI 助手的行为方式」而非「项目的技术属性」→ user\n"
+            "正例：\n"
+            '- "以后始终使用中文回答" → user（AI 助手的语言行为）\n'
+            '- "默认使用 pytest" → user（AI 助手的工具选择行为）\n'
+            '- "禁止自动提交代码" → user（AI 助手的操作行为）\n'
+            '- "You must keep public APIs backward compatible" → user（AI 助手的编码行为约束）\n\n'
             "### project\n"
             "当前项目的技术事实、约定、决策和参考资源。跟项目走。\n"
-            '判断信号：出现"本项目"、"请长期记住"且内容涉及技术栈/版本/路径/架构。\n'
-            '正例：「本项目使用 Python 3.11」「请长期记住：Web 框架是 FastAPI」\n\n'
+            "判断：描述的是「项目本身是什么/用什么/在哪里」而非「AI 助手怎么做」→ project\n"
+            "正例：\n"
+            '- "本项目使用 Python 3.11" → project（项目技术栈事实）\n'
+            '- "请长期记住：Web 框架是 FastAPI" → project（项目技术栈事实）\n'
+            '- "请长期记住：默认日志格式是结构化 JSON" → project（项目技术约定）\n'
+            '- "架构说明入口是 docs/architecture.md" → project（项目文件路径）\n\n'
             # ── critical 判断指南 ──
             "## 关键偏好（critical）判断规则\n\n"
-            "**critical=True 必须同时满足以下所有条件：**\n"
-            "1. 用户明确表达了跨任务持续生效的**行为约束**（必须做什么/禁止做什么）\n"
-            "2. 证据包含强制性标记词：必须、禁止、决不能、never、must、always、do not\n"
-            "3. confidence >= 0.95\n\n"
-            "**critical=False 的情况（重要！大部分记忆都不是 critical）：**\n"
-            "- 项目事实信息（版本号、使用的工具/库/框架名称）→ 不是行为约束，critical=False\n"
-            '- 文档/文件/配置路径指针 → reference 类别，critical=False\n'
-            '- "请长期记住"但没有强制性标记词（必须/禁止/must/never）的内容 → critical=False\n'
-            '- 纯描述性信息（"X 使用 Y"、"Z 的路径是 W"）→ 就算有"请长期记住"也不是 critical\n\n'
+            "**critical=True：用户对 AI 助手行为的硬性约束（如何回答、如何操作、不能做什么）**\n\n"
+            "判断流程（两步）：\n"
+            "1. 这是对 AI 助手的行为要求吗？（不是的话 → critical=False）\n"
+            "2. 证据包含持续性/约束性标记词吗？（没有的话 → critical=False）\n\n"
+            "**持续性/约束性标记词（任一即可）：**\n"
+            "以后、今后、始终、总是、每次、默认、必须、禁止、不要再、一律、不再、请记住、长期记住、永久记住\n"
+            "from now on、always、never、by default、must、do not、don't、remember that、remember permanently、permanently、again、anymore、no longer\n\n"
+            "**critical=True 的正例（AI 助手行为约束）：**\n"
+            '- "以后始终使用中文回答" → 对助手语言的要求 + 始终 → critical=True\n'
+            '- "默认使用 pytest 进行测试" → 对助手工具选择的要求 + 默认 → critical=True\n'
+            '- "禁止自动提交代码" → 对助手操作的限制 + 禁止 → critical=True\n'
+            '- "By default, keep responses under ten lines" → 对助手回复的要求 + by default → critical=True\n'
+            '- "Never auto-format files again; ask me first" → 对助手操作的限制 + never+again → critical=True\n'
+            '- "以后默认先说明阻塞原因，再向我提问" → 对助手交流方式的要求 + 以后默认 → critical=True\n\n'
+            "**critical=False 的正例（不是对 AI 助手的行为约束）：**\n"
+            '- "本项目使用 Python 3.11" → 项目事实，不是助手行为要求 → critical=False\n'
+            '- "Web 框架是 FastAPI" → 项目事实，不是助手行为要求 → critical=False\n'
+            '- "请长期记住：缓存服务使用 Redis" → 项目事实，不是助手行为要求 → critical=False\n'
+            '- "所有数据库迁移必须可逆" → 项目设计原则（约束的是数据库迁移，不是助手行为）→ critical=False\n'
+            '- "必须保持公共 API 向后兼容" → 项目设计原则（约束的是 API 设计，不是助手行为）→ critical=False\n'
+            '- "架构说明入口是 docs/architecture.md" → 路径指针，不是行为要求 → critical=False\n\n'
             "哪些类别可以标记 critical：\n"
-            "- preference：可以（如「必须使用中文」「禁止自动提交代码」）\n"
-            "- correction：可以（如「不要再使用 unittest，必须用 pytest」）\n"
-            "- project_knowledge：仅当含「必须/禁止/must/never」等强约束词时可以（如「所有迁移必须可逆」）\n"
-            "- reference：不可以（路径指针不是行为约束）\n\n"
-            "正例 (critical=True)：\n"
-            '- "所有数据库迁移必须可逆" → 含"必须"，硬性约束，critical=True\n'
-            '- "禁止使用 git reset --hard" → 含"禁止"，硬性约束，critical=True\n'
-            '- "You must keep public APIs backward compatible" → 含"must"，critical=True\n\n'
-            "反例 (critical=False)：\n"
-            '- "本项目使用 Python 3.11" → 项目事实，没有强制词，critical=False\n'
-            '- "Web 框架是 FastAPI" → 项目事实，critical=False\n'
-            '- "请长期记住：缓存服务使用 Redis" → 纯事实，没有强制词，critical=False\n'
-            '- "请长期记住：包管理器统一使用 uv" → 纯事实，没有强制词，critical=False\n'
-            '- "架构说明入口是 docs/architecture.md" → 路径指针，reference 类别，critical=False\n\n'
+            "- preference：可以（如行为偏好）\n"
+            "- correction：可以（如纠正行为偏好）\n"
+            "- project_knowledge：几乎不（只有极少数约束助手行为的项目规则可以，如「禁止修改与任务无关的文件」）\n"
+            "- reference：不可以\n\n"
             # ── JSON 格式与字段说明 ──
             "## JSON 格式\n\n"
             "operation.action 只能是 create、update、skip。skip 不需要其他字段。\n"
             "非 skip 必须包含 scope、category、note_id、title、body、evidence、durability、"
             "critical、confidence、tags、supersedes。\n"
+            "**类型约束（必须严格遵守）：**\n"
+            "- note_id: 必须是字符串，不能是数字、null 或空字符串\n"
+            "- title、body: 必须是非空字符串\n"
+            "- evidence、tags: 必须是字符串数组，即使为空也必须写 []\n"
+            "- supersedes: 必须是字符串数组，不需要替代旧笔记时写 []，不要写 null 或空字符串\n"
+            "- critical: 必须是布尔值 true 或 false，不要加引号\n"
+            "- confidence: 必须是数字（0 到 1），不要加引号\n"
             "evidence 必须是 turn_messages 中 role=user 消息的逐字原文数组；"
             "助手回复和工具输出不能作为用户偏好或纠正的证据。\n"
-            "durability 只能是 persistent、temporary、uncertain；只有明确跨任务持续有效的信息才是 persistent。\n"
-            "confidence 是 0 到 1 的数字。\n\n"
+            "durability 只能是 persistent、temporary、uncertain；只有明确跨任务持续有效的信息才是 persistent。\n\n"
             "## 必须 skip 的情况\n\n"
             "临时格式、一次性任务、短期进度、模型猜测、闲聊、敏感凭据和只来自助手或工具的内容必须 skip。\n"
             "重复事实使用 update 或 skip；明确纠正旧规则时在 supersedes 中列出被替代的既有 note_id。\n\n"

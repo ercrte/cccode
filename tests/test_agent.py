@@ -598,11 +598,12 @@ async def test_runner_injects_memory_context_before_model_request(tmp_path: Path
     assert memory_manager.runtime_calls == 2
     assert provider.requests[0].prompt is not None
     assert provider.requests[1].prompt is not None
-    first_runtime = provider.requests[0].prompt.runtime_blocks[-1].text
-    second_runtime = provider.requests[1].prompt.runtime_blocks[-1].text
-    assert "<mewcode_memory_index>" in first_runtime
-    assert "第一版索引" in first_runtime
-    assert "第二版索引" in second_runtime
+    # 记忆索引现在是独立的 name="memory_index" 块
+    first_memory = next(b.text for b in provider.requests[0].prompt.runtime_blocks if b.name == "memory_index")
+    second_memory = next(b.text for b in provider.requests[1].prompt.runtime_blocks if b.name == "memory_index")
+    assert "<mewcode_memory_index>" in first_memory
+    assert "第一版索引" in first_memory
+    assert "第二版索引" in second_memory
 
 
 @pytest.mark.asyncio
