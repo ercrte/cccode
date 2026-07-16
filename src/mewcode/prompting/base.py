@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -31,9 +31,23 @@ class PromptBlock:
 
 
 @dataclass(frozen=True)
+class GeneratedContextBlock:
+    name: str
+    title: str
+    text: str
+    kind: str
+    provenance: Literal["generated"] = "generated"
+    trust: Literal["untrusted_repository_data"] = "untrusted_repository_data"
+    persistence: Literal["request_ephemeral"] = "request_ephemeral"
+    cache_scope: Literal["snapshot"] = "snapshot"
+    snapshot_id: str = ""
+
+
+@dataclass(frozen=True)
 class PromptBundle:
     stable_blocks: Sequence[PromptBlock]
     runtime_blocks: Sequence[PromptBlock]
+    generated_context_blocks: Sequence[GeneratedContextBlock] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)

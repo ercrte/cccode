@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from mewcode.context.models import ContextSummary
-from mewcode.prompting.base import PromptBlock, PromptBundle
+from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
 from mewcode.providers.base import ChatMessage
 from mewcode.session import ChatSession, PendingPlan
 from mewcode.tools.base import ToolResult, ToolSpec
@@ -81,6 +81,28 @@ def test_session_prompt_does_not_pollute_history() -> None:
     assert [message.role for message in session.messages] == ["user"]
     assert [message.role for message in request.messages] == ["user"]
     assert request.prompt is prompt
+
+
+def test_repo_map_generated_context_is_request_only() -> None:
+    recorder = FakeRecorder()
+    session = ChatSession()
+    session.set_recorder(recorder)
+    session.append_user_message("请定位目标函数")
+    repo_map = GeneratedContextBlock(
+        name="repo_map",
+        title="仓库地图",
+        text='<mewcode_repo_map revision="abc123">\ntarget.py:1\n</mewcode_repo_map>',
+        kind="repo_map",
+        snapshot_id="snapshot-secret-id",
+    )
+    prompt = PromptBundle(stable_blocks=(), runtime_blocks=(), generated_context_blocks=(repo_map,))
+
+    request = session.build_request(prompt=prompt)
+
+    assert request.prompt is prompt
+    assert request.prompt.generated_context_blocks == (repo_map,)
+    assert [message.content for message in session.messages] == ["请定位目标函数"]
+    assert [message.content for message in recorder.messages] == ["请定位目标函数"]
 
 
 def test_session_saves_replaces_and_clears_pending_plan() -> None:

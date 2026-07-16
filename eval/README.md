@@ -108,3 +108,29 @@ python eval/run_memory_eval.py --mode online --output eval/results/memory-qualit
 报告输出 `results.json` 和 `report.md`，记录数据集版本、Provider、模型、运行时间、整体 Precision/Recall/F1、关键偏好 Precision/Recall、首轮理解正确率、关闭/开启记忆时的背景重述次数及减少率。门槛未达标退出 1，配置或框架错误退出 2，全部达标退出 0。
 
 offline 使用 scripted Provider，只验证评测流程和回归稳定性，不代表真实模型质量，也不能作为发布质量门槛的证据。
+
+## Repo Map 导航质量专项评测
+
+Repo Map 专项数据位于 `eval/cases/repo_map_quality/navigation.json`。每个请求只描述模块职责或符号，不直接给出目标文件路径或文件名；加载器会拒绝泄露目标路径的用例。
+
+离线模式在当前仓库生成真实 Repo Map，统计目标文件是否进入前 K 个地图文件：
+
+```bash
+python eval/run_repo_map_eval.py \
+  --mode offline \
+  --top-k 5 \
+  --output eval/results/repo-map/offline
+```
+
+成对模式使用当前 MewCode Provider，对每个任务分别关闭和开启 Repo Map，统计首次读取目标文件前的 `find_files`、`search_code`、`read_file` 探索调用数：
+
+```bash
+python eval/run_repo_map_eval.py \
+  --mode paired \
+  --model gpt-5.5 \
+  --output eval/results/repo-map/paired
+```
+
+`results.json` 保存逐用例 Top-K 文件、目标读取情况、探索调用数、最终回复和错误；`report.md` 汇总关闭/开启时的 Top-K 命中率与平均探索调用数。可用 `--map-budget` 调整地图预算，用 `--root` 指向另一个仓库。
+
+该专项用于人工比较导航质量和版本趋势，不设置真实模型通过阈值，也不是每次 CI 的硬性门禁。`offline` 结果只验证地图排序和评测管线；`paired` 会消耗真实模型额度，并受到模型版本、网络和采样波动影响。

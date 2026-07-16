@@ -7,7 +7,7 @@ import pytest
 
 from mewcode.config import AppConfig, PromptCacheConfig
 from mewcode.errors import ProviderError
-from mewcode.prompting.base import PromptBlock, PromptBundle
+from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
 from mewcode.providers.base import ChatMessage, ChatRequest
 from mewcode.providers.factory import create_provider
 from mewcode.providers.openai import OpenAIProvider
@@ -78,6 +78,16 @@ def prompt_bundle() -> PromptBundle:
                 stable=False,
             ),
         ),
+    )
+
+
+def repo_map_block(text: str = "<mewcode_repo_map>def target(...)</mewcode_repo_map>") -> GeneratedContextBlock:
+    return GeneratedContextBlock(
+        name="repo_map",
+        title="仓库地图",
+        text=text,
+        kind="repo_map",
+        snapshot_id="snapshot-1",
     )
 
 
@@ -196,6 +206,40 @@ async def test_openai_payload_includes_structured_prompt_messages() -> None:
     assert messages[2] == {"role": "user", "content": "hello"}
     assert seen["payload"]["tools"]
     assert "prompt_cache_key" in seen["payload"]
+
+
+def test_openai_repo_map_is_after_stable_prefix_and_before_dynamic_runtime() -> None:
+    provider = OpenAIProvider(openai_config())
+    base = prompt_bundle()
+    prompt = PromptBundle(
+        stable_blocks=base.stable_blocks,
+        runtime_blocks=base.runtime_blocks,
+        generated_context_blocks=(repo_map_block(),),
+    )
+
+    messages = provider._prompt_messages(ChatRequest(messages=(), prompt=prompt))
+
+    assert len(messages) == 3
+    assert "可缓存运行时前缀" in messages[0]["content"]
+    assert "<mewcode_repo_map>" in messages[1]["content"]
+    assert "<mewcode_runtime_context>" in messages[2]["content"]
+    assert all(message["role"] == "system" for message in messages)
+
+
+def test_openai_repo_map_does_not_change_stable_cache_key_or_prefix() -> None:
+    provider = OpenAIProvider(openai_config())
+    base = prompt_bundle()
+    first_prompt = PromptBundle(base.stable_blocks, base.runtime_blocks, (repo_map_block("map-one"),))
+    second_prompt = PromptBundle(base.stable_blocks, base.runtime_blocks, (repo_map_block("map-two"),))
+    first = ChatRequest(messages=(), tools=(read_file_spec(),), prompt=first_prompt)
+    second = ChatRequest(messages=(), tools=(read_file_spec(),), prompt=second_prompt)
+
+    assert provider._prompt_cache_key(first) == provider._prompt_cache_key(second)
+    assert provider._prompt_messages(first)[0] == provider._prompt_messages(second)[0]
+    assert provider._prompt_messages(first)[1] != provider._prompt_messages(second)[1]
+    payload = provider._payload(first)
+    assert "prompt_cache_options" not in payload
+    assert provider.supports_snapshot_cache_breakpoint() is False
 
 
 @pytest.mark.asyncio

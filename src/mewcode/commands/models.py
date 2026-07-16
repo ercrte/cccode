@@ -6,6 +6,7 @@ from typing import Literal, Protocol
 
 from mewcode.mcp.manager import McpLoadReport
 from mewcode.providers.base import TokenUsage
+from mewcode.repo_map.models import RepoMapStatus
 
 
 AgentMode = Literal["normal", "plan"]
@@ -75,6 +76,7 @@ class CommandStatusSnapshot:
     last_usage: TokenUsage | None
     mcp_report: McpLoadReport | None
     mcp_active_tools: tuple[str, ...] = ()
+    repo_map: RepoMapStatus | None = None
 
 
 @dataclass(frozen=True)

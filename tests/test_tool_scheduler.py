@@ -65,6 +65,19 @@ def make_scheduler(registry: ToolRegistry, tmp_path: Path, mode: str = "normal")
     )
 
 
+class RecordingObserver:
+    def __init__(self) -> None:
+        self.events: list[tuple[str, str, object | None]] = []
+
+    async def before_execute(self, call: ToolCall, spec: ToolSpec) -> object:
+        state = f"before:{call.id}"
+        self.events.append(("before", spec.name, None))
+        return state
+
+    async def after_execute(self, call: ToolCall, spec: ToolSpec, result, state: object | None) -> None:
+        self.events.append(("after", spec.name, state))
+
+
 def make_hook_context(registry: ToolRegistry, tmp_path: Path, mode: str = "normal") -> HookRuntimeContext:
     return HookRuntimeContext(
         cwd=tmp_path,
@@ -234,6 +247,43 @@ async def test_side_effect_tools_run_serially(tmp_path: Path) -> None:
 
     assert log == ["start:write_a", "end:write_a", "start:write_b", "end:write_b"]
     assert [result.tool_name for result in scheduler.results()] == ["write_a", "write_b"]
+
+
+@pytest.mark.asyncio
+async def test_execution_observer_wraps_only_actually_executed_tools(tmp_path: Path) -> None:
+    registry = make_registry(FakeTool("read", safety="read_only"), FakeTool("write", safety="side_effect"))
+    observer = RecordingObserver()
+    scheduler = ToolCallScheduler(
+        registry,
+        ToolExecutor(registry, ToolContext(cwd=tmp_path)),
+        ToolPolicy("normal"),
+        execution_observer=observer,
+    )
+
+    await collect(scheduler, [ToolCall(id="c1", name="read"), ToolCall(id="c2", name="write")])
+
+    assert observer.events == [
+        ("before", "read", None),
+        ("after", "read", "before:c1"),
+        ("before", "write", None),
+        ("after", "write", "before:c2"),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_execution_observer_is_not_called_for_policy_rejection(tmp_path: Path) -> None:
+    registry = make_registry(FakeTool("write", safety="side_effect"))
+    observer = RecordingObserver()
+    scheduler = ToolCallScheduler(
+        registry,
+        ToolExecutor(registry, ToolContext(cwd=tmp_path)),
+        ToolPolicy("plan"),
+        execution_observer=observer,
+    )
+
+    await collect(scheduler, [ToolCall(id="c1", name="write")])
+
+    assert observer.events == []
 
 
 @pytest.mark.asyncio

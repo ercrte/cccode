@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Mapping
+from dataclasses import replace
 from importlib import resources
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from mewcode.agent import AgentLoopRunner, CompletionDecision, StreamCollector, 
 from mewcode.commands import AgentCommand
 from mewcode.config import AgentConfig
 from mewcode.context.manager import ContextManager
+from mewcode.context.estimator import TokenEstimator
 from mewcode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, PreparedChatRequest, RequestFootprint
 from mewcode.errors import ProviderError
 from mewcode.hooks import parse_hook_config
@@ -23,6 +25,7 @@ from mewcode.mcp.tools import McpToolDefinition, RemoteMcpTool, SearchMcpToolsTo
 from mewcode.permissions import PermissionConfig
 from mewcode.permissions.controller import create_permission_controller
 from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent, TokenUsage
+from mewcode.repo_map import RepoMapSnapshot
 from mewcode.session import ChatSession, PendingPlan
 from mewcode.skills import LoadSkillTool, SkillManager
 from mewcode.skills.models import SkillRoots
@@ -72,13 +75,26 @@ class FakeContextManager:
         self.prepare_called = False
         self.recorded_usage: TokenUsage | None = None
 
-    async def prepare_request(self, *, session, provider, tools, prompt_factory, mode="auto"):
+    async def prepare_request(
+        self,
+        *,
+        session,
+        provider,
+        tools,
+        prompt_factory,
+        mode="auto",
+        optional_context_factory=None,
+        optional_context_max_tokens=0,
+    ):
         _ = provider, mode
         self.prepare_called = True
         self.prepare_calls += 1
         if self.fail or (self.fail_after is not None and self.prepare_calls >= self.fail_after):
             raise ContextLimitError("上下文超出预算")
         prompt = prompt_factory()
+        if optional_context_factory is not None:
+            blocks = await optional_context_factory(optional_context_max_tokens)
+            prompt = replace(prompt, generated_context_blocks=blocks)
         return PreparedChatRequest(
             request=session.build_request(tools=tools, prompt=prompt),
             footprint=RequestFootprint(chars=10, estimated_tokens=3),
@@ -88,6 +104,40 @@ class FakeContextManager:
     def record_usage(self, usage: TokenUsage | None, footprint: RequestFootprint) -> None:
         _ = footprint
         self.recorded_usage = usage
+
+    @property
+    def estimator(self):
+        return TokenEstimator(ContextConfig())
+
+
+class FakeRepoMapManager:
+    def __init__(self) -> None:
+        self.config = type("Config", (), {"max_tokens": 2000})()
+        self.started: list[str] = []
+        self.ended: list[object] = []
+
+    def begin_turn(self, source_request: str):
+        turn = type("Turn", (), {"source_request": source_request})()
+        self.started.append(source_request)
+        return turn
+
+    def end_turn(self, turn) -> None:
+        self.ended.append(turn)
+
+    async def build_snapshot(self, turn, granted_tokens: int, token_counter):
+        _ = turn, granted_tokens, token_counter
+        return RepoMapSnapshot(
+            snapshot_id="snapshot-1",
+            revision="revision-1",
+            text="<mewcode_repo_map>def target(...)</mewcode_repo_map>",
+            estimated_tokens=10,
+            included_files=("target.py",),
+            truncated=False,
+        )
+
+    def observer_for(self, turn):
+        _ = turn
+        return None
 
 
 class FakeMemoryManager:
@@ -202,6 +252,7 @@ def make_runner(
     memory_manager=None,
     hook_manager=None,
     mcp_manager=None,
+    repo_map_manager=None,
 ) -> AgentLoopRunner:
     tool_registry = registry or make_registry(FakeTool("read"))
     return AgentLoopRunner(
@@ -215,6 +266,7 @@ def make_runner(
         memory_manager=memory_manager,
         hook_manager=hook_manager,
         mcp_manager=mcp_manager,
+        repo_map_manager=repo_map_manager,
     )
 
 
@@ -657,6 +709,31 @@ async def test_runner_works_without_memory_manager(tmp_path: Path) -> None:
     runtime_text = provider.requests[0].prompt.runtime_blocks[-1].text
     assert "<mewcode_memory_index>" not in runtime_text
     assert runner.session.messages[-1].content == "完成"
+
+
+@pytest.mark.asyncio
+async def test_runner_injects_ephemeral_repo_map_and_closes_turn(tmp_path: Path) -> None:
+    provider = FakeProvider(
+        [[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="完成"))]]
+    )
+    repo_map = FakeRepoMapManager()
+    runner = make_runner(
+        provider,
+        tmp_path,
+        context_manager=FakeContextManager(),
+        repo_map_manager=repo_map,
+    )
+
+    await collect(runner, command("寻找 target"))
+
+    prompt = provider.requests[0].prompt
+    assert prompt is not None
+    assert len(prompt.generated_context_blocks) == 1
+    assert prompt.generated_context_blocks[0].kind == "repo_map"
+    assert prompt.generated_context_blocks[0].persistence == "request_ephemeral"
+    assert repo_map.started == ["寻找 target"]
+    assert len(repo_map.ended) == 1
+    assert all("mewcode_repo_map" not in message.content for message in runner.session.messages)
 
 
 @pytest.mark.asyncio

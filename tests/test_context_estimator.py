@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from mewcode.context.estimator import TokenEstimator
 from mewcode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, RequestFootprint, TokenAnchor
-from mewcode.prompting.base import PromptBlock, PromptBundle
+from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
 from mewcode.providers.base import ChatMessage
 from mewcode.tools.base import ToolCall, ToolSpec
 
@@ -47,6 +47,23 @@ def test_estimates_request_footprint_from_messages_tools_and_prompt() -> None:
 
     assert footprint.chars > len("hello")
     assert footprint.estimated_tokens > 0
+
+
+def test_estimator_counts_complete_generated_context_block() -> None:
+    estimator = TokenEstimator(ContextConfig(chars_per_token=4.0))
+    base = PromptBundle(stable_blocks=(), runtime_blocks=())
+    block = GeneratedContextBlock(
+        name="repo_map",
+        title="仓库地图",
+        text="<mewcode_repo_map>路径与边界</mewcode_repo_map>",
+        kind="repo_map",
+        snapshot_id="snapshot-1",
+    )
+    with_map = PromptBundle(stable_blocks=(), runtime_blocks=(), generated_context_blocks=(block,))
+
+    assert estimator.estimate_text(block.text) > 0
+    assert estimator.estimate_generated_context(block) > estimator.estimate_text("路径与边界")
+    assert estimator.request_footprint((), (), with_map).estimated_tokens > estimator.request_footprint((), (), base).estimated_tokens
 
 
 def test_estimates_with_usage_anchor_delta() -> None:

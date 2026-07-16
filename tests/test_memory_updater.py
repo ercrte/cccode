@@ -13,6 +13,8 @@ from mewcode.memory.models import KnowledgeContext, MemoryUpdateJob, SessionMemo
 from mewcode.memory.notes import MemoryNoteStore
 from mewcode.memory.updater import MemoryNoteUpdater, MemoryUpdateError
 from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from mewcode.prompting.base import GeneratedContextBlock, PromptBundle
+from mewcode.session import ChatSession
 from mewcode.session_id import SessionId
 from tests.test_memory_notes import note
 
@@ -106,6 +108,42 @@ async def test_updater_prompt_contains_categories_and_scopes(tmp_path: Path) -> 
     assert "reference" in prompt
     assert "scope 只能是 user 或 project" not in prompt  # 旧文本已被新指南替代
     assert "## 作用域（scope）判断规则" in prompt
+
+
+@pytest.mark.asyncio
+async def test_updater_never_receives_repo_map_request_context(tmp_path: Path) -> None:
+    updater, _store = make_updater(tmp_path)
+    provider = FakeProvider('{"operations": []}')
+    session = ChatSession()
+    session.append_user_message("以后默认中文")
+    session.build_request(
+        prompt=PromptBundle(
+            stable_blocks=(),
+            runtime_blocks=(),
+            generated_context_blocks=(
+                GeneratedContextBlock(
+                    name="repo_map",
+                    title="仓库地图",
+                    text='<mewcode_repo_map revision="abc123">\ntarget.py:1\n</mewcode_repo_map>',
+                    kind="repo_map",
+                    snapshot_id="snapshot-secret-id",
+                ),
+            ),
+        )
+    )
+    job = MemoryUpdateJob(
+        session_id=SessionId("20260612-080910-abcd"),
+        cwd=tmp_path,
+        turn_messages=tuple(session.messages),
+        final_message=ChatMessage(role="assistant", content="已记住"),
+        knowledge_context=KnowledgeContext(),
+    )
+
+    await updater.update(job=job, provider=provider)
+
+    prompt = provider.requests[0].messages[0].content
+    assert "<mewcode_repo_map" not in prompt
+    assert "snapshot-secret-id" not in prompt
 
 
 @pytest.mark.asyncio

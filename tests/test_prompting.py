@@ -7,7 +7,7 @@ from mewcode.hooks.models import HookPromptInjection
 from mewcode.memory.models import InstructionBlock, InstructionBundle, KnowledgeContext, MemoryIndex, RestoreReport
 from mewcode.mcp.search import McpPromptContext, McpServerToolSummary
 from mewcode.prompting.builder import PromptBuilder, runtime_instruction_level
-from mewcode.prompting.base import RuntimePromptContext
+from mewcode.prompting.base import GeneratedContextBlock, PromptBundle, RuntimePromptContext
 from mewcode.prompting.modules import stable_prompt_modules
 from mewcode.subagents.models import (
     ActiveSubAgentPrompt,
@@ -95,6 +95,23 @@ def test_stable_modules_are_ordered_and_cacheable() -> None:
     ]
     assert all(module.stable for module in modules)
     assert [module.cacheable for module in modules] == [False, False, False, False, False, False, True]
+
+
+def test_generated_context_block_preserves_ephemeral_untrusted_semantics() -> None:
+    block = GeneratedContextBlock(
+        name="repo_map",
+        title="仓库地图",
+        text="<mewcode_repo_map />",
+        kind="repo_map",
+        snapshot_id="snapshot-1",
+    )
+    bundle = PromptBundle(stable_blocks=(), runtime_blocks=(), generated_context_blocks=(block,))
+
+    assert block.provenance == "generated"
+    assert block.trust == "untrusted_repository_data"
+    assert block.persistence == "request_ephemeral"
+    assert block.cache_scope == "snapshot"
+    assert bundle.generated_context_blocks == (block,)
 
 
 def test_stable_modules_include_tool_rules() -> None:

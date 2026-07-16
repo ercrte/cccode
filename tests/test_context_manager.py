@@ -10,7 +10,7 @@ from mewcode.context.manager import ContextManager
 from mewcode.context.models import ContextConfig, ContextLimitError, RequestFootprint, TokenAnchor
 from mewcode.context.segmenter import ConversationSegmenter
 from mewcode.context.estimator import TokenEstimator
-from mewcode.prompting.base import PromptBlock, PromptBundle
+from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
 from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
 from mewcode.session import ChatSession
 from mewcode.tools.base import ToolCall
@@ -113,6 +113,65 @@ async def test_prepare_request_can_skip_when_context_disabled(tmp_path: Path) ->
         prompt_factory=lambda: prompt_factory(session),
     )
 
+    assert prepared.request.messages[0].content == "x" * 200
+
+
+@pytest.mark.asyncio
+async def test_optional_context_receives_only_remaining_low_priority_budget(tmp_path: Path) -> None:
+    config = ContextConfig(window_tokens=300, auto_reserve_tokens=20, chars_per_token=4.0)
+    session = ChatSession(messages=[message("必须保留的用户请求")])
+    grants: list[int] = []
+
+    async def optional(granted: int) -> tuple[GeneratedContextBlock, ...]:
+        grants.append(granted)
+        return (
+            GeneratedContextBlock(
+                name="repo_map",
+                title="仓库地图",
+                text="map" * min(granted, 20),
+                kind="repo_map",
+                snapshot_id="snapshot",
+            ),
+        )
+
+    prepared = await manager(tmp_path, config).prepare_request(
+        session=session,
+        provider=FakeProvider(),
+        tools=(),
+        prompt_factory=lambda: prompt_factory(session),
+        optional_context_factory=optional,
+        optional_context_max_tokens=2000,
+    )
+
+    assert grants
+    assert grants[0] < 2000
+    assert prepared.request.messages[0].content == "必须保留的用户请求"
+    assert prepared.request.prompt is not None
+    assert prepared.request.prompt.generated_context_blocks
+    assert prepared.footprint.estimated_tokens <= config.window_tokens - 10 - config.auto_reserve_tokens
+
+
+@pytest.mark.asyncio
+async def test_optional_context_is_omitted_when_high_priority_context_fills_budget(tmp_path: Path) -> None:
+    config = ContextConfig(enabled=False, window_tokens=40, auto_reserve_tokens=20, chars_per_token=1.0)
+    session = ChatSession(messages=[message("x" * 200)])
+    called = False
+
+    async def optional(granted: int) -> tuple[GeneratedContextBlock, ...]:
+        nonlocal called
+        called = True
+        return ()
+
+    prepared = await manager(tmp_path, config).prepare_request(
+        session=session,
+        provider=FakeProvider(),
+        tools=(),
+        prompt_factory=lambda: prompt_factory(session),
+        optional_context_factory=optional,
+        optional_context_max_tokens=2000,
+    )
+
+    assert called is False
     assert prepared.request.messages[0].content == "x" * 200
 
 

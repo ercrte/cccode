@@ -131,6 +131,11 @@ class OpenAIProvider:
         if cacheable_text:
             messages.append({"role": "system", "content": cacheable_text})
 
+        for block in request.prompt.generated_context_blocks:
+            text = self._prompt_blocks_text((block,))
+            if text:
+                messages.append({"role": "system", "content": text})
+
         runtime_text = self._prompt_blocks_text([block for block in request.prompt.runtime_blocks if not block.cacheable])
         if runtime_text:
             messages.append({"role": "system", "content": runtime_text})
@@ -166,6 +171,10 @@ class OpenAIProvider:
             *request.prompt.stable_blocks,
             *[block for block in request.prompt.runtime_blocks if block.cacheable],
         ]
+
+    def supports_snapshot_cache_breakpoint(self, model: str | None = None) -> bool:
+        _ = model
+        return False
 
     def _message_payload(self, message: ChatMessage) -> dict[str, Any]:
         if message.role == "tool":

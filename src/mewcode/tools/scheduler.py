@@ -20,6 +20,20 @@ class ToolGate(Protocol):
     def allows(self, spec: ToolSpec) -> bool:
         ...
 
+
+class ToolExecutionObserver(Protocol):
+    async def before_execute(self, call: ToolCall, spec: ToolSpec) -> object | None:
+        ...
+
+    async def after_execute(
+        self,
+        call: ToolCall,
+        spec: ToolSpec,
+        result: ToolResult,
+        state: object | None,
+    ) -> None:
+        ...
+
     def denial(self, spec: ToolSpec) -> str:
         ...
 
@@ -190,6 +204,7 @@ class ToolCallScheduler:
         permission_controller: PermissionController | None = None,
         hook_manager: object | None = None,
         hook_context: object | None = None,
+        execution_observer: ToolExecutionObserver | None = None,
     ) -> None:
         self.registry = registry
         self.executor = executor
@@ -197,6 +212,7 @@ class ToolCallScheduler:
         self.permission_controller = permission_controller
         self.hook_manager = hook_manager
         self.hook_context = hook_context
+        self.execution_observer = execution_observer
         self._results: list[ToolResult] = []
 
     def make_batches(self, calls: Sequence[ToolCall]) -> tuple[ToolBatch, ...]:
@@ -252,21 +268,21 @@ class ToolCallScheduler:
                         results.append(result)
                         continue
                     if self.permission_controller is None:
-                        result = await self.executor.execute(call)
+                        result = await self._execute(call)
                         after_results = await self._after_tool(call, result)
                         hook_results_by_call[call.id] = (*hook_results_by_call[call.id], *after_results)
                         results.append(result)
                         continue
                     tool = self.registry.get(call.name)
                     if tool is None:
-                        result = await self.executor.execute(call)
+                        result = await self._execute(call)
                         after_results = await self._after_tool(call, result)
                         hook_results_by_call[call.id] = (*hook_results_by_call[call.id], *after_results)
                         results.append(result)
                         continue
                     decision = self.permission_controller.evaluate(call, tool.spec)
                     if decision.kind == "allow":
-                        result = await self.executor.execute(call)
+                        result = await self._execute(call)
                         after_results = await self._after_tool(call, result)
                         hook_results_by_call[call.id] = (*hook_results_by_call[call.id], *after_results)
                         results.append(result)
@@ -289,7 +305,7 @@ class ToolCallScheduler:
                         permission=PermissionEventPayload(prompt=decision.prompt, decision=resolved),
                     )
                     if resolved.kind == "allow":
-                        result = await self.executor.execute(call)
+                        result = await self._execute(call)
                     else:
                         result = self.permission_controller.denial_result(call, resolved)
                     after_results = await self._after_tool(call, result)
@@ -314,7 +330,23 @@ class ToolCallScheduler:
         permission_denied = self._permission_denial(call)
         if permission_denied is not None:
             return permission_denied
-        return await self.executor.execute(call)
+        return await self._execute(call)
+
+    async def _execute(self, call: ToolCall) -> ToolResult:
+        tool = self.registry.get(call.name)
+        if tool is None or self.execution_observer is None:
+            return await self.executor.execute(call)
+        state: object | None = None
+        try:
+            state = await self.execution_observer.before_execute(call, tool.spec)
+        except Exception:
+            state = None
+        result = await self.executor.execute(call)
+        try:
+            await self.execution_observer.after_execute(call, tool.spec, result, state)
+        except Exception:
+            pass
+        return result
 
     async def _execute_or_reject_with_hooks(self, call: ToolCall) -> tuple[ToolResult, tuple[object, ...]]:
         hook_results: tuple[object, ...] = ()

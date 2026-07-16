@@ -14,7 +14,7 @@ from mewcode.errors import MewCodeError, ProviderError
 from mewcode.memory.models import KnowledgeContext, MemoryUpdateJob
 from mewcode.permissions.controller import PermissionController, create_permission_controller
 from mewcode.permissions.models import PermissionConfig, PermissionEventPayload
-from mewcode.prompting import PromptBuilder, RuntimePromptContext
+from mewcode.prompting import GeneratedContextBlock, PromptBuilder, RuntimePromptContext
 from mewcode.providers.base import ChatMessage, LLMProvider, StreamEvent, TokenUsage
 from mewcode.session import ChatSession
 from mewcode.subagents.cache import FileReadCache
@@ -30,6 +30,7 @@ from mewcode.hooks.models import HookEvent, HookExecutionResult, HookRuntimeCont
 if TYPE_CHECKING:
     from mewcode.memory.manager import SessionMemoryManager
     from mewcode.mcp.manager import McpManager
+    from mewcode.repo_map.manager import RepoMapManager, RepoMapTurn
     from mewcode.skills.manager import SkillManager
     from mewcode.teams.models import TeamPromptContext
 
@@ -168,6 +169,7 @@ class AgentLoopRunner:
         loop_controller: AgentLoopController | None = None,
         team_prompt_provider: Callable[[], TeamPromptContext | None] | None = None,
         mcp_manager: McpManager | None = None,
+        repo_map_manager: RepoMapManager | None = None,
     ) -> None:
         self.session = session
         self.provider = provider
@@ -199,10 +201,17 @@ class AgentLoopRunner:
         self.loop_controller = loop_controller
         self.team_prompt_provider = team_prompt_provider
         self.mcp_manager = mcp_manager
+        self.repo_map_manager = repo_map_manager
         self.mcp_turn_state = mcp_manager.create_turn_state() if mcp_manager is not None else None
+        self.repo_map_turn: RepoMapTurn | None = None
         self._cancel_requested = False
 
     async def run(self, command: AgentCommand, *, append_user_message: bool = True) -> AsyncIterator[TurnEvent]:
+        if self.repo_map_manager is not None and getattr(self.repo_map_manager.config, "enabled", True):
+            try:
+                self.repo_map_turn = self.repo_map_manager.begin_turn(command.model_text)
+            except Exception:
+                self.repo_map_turn = None
         if self.mcp_turn_state is not None:
             self.mcp_turn_state.begin_turn()
         try:
@@ -211,6 +220,12 @@ class AgentLoopRunner:
         finally:
             if self.mcp_turn_state is not None:
                 self.mcp_turn_state.end_turn()
+            if self.repo_map_manager is not None and self.repo_map_turn is not None:
+                try:
+                    self.repo_map_manager.end_turn(self.repo_map_turn)
+                except Exception:
+                    pass
+            self.repo_map_turn = None
 
     async def _run_turn(self, command: AgentCommand, *, append_user_message: bool = True) -> AsyncIterator[TurnEvent]:
         self._cancel_requested = False
@@ -298,12 +313,40 @@ class AgentLoopRunner:
                     )
 
                 try:
-                    prepared = await self.context_manager.prepare_request(
-                        session=self.session,
-                        provider=provider,
-                        tools=allowed_tools,
-                        prompt_factory=prompt_factory,  # type: ignore[arg-type]
-                    )
+                    if self.repo_map_manager is not None and self.repo_map_turn is not None:
+                        async def repo_map_factory(granted_tokens: int) -> tuple[GeneratedContextBlock, ...]:
+                            snapshot = await self.repo_map_manager.build_snapshot(
+                                self.repo_map_turn,  # type: ignore[arg-type]
+                                granted_tokens,
+                                self.context_manager.estimator.estimate_text,
+                            )
+                            if snapshot is None:
+                                return ()
+                            return (
+                                GeneratedContextBlock(
+                                    name="repo_map",
+                                    title="仓库地图",
+                                    text=snapshot.text,
+                                    kind="repo_map",
+                                    snapshot_id=snapshot.snapshot_id,
+                                ),
+                            )
+
+                        prepared = await self.context_manager.prepare_request(
+                            session=self.session,
+                            provider=provider,
+                            tools=allowed_tools,
+                            prompt_factory=prompt_factory,  # type: ignore[arg-type]
+                            optional_context_factory=repo_map_factory,
+                            optional_context_max_tokens=self.repo_map_manager.config.max_tokens,
+                        )
+                    else:
+                        prepared = await self.context_manager.prepare_request(
+                            session=self.session,
+                            provider=provider,
+                            tools=allowed_tools,
+                            prompt_factory=prompt_factory,  # type: ignore[arg-type]
+                        )
                 except ContextLimitError as exc:
                     text = str(exc)
                     stop_message = ChatMessage(role="assistant", content=text)
@@ -419,6 +462,11 @@ class AgentLoopRunner:
                     self.permission_controller,
                     hook_manager=self.hook_manager,
                     hook_context=hook_context,
+                    execution_observer=(
+                        self.repo_map_manager.observer_for(self.repo_map_turn)
+                        if self.repo_map_manager is not None and self.repo_map_turn is not None
+                        else None
+                    ),
                 )
                 self._bind_parent_context(command, allowed_tools, tool_whitelist)
                 try:

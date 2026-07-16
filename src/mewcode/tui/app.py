@@ -35,6 +35,7 @@ from mewcode.permissions.controller import PermissionController
 from mewcode.permissions.models import PermissionPrompt, UserPermissionChoice
 from mewcode.providers.base import LLMProvider, TokenUsage
 from mewcode.providers.base import ChatMessage
+from mewcode.repo_map.manager import RepoMapManager
 from mewcode.session import ChatSession
 from mewcode.skills import LOAD_SKILL_TOOL_NAME, LoadSkillTool, SkillConfigurationError, SkillManager, default_skill_roots
 from mewcode.skills.execution import ProviderResolver, create_isolated_skill_runner, create_provider_resolver
@@ -113,6 +114,7 @@ class MewCodeApp(App[None]):
         provider_resolver: ProviderResolver | None = None,
         hook_manager=None,
         team_manager: TeamManager | None = None,
+        repo_map_manager: RepoMapManager | None = None,
     ) -> None:
         super().__init__()
         self.session = session
@@ -126,6 +128,10 @@ class MewCodeApp(App[None]):
             config.context,
             self.executor.context.cwd,
             config.max_tokens,
+        )
+        self.repo_map_manager = repo_map_manager or RepoMapManager(
+            self.executor.context.cwd,
+            config.repo_map,
         )
         self.memory_manager = memory_manager
         self.restore_report = restore_report
@@ -186,6 +192,7 @@ class MewCodeApp(App[None]):
 
     async def on_mount(self) -> None:
         self.refresh_status()
+        await self.repo_map_manager.start()
         await self._show_restore_report()
         if self.mcp_manager is not None:
             try:
@@ -207,6 +214,7 @@ class MewCodeApp(App[None]):
         await self.hook_manager.close()
         if self.mcp_manager is not None:
             await self.mcp_manager.close()
+        await self.repo_map_manager.close()
 
     def set_permission_controller(self, controller: PermissionController) -> None:
         self.permission_controller = controller
@@ -280,6 +288,7 @@ class MewCodeApp(App[None]):
             last_usage=self.last_usage,
             mcp_report=mcp_report,
             mcp_active_tools=active_mcp_tools,
+            repo_map=self.repo_map_manager.status(),
         )
 
     def session_snapshot(self) -> CommandSessionSnapshot:
@@ -467,6 +476,7 @@ class MewCodeApp(App[None]):
             loop_controller=self.team_manager.loop_controller(self.executor.context.principal),
             team_prompt_provider=lambda: self.team_manager.prompt_context(self.executor.context.principal),
             mcp_manager=self.mcp_manager,
+            repo_map_manager=self.repo_map_manager,
         )
         self._runner = runner
         try:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import asdict
 import json
 import os
 import subprocess
@@ -37,6 +38,21 @@ from mew_eval.provider import ScriptedEvalProvider
 from mew_eval.report import write_json_report, write_markdown_report
 from mew_eval.runner import run_case, run_suite
 from mew_eval.scoring import case_status, score_case, total_score
+from repo_map_quality.loader import NavigationDatasetLoader, RepoMapQualityConfigError
+from repo_map_quality.models import (
+    NavigationCase,
+    NavigationCaseResult,
+    NavigationDataset,
+    NavigationSummary,
+    NavigationTrial,
+    RepoMapQualityReport,
+    RepoMapQualityRunOptions,
+)
+from repo_map_quality.report import (
+    write_json_report as write_repo_map_json_report,
+    write_markdown_report as write_repo_map_markdown_report,
+)
+from repo_map_quality.runner import RepoMapQualityRunner
 from mewcode.providers.base import ChatMessage, ChatRequest, PromptCacheUsage, StreamEvent, TokenUsage
 
 
@@ -643,3 +659,171 @@ def test_run_eval_cli_offline_shortcut(tmp_path: Path) -> None:
     data = json.loads((output / "results.json").read_text(encoding="utf-8"))
     assert data["provider"]["mode"] == "offline"
     assert data["summary"]["total_cases"] == 7
+
+
+def test_repo_map_navigation_loader_validates_and_round_trips(tmp_path: Path) -> None:
+    path = tmp_path / "navigation.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": "test-v1",
+                "cases": [
+                    {
+                        "id": "service-entry",
+                        "request": "start_service 是如何启动服务的？",
+                        "target_file": "pkg/service.py",
+                        "top_k": 3,
+                        "tags": ["entrypoint"],
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    dataset = NavigationDatasetLoader().load(path)
+    restored = json.loads(json.dumps(asdict(dataset), ensure_ascii=False))
+
+    assert dataset.version == "test-v1"
+    assert dataset.cases[0] == NavigationCase(
+        "service-entry",
+        "start_service 是如何启动服务的？",
+        "pkg/service.py",
+        3,
+        ("entrypoint",),
+    )
+    assert restored["cases"][0]["target_file"] == "pkg/service.py"
+
+
+@pytest.mark.parametrize(
+    "prompt_text,target",
+    [
+        ("请读取 pkg/service.py", "pkg/service.py"),
+        ("请读取 service.py", "pkg/service.py"),
+    ],
+)
+def test_repo_map_navigation_loader_rejects_target_leak(
+    tmp_path: Path,
+    prompt_text: str,
+    target: str,
+) -> None:
+    path = tmp_path / "navigation.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": "test-v1",
+                "cases": [{"id": "bad", "request": prompt_text, "target_file": target}],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RepoMapQualityConfigError, match="泄露"):
+        NavigationDatasetLoader().load(path)
+
+
+def test_default_repo_map_navigation_dataset_covers_core_modules() -> None:
+    dataset = NavigationDatasetLoader().load(
+        ROOT / "eval/cases/repo_map_quality/navigation.json"
+    )
+
+    assert len(dataset.cases) >= 8
+    tags = {tag for case in dataset.cases for tag in case.tags}
+    assert {"entrypoint", "context", "provider", "tools", "session", "repo-map"}.issubset(tags)
+    assert all(case.target_file not in case.request for case in dataset.cases)
+
+
+@pytest.mark.asyncio
+async def test_repo_map_quality_offline_runner_and_reports(tmp_path: Path) -> None:
+    package = tmp_path / "pkg"
+    package.mkdir()
+    (package / "service.py").write_text("def start_service(): pass\n", encoding="utf-8")
+    (package / "other.py").write_text("def unrelated(): pass\n", encoding="utf-8")
+    dataset = NavigationDataset(
+        version="test-v1",
+        cases=(NavigationCase("service-entry", "start_service 如何启动服务？", "pkg/service.py", 1),),
+    )
+
+    report = await RepoMapQualityRunner().run(
+        dataset,
+        RepoMapQualityRunOptions(mode="offline", root=tmp_path, map_budget=2000),
+    )
+    json_path = tmp_path / "out/results.json"
+    markdown_path = tmp_path / "out/report.md"
+    write_repo_map_json_report(report, json_path)
+    write_repo_map_markdown_report(report, markdown_path)
+
+    assert report.summary.case_count == 1
+    assert report.summary.disabled_top_k_hit_rate == 0.0
+    assert report.summary.enabled_top_k_hit_rate == 1.0
+    assert report.results[0].enabled.top_files == ("pkg/service.py",)
+    assert json.loads(json_path.read_text(encoding="utf-8"))["mode"] == "offline"
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert "Top-K 命中率" in markdown
+    assert "不是 CI 通过阈值" in markdown
+
+
+def test_repo_map_quality_report_contains_paired_metrics(tmp_path: Path) -> None:
+    report = RepoMapQualityReport(
+        dataset_version="test-v1",
+        mode="paired",
+        root="/repo",
+        started_at="2026-07-16T00:00:00+00:00",
+        results=(
+            NavigationCaseResult(
+                case_id="case-1",
+                target_file="pkg/service.py",
+                top_k=5,
+                disabled=NavigationTrial(
+                    enabled=False,
+                    target_hit=False,
+                    target_read=True,
+                    exploration_calls=4,
+                ),
+                enabled=NavigationTrial(
+                    enabled=True,
+                    target_hit=True,
+                    top_files=("pkg/service.py",),
+                    target_read=True,
+                    exploration_calls=1,
+                ),
+            ),
+        ),
+        summary=NavigationSummary(
+            case_count=1,
+            disabled_top_k_hit_rate=0.0,
+            enabled_top_k_hit_rate=1.0,
+            disabled_average_exploration_calls=4.0,
+            enabled_average_exploration_calls=1.0,
+        ),
+    )
+    json_path = tmp_path / "results.json"
+    markdown_path = tmp_path / "report.md"
+
+    write_repo_map_json_report(report, json_path)
+    write_repo_map_markdown_report(report, markdown_path)
+
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert data["summary"]["disabled_average_exploration_calls"] == 4.0
+    assert data["summary"]["enabled_average_exploration_calls"] == 1.0
+    assert "目标文件 Top-K 命中率" in markdown
+    assert "4.00" in markdown and "1.00" in markdown
+    assert "不是 CI 通过阈值" in markdown
+
+
+def test_repo_map_eval_cli_exposes_offline_and_paired_modes() -> None:
+    completed = subprocess.run(
+        [sys.executable, "eval/run_repo_map_eval.py", "--help"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "offline" in completed.stdout
+    assert "paired" in completed.stdout
+    assert "--top-k" in completed.stdout

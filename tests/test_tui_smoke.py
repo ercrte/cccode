@@ -8,7 +8,7 @@ import pytest
 from textual.widgets import Button, Static
 
 from mewcode.agent import AgentProgress, TurnEvent
-from mewcode.config import AppConfig
+from mewcode.config import AppConfig, RepoMapConfig
 from mewcode.context.manager import ContextManager
 from mewcode.context.models import ContextConfig
 from mewcode.context.models import ContextCompactionReport, PreparedChatRequest, RequestFootprint
@@ -21,6 +21,7 @@ from mewcode.permissions import PermissionConfig
 from mewcode.permissions.controller import create_permission_controller
 from mewcode.permissions.models import PermissionPrompt
 from mewcode.providers.base import ChatMessage, ChatRequest, PromptCacheUsage, StreamEvent, TokenUsage
+from mewcode.repo_map.models import RepoMapStatus
 from mewcode.session import ChatSession
 from mewcode.skills import SkillManager, SkillRoots
 from mewcode.tools.base import ToolCall, ToolContext, ToolResult
@@ -144,13 +145,58 @@ class FakeMemoryManager:
         _ = job, provider
 
 
+class FakeRepoMapManager:
+    def __init__(self) -> None:
+        self.config = RepoMapConfig(enabled=True, max_tokens=321)
+        self.started = 0
+        self.closed = 0
+
+    async def start(self) -> None:
+        self.started += 1
+
+    async def close(self) -> None:
+        self.closed += 1
+
+    def status(self) -> RepoMapStatus:
+        return RepoMapStatus(
+            enabled=True,
+            state="ready",
+            root="/repo",
+            revision="abcdef0123456789",
+            configured_budget=321,
+            candidate_files=2,
+        )
+
+
 def make_config() -> AppConfig:
     return AppConfig(
         protocol="openai",
         model="test-model",
         base_url="https://example.test/v1",
         api_key="sk-tui-secret-1234567890",
+        repo_map=RepoMapConfig(enabled=False),
     )
+
+
+@pytest.mark.asyncio
+async def test_tui_manages_repo_map_lifecycle_and_reports_status() -> None:
+    manager = FakeRepoMapManager()
+    app = MewCodeApp(
+        ChatSession(),
+        FakeProvider([]),
+        make_config(),
+        repo_map_manager=manager,  # type: ignore[arg-type]
+    )
+
+    async with app.run_test() as pilot:
+        await submit_and_wait(app, pilot, "/status")
+        rendered = "\n".join(str(view.body.content) for view in app.query(MessageView))
+        assert manager.started == 1
+        assert "Repo Map：ready" in rendered
+        assert "根目录 /repo" in rendered
+        assert "revision abcdef012345" in rendered
+
+    assert manager.closed == 1
 
 
 async def submit_and_wait(app: MewCodeApp, pilot, text: str) -> None:

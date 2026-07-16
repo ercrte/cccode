@@ -51,6 +51,24 @@ thinking:
 
 `api_key` 可以直接写明文，也可以使用完整环境变量引用，例如 `${OPENAI_API_KEY}`。
 
+### Repo Map
+
+Repo Map 默认启用，为主 Agent 的每次模型请求生成一份 Python 仓库导航索引。默认预算为 2,000 Token，可在用户级或项目级配置中调整：
+
+```yaml
+repo_map:
+  enabled: true
+  max_tokens: 2000
+```
+
+也可以用 `repo_map: false` 或 `repo_map.enabled: false` 完全关闭。预算不足、索引尚未准备好或仓库中没有 `.py`/`.pyi` 文件时，MewCode 会安全省略整块地图，不阻塞普通请求。
+
+Git 项目以 Worktree 根目录为范围，包含 tracked 文件以及未被 ignore 的 untracked Python 文件；非 Git 目录使用安全遍历。索引不跟随 symlink，不会越出项目根目录。源码变化按内容哈希产生新的 workspace revision：只读工具后同一快照保持不变，编辑、删除或命令可能修改源码后，下一次模型调用会取得新 revision 的地图。
+
+地图只包含经过清理的类、函数和方法签名及启发式关系，不包含注释和 docstring。它以 `untrusted_repository_data` 标记为不可信导航数据；模型在修改文件或依赖实现细节前仍必须使用 `read_file` 或 `search_code` 查看真实源码。Repo Map 是请求期临时上下文，不写入聊天历史、上下文摘要、会话恢复或长期记忆。
+
+Repo Map 位于长期稳定 Prompt Cache 前缀之后，不参与稳定缓存身份；支持快照级缓存边界的 Provider 可以短期复用同一快照。输入 `/status` 可查看 enabled/state、workspace revision、配置与有效预算、候选/纳入文件数、裁剪、三层缓存命中、耗时和降级原因。
+
 ### MCP Server
 
 可以在用户级或项目级配置中通过 `mcp_servers` 声明外部 MCP Server。该字段是一个 map，每个 key 是 Server 名。用户级和项目级都声明时，不同名 Server 会同时保留，项目级同名 Server 会覆盖用户级同名 Server。
@@ -146,7 +164,7 @@ mewcode --new-session
 - `/session`：显示当前会话标识、恢复状态、消息数量和模式。
 - `/memory`：显示长期记忆启用状态、索引可用状态和自动笔记状态。
 - `/permission`：显示权限模式和各层规则数量，不修改权限规则。
-- `/status`：显示供应商、模型、当前模式、任务状态、最近 Token 用量和 MCP 加载概况。
+- `/status`：显示供应商、模型、当前模式、任务状态、最近 Token 用量、Repo Map 状态和 MCP 加载概况。
 - `/mcp auth <server>`、`/mcp logout <server>`：授权或退出启用 OAuth 的远程 MCP Server。
 - `/agents`：显示可用子 Agent 角色和后台任务详情。
 - `/background`：把当前前台等待的子 Agent 任务切到后台，完成后再通知主对话。

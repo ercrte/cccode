@@ -15,6 +15,7 @@ from mewcode.memory.notes import MemoryNoteStore
 from mewcode.memory.recovery import SessionBootstrapper, SessionHistoryValidator
 from mewcode.memory.session_store import SessionJsonlStore, message_to_json
 from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from mewcode.prompting.base import GeneratedContextBlock, PromptBundle
 from mewcode.session import ChatSession
 from mewcode.session_id import SessionId
 from mewcode.tools.base import ToolCall
@@ -47,6 +48,34 @@ class FakeContextManager:
                 heavy_compacted=self.compacted,
             ),
         )
+
+
+def test_repo_map_prompt_is_not_saved_or_restored(tmp_path: Path) -> None:
+    store = SessionJsonlStore(tmp_path, _config(tmp_path))
+    session_id = SessionId("20260612-080910-abcd")
+    session = store.create_session(session_id)
+    session.append_user_message("请定位目标函数")
+    repo_map = GeneratedContextBlock(
+        name="repo_map",
+        title="仓库地图",
+        text='<mewcode_repo_map revision="abc123">\ntarget.py:1\n</mewcode_repo_map>',
+        kind="repo_map",
+        snapshot_id="snapshot-secret-id",
+    )
+    session.build_request(
+        prompt=PromptBundle(stable_blocks=(), runtime_blocks=(), generated_context_blocks=(repo_map,))
+    )
+    session.append_assistant_message(ChatMessage(role="assistant", content="请先读取 target.py"))
+    session.append_checkpoint()
+
+    persisted = (store.sessions_dir / f"{session_id}.jsonl").read_text(encoding="utf-8")
+    restored, _report = store.load_session(session_id)
+    restored_text = "\n".join(message.content for message in restored.messages)
+
+    assert "<mewcode_repo_map" not in persisted
+    assert "snapshot-secret-id" not in persisted
+    assert "<mewcode_repo_map" not in restored_text
+    assert "snapshot-secret-id" not in restored_text
 
 
 def test_validator_keeps_complete_tool_segments() -> None:

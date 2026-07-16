@@ -7,7 +7,7 @@ import pytest
 
 from mewcode.config import AppConfig, PromptCacheConfig, ThinkingConfig
 from mewcode.errors import ProviderError
-from mewcode.prompting.base import PromptBlock, PromptBundle
+from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
 from mewcode.providers.anthropic import AnthropicProvider
 from mewcode.providers.base import ChatMessage, ChatRequest
 from mewcode.providers.factory import create_provider
@@ -83,6 +83,16 @@ def prompt_bundle() -> PromptBundle:
                 stable=False,
             ),
         ),
+    )
+
+
+def repo_map_block(text: str = "<mewcode_repo_map>def target(...)</mewcode_repo_map>") -> GeneratedContextBlock:
+    return GeneratedContextBlock(
+        name="repo_map",
+        title="仓库地图",
+        text=text,
+        kind="repo_map",
+        snapshot_id="snapshot-1",
     )
 
 
@@ -204,6 +214,35 @@ async def test_anthropic_payload_includes_structured_system_blocks() -> None:
     }
     assert seen["payload"]["tools"]
     assert seen["payload"]["messages"] == [{"role": "user", "content": "hello"}]
+
+
+def test_anthropic_repo_map_has_second_snapshot_cache_boundary() -> None:
+    provider = AnthropicProvider(anthropic_config())
+    base = prompt_bundle()
+    prompt = PromptBundle(base.stable_blocks, base.runtime_blocks, (repo_map_block(),))
+
+    system = provider._system_blocks(ChatRequest(messages=(), prompt=prompt))
+
+    assert "可缓存运行时前缀" in system[2]["text"]
+    assert system[2]["cache_control"] == {"type": "ephemeral"}
+    assert "<mewcode_repo_map>" in system[3]["text"]
+    assert system[3]["cache_control"] == {"type": "ephemeral"}
+    assert "<mewcode_runtime_context>" in system[4]["text"]
+    assert "cache_control" not in system[4]
+
+
+def test_anthropic_repo_map_change_preserves_long_term_prefix() -> None:
+    provider = AnthropicProvider(anthropic_config())
+    base = prompt_bundle()
+    first = PromptBundle(base.stable_blocks, base.runtime_blocks, (repo_map_block("map-one"),))
+    second = PromptBundle(base.stable_blocks, base.runtime_blocks, (repo_map_block("map-two"),))
+
+    first_system = provider._system_blocks(ChatRequest(messages=(), prompt=first))
+    second_system = provider._system_blocks(ChatRequest(messages=(), prompt=second))
+
+    assert first_system[:3] == second_system[:3]
+    assert first_system[3] != second_system[3]
+    assert first_system[3]["cache_control"] == second_system[3]["cache_control"]
 
 
 @pytest.mark.asyncio

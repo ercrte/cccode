@@ -369,6 +369,7 @@ def _format_status(
             f"功能{_enabled(sub_agent_snapshot.enabled)}，角色 {len(sub_agent_snapshot.available)} 个，"
             f"后台/运行 {active_background} 个，告警 {sub_agent_snapshot.warning_count} 条"
         )
+    repo_map_line = _format_repo_map_status(snapshot)
     return "\n".join(
         (
             "运行状态：",
@@ -378,9 +379,29 @@ def _format_status(
             f"- 任务运行中：{_enabled(snapshot.agent_running)}",
             f"- Token：{_format_usage(snapshot.last_usage)}",
             f"- MCP：{mcp}",
+            f"- Repo Map：{repo_map_line}",
             f"- Skill：{skill_line}",
             f"- 子 Agent：{sub_agent_line}",
         )
+    )
+
+
+def _format_repo_map_status(snapshot: CommandStatusSnapshot) -> str:
+    status = snapshot.repo_map
+    if status is None:
+        return "未配置或未初始化"
+    if not status.enabled:
+        return "已禁用"
+
+    root = status.root or "未知"
+    revision = status.revision[:12] if status.revision else "暂无"
+    elapsed = f"{status.elapsed_ms:.1f}ms" if status.elapsed_ms is not None else "未知"
+    suffix = f"；原因 {status.reason}" if status.reason else ""
+    return (
+        f"{status.state}，根目录 {root}，revision {revision}，候选 {status.candidate_files} 个/纳入 "
+        f"{status.included_files} 个，预算 {status.effective_budget}/{status.configured_budget} tokens，"
+        f"裁剪 {_enabled(status.truncated)}，缓存 parse={status.cache.parse}, "
+        f"graph={status.cache.graph}, snapshot={status.cache.snapshot}，耗时 {elapsed}{suffix}"
     )
 
 

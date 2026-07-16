@@ -165,7 +165,18 @@ class AnthropicProvider:
             for block in self._dynamic_runtime_blocks(request)
             if block.text.strip()
         ]
-        return [*cache_prefix_blocks, *runtime_blocks]
+        generated_blocks = [
+            {"type": "text", "text": self._prompt_block_text(block)}
+            for block in request.prompt.generated_context_blocks
+            if block.text.strip()
+        ]
+        if (
+            generated_blocks
+            and self.config.prompt_cache.enabled
+            and self.config.prompt_cache.anthropic_cache_control
+        ):
+            generated_blocks[-1]["cache_control"] = {"type": "ephemeral"}
+        return [*cache_prefix_blocks, *generated_blocks, *runtime_blocks]
 
     def _cache_prefix_blocks(self, request: ChatRequest) -> tuple[PromptBlock, ...]:
         if request.prompt is None:

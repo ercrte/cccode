@@ -11,6 +11,7 @@ from mewcode.config import (
     McpOAuthConfig,
     McpServerConfig,
     PromptCacheConfig,
+    RepoMapConfig,
     load_config,
     resolve_api_key,
 )
@@ -82,6 +83,49 @@ api_key: plain-key
     assert config.mcp.servers == {}
     assert config.context == ContextConfig()
     assert config.memory == SessionMemoryConfig()
+    assert config.repo_map == RepoMapConfig(enabled=True, max_tokens=2000)
+
+
+def test_loads_repo_map_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    write_yaml(
+        tmp_path / ".mewcode.yaml",
+        """
+protocol: openai
+model: test-model
+base_url: https://example.test/v1
+api_key: plain-key
+repo_map:
+  enabled: false
+  max_tokens: 750
+""",
+    )
+
+    config = load_config(tmp_path)
+
+    assert config.repo_map == RepoMapConfig(enabled=False, max_tokens=750)
+
+
+@pytest.mark.parametrize("snippet", ["repo_map: []", "repo_map:\n  max_tokens: 0"])
+def test_rejects_invalid_repo_map_config(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    snippet: str,
+) -> None:
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    write_yaml(
+        tmp_path / ".mewcode.yaml",
+        f"""
+protocol: openai
+model: test-model
+base_url: https://example.test/v1
+api_key: plain-key
+{snippet}
+""",
+    )
+
+    with pytest.raises(ConfigError, match="repo_map"):
+        load_config(tmp_path)
 
 
 def test_loads_hook_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

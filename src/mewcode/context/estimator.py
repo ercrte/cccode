@@ -6,7 +6,7 @@ from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from mewcode.context.models import ContextConfig, RequestFootprint, TokenAnchor
-from mewcode.prompting.base import PromptBundle
+from mewcode.prompting.base import GeneratedContextBlock, PromptBundle
 from mewcode.providers.base import ChatMessage
 from mewcode.tools.base import ToolSpec
 
@@ -40,6 +40,13 @@ class TokenEstimator:
         chars = len(json.dumps(self._message_payload(message), ensure_ascii=False, sort_keys=True, default=str))
         return self._chars_to_tokens(chars)
 
+    def estimate_text(self, text: str) -> int:
+        return self._chars_to_tokens(len(text))
+
+    def estimate_generated_context(self, block: GeneratedContextBlock) -> int:
+        chars = len(json.dumps(self._dataclass_payload(block), ensure_ascii=False, sort_keys=True, default=str))
+        return self._chars_to_tokens(chars)
+
     def _chars_to_tokens(self, chars: int) -> int:
         return max(1, math.ceil(chars / self.config.chars_per_token))
 
@@ -48,6 +55,9 @@ class TokenEstimator:
             return None
         return {
             "stable_blocks": [self._dataclass_payload(block) for block in prompt.stable_blocks],
+            "generated_context_blocks": [
+                self._dataclass_payload(block) for block in prompt.generated_context_blocks
+            ],
             "runtime_blocks": [self._dataclass_payload(block) for block in prompt.runtime_blocks],
         }
 

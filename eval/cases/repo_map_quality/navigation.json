@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "tui-main-loop",
+      "request": "MewCodeApp 在主终端界面中如何创建并运行模型循环？概括它注入的依赖。",
+      "target_file": "src/mewcode/tui/app.py",
+      "top_k": 5,
+      "tags": ["entrypoint", "tui"]
+    },
+    {
+      "id": "context-budget",
+      "request": "ContextManager 在模型请求发出前如何估算、压缩并分配可选上下文预算？",
+      "target_file": "src/mewcode/context/manager.py",
+      "top_k": 5,
+      "tags": ["context", "budget"]
+    },
+    {
+      "id": "openai-prompt-order",
+      "request": "OpenAIProvider 如何排列稳定提示、生成上下文与动态运行提示？",
+      "target_file": "src/mewcode/providers/openai.py",
+      "top_k": 5,
+      "tags": ["provider", "prompt-cache"]
+    },
+    {
+      "id": "anthropic-cache-boundary",
+      "request": "AnthropicProvider 在哪里建立稳定前缀和快照级的两层缓存边界？",
+      "target_file": "src/mewcode/providers/anthropic.py",
+      "top_k": 5,
+      "tags": ["provider", "prompt-cache"]
+    },
+    {
+      "id": "tool-execution-boundary",
+      "request": "ToolCallScheduler 如何区分权限拒绝、Hook 拦截和真正执行，并在什么位置通知观察者？",
+      "target_file": "src/mewcode/tools/scheduler.py",
+      "top_k": 5,
+      "tags": ["tools", "permissions"]
+    },
+    {
+      "id": "session-request-isolation",
+      "request": "ChatSession 如何把消息构造成供应商请求，并确保请求期提示不会追加到聊天历史？",
+      "target_file": "src/mewcode/session.py",
+      "top_k": 5,
+      "tags": ["session", "persistence"]
+    },
+    {
+      "id": "repo-map-configuration",
+      "request": "RepoMapConfig 的默认开关、Token 预算及 YAML 校验由哪部分负责？",
+      "target_file": "src/mewcode/config.py",
+      "top_k": 5,
+      "tags": ["configuration", "repo-map"]
+    },
+    {
+      "id": "repo-map-lifecycle",
+      "request": "RepoMapManager 如何维护后台索引、workspace revision、三层缓存和请求期快照？",
+      "target_file": "src/mewcode/repo_map/manager.py",
+      "top_k": 5,
+      "tags": ["repo-map", "lifecycle"]
+    }
+  ]
+}

@@ -26,6 +26,7 @@ from mewcode.commands import (
 from mewcode.mcp.manager import McpLoadReport
 from mewcode.mcp.oauth.models import McpOAuthStatus
 from mewcode.providers.base import TokenUsage
+from mewcode.repo_map.models import RepoMapCacheStatus, RepoMapStatus
 from mewcode.skills import LoadSkillTool, SkillManager
 from mewcode.skills.models import SkillRoots
 from mewcode.tools.registry import create_default_registry
@@ -87,6 +88,19 @@ class FakeContext:
                 warnings=("系统 Keyring 不可用，OAuth 凭据仅在当前进程内保存",),
             ),
             mcp_active_tools=("local__echo",),
+            repo_map=RepoMapStatus(
+                enabled=True,
+                state="ready",
+                root="/repo",
+                revision="0123456789abcdef",
+                configured_budget=2000,
+                effective_budget=1200,
+                candidate_files=12,
+                included_files=4,
+                truncated=True,
+                cache=RepoMapCacheStatus(parse="mixed", graph="hit", snapshot="hit"),
+                elapsed_ms=2.5,
+            ),
         )
 
     def session_snapshot(self) -> CommandSessionSnapshot:
@@ -399,6 +413,10 @@ async def test_session_memory_permission_and_status_commands_render_snapshots() 
     assert "供应商：openai" in rendered
     assert "Token：5" in rendered
     assert "失败 Server 1 个" in rendered
+    assert "Repo Map：ready" in rendered
+    assert "revision 0123456789ab" in rendered
+    assert "预算 1200/2000 tokens" in rendered
+    assert "parse=mixed, graph=hit, snapshot=hit" in rendered
     assert "发现工具 2 个" in rendered
     assert "当前轮次暴露 1 个" in rendered
     assert "github=需要授权" in rendered

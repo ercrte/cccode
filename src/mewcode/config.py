@@ -55,6 +55,12 @@ class PromptCacheConfig:
 
 
 @dataclass(frozen=True)
+class RepoMapConfig:
+    enabled: bool = True
+    max_tokens: int = 2000
+
+
+@dataclass(frozen=True)
 class McpOAuthConfig:
     enabled: bool = True
     client_id: str | None = None
@@ -91,6 +97,7 @@ class AppConfig:
     agent: AgentConfig = field(default_factory=AgentConfig)
     permissions: PermissionConfig = field(default_factory=PermissionConfig)
     prompt_cache: PromptCacheConfig = field(default_factory=PromptCacheConfig)
+    repo_map: RepoMapConfig = field(default_factory=RepoMapConfig)
     hooks: HookConfig = field(default_factory=HookConfig)
     mcp: McpConfig = field(default_factory=McpConfig)
     context: ContextConfig = field(default_factory=ContextConfig)
@@ -197,6 +204,7 @@ def _parse_config(raw: dict[str, Any]) -> AppConfig:
         thinking=_parse_thinking(raw.get("thinking")),
         agent=_parse_agent(raw.get("agent")),
         prompt_cache=_parse_prompt_cache(raw.get("prompt_cache")),
+        repo_map=_parse_repo_map(raw.get("repo_map")),
         permissions=_parse_permissions(raw.get("permissions")),
         hooks=parse_hook_config(raw.get("hooks")),
         mcp=_parse_mcp_config(raw.get("mcp_servers")),
@@ -276,6 +284,21 @@ def _parse_prompt_cache(raw: Any) -> PromptCacheConfig:
         openai_retention=openai_retention,
         anthropic_cache_control=bool(raw.get("anthropic_cache_control", True)),
     )
+
+
+def _parse_repo_map(raw: Any) -> RepoMapConfig:
+    if raw is None:
+        return RepoMapConfig()
+    if isinstance(raw, bool):
+        return RepoMapConfig(enabled=raw)
+    if not isinstance(raw, dict):
+        raise ConfigError("repo_map 必须是 YAML 对象或布尔值")
+
+    enabled = bool(raw.get("enabled", True))
+    max_tokens = _parse_int(raw.get("max_tokens", 2000), "repo_map.max_tokens")
+    if enabled and max_tokens <= 0:
+        raise ConfigError("repo_map.max_tokens 必须大于 0")
+    return RepoMapConfig(enabled=enabled, max_tokens=max_tokens)
 
 
 def _parse_teams(raw: Any) -> TeamConfig:

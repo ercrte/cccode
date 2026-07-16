@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from mewcode.prompting.base import (
+    GeneratedContextBlock,
     PromptBlock,
     PromptBundle,
     RuntimeInstructionLevel,
@@ -15,6 +16,7 @@ from mewcode.prompting.builder import (
 from mewcode.prompting.modules import stable_prompt_modules
 
 __all__ = [
+    "GeneratedContextBlock",
     "PromptBlock",
     "PromptBundle",
     "PromptBuilder",

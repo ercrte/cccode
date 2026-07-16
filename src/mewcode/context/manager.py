@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import replace
 from pathlib import Path
 
@@ -18,10 +18,13 @@ from mewcode.context.models import (
 from mewcode.context.segmenter import ConversationSegment, ConversationSegmenter
 from mewcode.context.store import ContextStore
 from mewcode.context.summarizer import HistorySummarizer
-from mewcode.prompting.base import PromptBundle
+from mewcode.prompting.base import GeneratedContextBlock, PromptBundle
 from mewcode.providers.base import LLMProvider, TokenUsage
 from mewcode.session import ChatSession
 from mewcode.tools.base import ToolSpec
+
+
+OptionalContextFactory = Callable[[int], Awaitable[tuple[GeneratedContextBlock, ...]]]
 
 
 class ContextManager:
@@ -53,19 +56,31 @@ class ContextManager:
         tools: Sequence[ToolSpec],
         prompt_factory: Callable[[], PromptBundle],
         mode: str = "auto",
+        optional_context_factory: OptionalContextFactory | None = None,
+        optional_context_max_tokens: int = 0,
     ) -> PreparedChatRequest:
         self._last_session = session
+        reserve_tokens = self.config.manual_reserve_tokens if mode == "manual" else self.config.auto_reserve_tokens
+        budget = self._input_budget(reserve_tokens)
         if not self.config.enabled:
             prompt = prompt_factory()
-            return self._prepared(session, tools, prompt, None)
+            footprint = self._anchored_footprint(session, tools, prompt)
+            return await self._with_optional_context(
+                session=session,
+                tools=tools,
+                prompt=prompt,
+                report=None,
+                footprint=footprint,
+                budget=budget,
+                factory=optional_context_factory,
+                max_tokens=optional_context_max_tokens,
+            )
 
         before_prompt = prompt_factory()
         before_footprint = self._anchored_footprint(session, tools, before_prompt)
         tool_result = self.compactor.compact(session)
         prompt = prompt_factory()
         footprint = self._anchored_footprint(session, tools, prompt)
-        reserve_tokens = self.config.manual_reserve_tokens if mode == "manual" else self.config.auto_reserve_tokens
-        budget = self._input_budget(reserve_tokens)
         report = ContextCompactionReport(
             mode="manual" if mode == "manual" else "auto",
             light_compacted=tool_result.changed,
@@ -79,7 +94,16 @@ class ContextManager:
         )
 
         if footprint.estimated_tokens <= budget:
-            return self._prepared(session, tools, prompt, report if tool_result.changed else None, footprint)
+            return await self._with_optional_context(
+                session=session,
+                tools=tools,
+                prompt=prompt,
+                report=report if tool_result.changed else None,
+                footprint=footprint,
+                budget=budget,
+                factory=optional_context_factory,
+                max_tokens=optional_context_max_tokens,
+            )
 
         try:
             heavy_report = await self._heavy_compact(
@@ -95,13 +119,80 @@ class ContextManager:
                 raise ContextLimitError("上下文摘要连续失败，已停止本次请求。", report=failure_report) from exc
             if footprint.estimated_tokens > budget:
                 raise ContextLimitError("上下文已接近或超过预算，且摘要失败。", report=failure_report) from exc
-            return self._prepared(session, tools, prompt, failure_report, footprint)
+            return await self._with_optional_context(
+                session=session,
+                tools=tools,
+                prompt=prompt,
+                report=failure_report,
+                footprint=footprint,
+                budget=budget,
+                factory=optional_context_factory,
+                max_tokens=optional_context_max_tokens,
+            )
 
         prompt = prompt_factory()
         final_footprint = self._anchored_footprint(session, tools, prompt)
         if final_footprint.estimated_tokens > budget:
             raise ContextLimitError("上下文压缩后仍超过预算，已停止本次请求。", report=heavy_report)
-        return self._prepared(session, tools, prompt, heavy_report, final_footprint)
+        return await self._with_optional_context(
+            session=session,
+            tools=tools,
+            prompt=prompt,
+            report=heavy_report,
+            footprint=final_footprint,
+            budget=budget,
+            factory=optional_context_factory,
+            max_tokens=optional_context_max_tokens,
+        )
+
+    async def _with_optional_context(
+        self,
+        *,
+        session: ChatSession,
+        tools: Sequence[ToolSpec],
+        prompt: PromptBundle,
+        report: ContextCompactionReport | None,
+        footprint: RequestFootprint,
+        budget: int,
+        factory: OptionalContextFactory | None,
+        max_tokens: int,
+    ) -> PreparedChatRequest:
+        if factory is None or max_tokens <= 0 or footprint.estimated_tokens >= budget:
+            return self._prepared(session, tools, prompt, report, footprint)
+        granted = min(max_tokens, budget - footprint.estimated_tokens)
+        if granted <= 0:
+            return self._prepared(session, tools, prompt, report, footprint)
+
+        base_blocks = tuple(prompt.generated_context_blocks)
+        try:
+            optional_blocks = await factory(granted)
+        except Exception:
+            optional_blocks = ()
+        if not optional_blocks:
+            return self._prepared(session, tools, prompt, report, footprint)
+        combined = replace(
+            prompt,
+            generated_context_blocks=(*base_blocks, *optional_blocks),
+        )
+        combined_footprint = self._anchored_footprint(session, tools, combined)
+        if combined_footprint.estimated_tokens <= budget:
+            return self._prepared(session, tools, combined, report, combined_footprint)
+
+        retry_budget = max(0, granted - (combined_footprint.estimated_tokens - budget))
+        if retry_budget > 0 and retry_budget < granted:
+            try:
+                retry_blocks = await factory(retry_budget)
+            except Exception:
+                retry_blocks = ()
+            if retry_blocks:
+                retried = replace(
+                    prompt,
+                    generated_context_blocks=(*base_blocks, *retry_blocks),
+                )
+                retried_footprint = self._anchored_footprint(session, tools, retried)
+                if retried_footprint.estimated_tokens <= budget:
+                    return self._prepared(session, tools, retried, report, retried_footprint)
+        return self._prepared(session, tools, prompt, report, footprint)
 
     async def manual_compact(
         self,
