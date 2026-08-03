@@ -1156,7 +1156,7 @@
         "inheritance",
         "mixed"
       ],
-      "source_prompt": "请长期记住：本项目配置文件名是 .mewcode.yaml。以后禁止猜测配置，必须读取文件确认。",
+      "source_prompt": "请长期记住：本项目配置文件名是 .julycode.yaml。以后禁止猜测配置，必须读取文件确认。",
       "source_expected": [
         {
           "key": "inheritance-020-project",
@@ -1164,11 +1164,11 @@
           "category": "reference",
           "critical": false,
           "evidence": [
-            "请长期记住：本项目配置文件名是 .mewcode.yaml。"
+            "请长期记住：本项目配置文件名是 .julycode.yaml。"
           ],
           "content_term_groups": [
             [
-              ".mewcode.yaml"
+              ".julycode.yaml"
             ]
           ]
         },
@@ -1192,7 +1192,7 @@
       "expectation": {
         "required_term_groups": [
           [
-            ".mewcode.yaml"
+            ".julycode.yaml"
           ],
           [
             "读取",

@@ -4,19 +4,19 @@
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/prompting/builder.py` | 记忆索引从动态区移到缓存区 |
+| 修改 | `src/julycode/prompting/builder.py` | 记忆索引从动态区移到缓存区 |
 | 修改 | `tests/test_prompting.py` | 断言适配 |
 
 ## T1: 迁移记忆索引到可缓存前缀
 
-**文件：** `src/mewcode/prompting/builder.py`
+**文件：** `src/julycode/prompting/builder.py`
 **依赖：** 无
 **步骤：**
-1. 把 `_dynamic_knowledge_context_lines()` 中构建 `<mewcode_memory_index>` 块的逻辑（约 314-335 行）移到 `_runtime_cache_prefix_lines()`（约 85-92 行）。
-2. 移完后 `_dynamic_knowledge_context_lines()` 仅保留 `<mewcode_restore_notice>` 块。
+1. 把 `_dynamic_knowledge_context_lines()` 中构建 `<julycode_memory_index>` 块的逻辑（约 314-335 行）移到 `_runtime_cache_prefix_lines()`（约 85-92 行）。
+2. 移完后 `_dynamic_knowledge_context_lines()` 仅保留 `<julycode_restore_notice>` 块。
 3. 确保 `_runtime_cache_prefix_lines` 的签名支持接收 `KnowledgeContext`（当前不接收，需加参数或从调用方传入）。
 
-**验证：** 肉眼检查 prompt 结构，确认 `<mewcode_memory_index>` 现在位于 `cacheable=True` 的 block 中。
+**验证：** 肉眼检查 prompt 结构，确认 `<julycode_memory_index>` 现在位于 `cacheable=True` 的 block 中。
 
 ## T2: 更新测试断言
 

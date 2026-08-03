@@ -4,12 +4,12 @@
 
 ## 实现完整性
 
-- [ ] T1: 提取 Prompt 包含每条 category 定义+触发词+正例+反例（验证：`grep -c "preference" src/mewcode/memory/updater.py` 确认出现多次，且含"定义"、"正例"、"反例"关键词）
-- [ ] T2: critical 门控允许 project_knowledge 类别（验证：`grep "project_knowledge" src/mewcode/memory/extraction.py` 在 critical 检查行附近出现）
-- [ ] T3: evidence 匹配使用归一化（验证：`grep "_normalize" src/mewcode/memory/extraction.py` 在 evidence 检查附近出现）
-- [ ] T4: 索引使用 `**[关键]**`（验证：`grep '\*\*\[关键\]\*\*' src/mewcode/memory/index.py` 命中）
-- [ ] T5: index_max_lines=400, index_max_bytes=50000（验证：`grep "index_max_lines\|index_max_bytes" src/mewcode/memory/models.py`）
-- [ ] T6: 引导语含"禁止"、"硬性行为约束"、"直接使用"（验证：`grep "禁止\|硬性行为约束\|直接使用" src/mewcode/prompting/builder.py`）
+- [ ] T1: 提取 Prompt 包含每条 category 定义+触发词+正例+反例（验证：`grep -c "preference" src/julycode/memory/updater.py` 确认出现多次，且含"定义"、"正例"、"反例"关键词）
+- [ ] T2: critical 门控允许 project_knowledge 类别（验证：`grep "project_knowledge" src/julycode/memory/extraction.py` 在 critical 检查行附近出现）
+- [ ] T3: evidence 匹配使用归一化（验证：`grep "_normalize" src/julycode/memory/extraction.py` 在 evidence 检查附近出现）
+- [ ] T4: 索引使用 `**[关键]**`（验证：`grep '\*\*\[关键\]\*\*' src/julycode/memory/index.py` 命中）
+- [ ] T5: index_max_lines=400, index_max_bytes=50000（验证：`grep "index_max_lines\|index_max_bytes" src/julycode/memory/models.py`）
+- [ ] T6: 引导语含"禁止"、"硬性行为约束"、"直接使用"（验证：`grep "禁止\|硬性行为约束\|直接使用" src/julycode/prompting/builder.py`）
 
 ## 单元测试
 

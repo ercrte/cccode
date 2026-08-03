@@ -8,9 +8,9 @@ from typing import Any
 import httpx
 import pytest
 
-from mewcode.config import McpServerConfig
-from mewcode.mcp.errors import McpAuthorizationRequired, McpConnectionError, McpProtocolError, McpTimeoutError
-from mewcode.mcp.transport import StdioMcpTransport, StreamableHttpMcpTransport
+from julycode.config import McpServerConfig
+from julycode.mcp.errors import McpAuthorizationRequired, McpConnectionError, McpProtocolError, McpTimeoutError
+from julycode.mcp.transport import StdioMcpTransport, StreamableHttpMcpTransport
 
 
 def stdio_config(*args: str) -> McpServerConfig:

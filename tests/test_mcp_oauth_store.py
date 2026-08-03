@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from mewcode.mcp.oauth.models import OAuthClientRegistration, OAuthCredentialBundle, OAuthTokenSet
-from mewcode.mcp.oauth.store import (
+from julycode.mcp.oauth.models import OAuthClientRegistration, OAuthCredentialBundle, OAuthTokenSet
+from julycode.mcp.oauth.store import (
     MemoryCredentialStore,
     OAuthCredentialStore,
     credential_account,

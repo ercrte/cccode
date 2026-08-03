@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mewcode.memory.models import MemoryNote, SessionMemoryConfig
-from mewcode.memory.notes import MemoryNoteStore
-from mewcode.session_id import SessionId
+from julycode.memory.models import MemoryNote, SessionMemoryConfig
+from julycode.memory.notes import MemoryNoteStore
+from julycode.session_id import SessionId
 
 
 def note(
@@ -33,7 +33,7 @@ def note(
 
 
 def test_write_and_read_memory_note(tmp_path: Path) -> None:
-    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode")))
+    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode")))
 
     path = store.write_note(note("rule"))
     restored = store.read_note("project", "rule")
@@ -45,7 +45,7 @@ def test_write_and_read_memory_note(tmp_path: Path) -> None:
 
 
 def test_notes_are_grouped_by_scope_and_category(tmp_path: Path) -> None:
-    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode")))
+    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode")))
     store.write_note(note("pref", scope="user", category="preference"))
     store.write_note(note("corr", scope="user", category="correction"))
     store.write_note(note("knowledge", scope="project", category="project_knowledge"))
@@ -61,7 +61,7 @@ def test_notes_are_grouped_by_scope_and_category(tmp_path: Path) -> None:
 def test_note_store_redacts_sensitive_values(tmp_path: Path) -> None:
     store = MemoryNoteStore(
         tmp_path,
-        SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode")),
+        SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode")),
         secrets=("plain-secret-value",),
     )
     store.write_note(
@@ -83,7 +83,7 @@ def test_note_store_redacts_sensitive_values(tmp_path: Path) -> None:
 
 
 def test_note_metadata_round_trip(tmp_path: Path) -> None:
-    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode")))
+    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode")))
 
     store.write_note(note("critical", scope="user", category="preference", critical=True, evidence=("以后始终用中文",)))
     restored = store.read_note("user", "critical")
@@ -95,8 +95,8 @@ def test_note_metadata_round_trip(tmp_path: Path) -> None:
 
 
 def test_reads_legacy_note_without_quality_metadata(tmp_path: Path) -> None:
-    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode")))
-    path = tmp_path / ".mewcode" / "memory" / "project_knowledge" / "legacy.md"
+    store = MemoryNoteStore(tmp_path, SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode")))
+    path = tmp_path / ".julycode" / "memory" / "project_knowledge" / "legacy.md"
     path.parent.mkdir(parents=True)
     path.write_text(
         "---\nnote_id: legacy\nscope: project\ncategory: project_knowledge\ntitle: 旧笔记\n"
@@ -115,7 +115,7 @@ def test_reads_legacy_note_without_quality_metadata(tmp_path: Path) -> None:
 def test_contains_sensitive_and_deletes_note(tmp_path: Path) -> None:
     store = MemoryNoteStore(
         tmp_path,
-        SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode")),
+        SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode")),
         secrets=("known-secret",),
     )
     store.write_note(note("delete-me"))

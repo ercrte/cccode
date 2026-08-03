@@ -15,8 +15,8 @@ EVAL_ROOT = ROOT / "eval"
 if str(EVAL_ROOT) not in sys.path:
     sys.path.insert(0, str(EVAL_ROOT))
 
-from mew_eval.loader import EvalConfigError, load_cases, load_metrics
-from mew_eval.models import (
+from july_eval.loader import EvalConfigError, load_cases, load_metrics
+from july_eval.models import (
     EvalCase,
     EvalCaseResult,
     EvalEventSummary,
@@ -34,10 +34,10 @@ from mew_eval.models import (
     EvalUsageSummary,
     MetricScore,
 )
-from mew_eval.provider import ScriptedEvalProvider
-from mew_eval.report import write_json_report, write_markdown_report
-from mew_eval.runner import run_case, run_suite
-from mew_eval.scoring import case_status, score_case, total_score
+from july_eval.provider import ScriptedEvalProvider
+from july_eval.report import write_json_report, write_markdown_report
+from july_eval.runner import run_case, run_suite
+from july_eval.scoring import case_status, score_case, total_score
 from repo_map_quality.loader import NavigationDatasetLoader, RepoMapQualityConfigError
 from repo_map_quality.models import (
     NavigationCase,
@@ -53,7 +53,7 @@ from repo_map_quality.report import (
     write_markdown_report as write_repo_map_markdown_report,
 )
 from repo_map_quality.runner import RepoMapQualityRunner
-from mewcode.providers.base import ChatMessage, ChatRequest, PromptCacheUsage, StreamEvent, TokenUsage
+from julycode.providers.base import ChatMessage, ChatRequest, PromptCacheUsage, StreamEvent, TokenUsage
 
 
 class FakeOnlineProvider:
@@ -247,7 +247,7 @@ def test_default_metrics_and_cases_cover_required_dimensions() -> None:
         "stability",
     }.issubset(metric_ids)
     assert all(metric.weight > 0 and metric.scale_min < metric.scale_max and metric.evidence for metric in metrics)
-    assert len(cases) == 7
+    assert len(cases) == 8
     assert all(case.offline_only for case in cases)
     categories = {case.category for case in cases}
     assert len(categories) >= 6
@@ -283,6 +283,26 @@ def test_online_cases_cover_required_scenarios() -> None:
     assert any(case.expectations.verification_commands for case in cases)
 
 
+def test_readonly_location_cases_forbid_run_command_but_verification_allows_it() -> None:
+    offline_cases = {case.id: case for case in load_cases(ROOT / "eval/cases/offline")}
+    online_cases = {case.id: case for case in load_cases(ROOT / "eval/cases/online")}
+
+    for case_id in ("readonly_search", "multi_tool_loop", "code_location_reliability"):
+        assert "run_command" in offline_cases[case_id].expectations.forbidden_tools
+    for case_id in (
+        "online_basic_project_summary",
+        "online_find_agent_runner",
+        "online_trace_tool_scheduler",
+        "online_read_permission_rules",
+        "online_search_then_edit",
+        "online_unknown_file_recovery",
+    ):
+        assert "run_command" in online_cases[case_id].expectations.forbidden_tools
+
+    assert "run_command" not in online_cases["online_write_small_function"].expectations.forbidden_tools
+    assert "run_command" not in online_cases["online_fix_failing_test"].expectations.forbidden_tools
+
+
 async def _messages_for(provider: ScriptedEvalProvider, messages: list[ChatMessage]):
     return [event async for event in provider.stream_chat(ChatRequest(messages=messages))]
 
@@ -295,7 +315,7 @@ async def test_scripted_provider_basic_qa_returns_text_and_usage() -> None:
 
     assert [event.type for event in events] == ["usage", "text_delta", "message_done"]
     assert events[0].usage is not None
-    assert "MewCode" in events[-1].message.content  # type: ignore[union-attr]
+    assert "JulyCode" in events[-1].message.content  # type: ignore[union-attr]
 
 
 @pytest.mark.asyncio
@@ -312,6 +332,48 @@ async def test_scripted_provider_readonly_then_final() -> None:
         ],
     )
     assert "README" in second[-1].message.content  # type: ignore[union-attr]
+
+
+@pytest.mark.asyncio
+async def test_scripted_provider_code_location_uses_search_then_partial_read() -> None:
+    provider = ScriptedEvalProvider()
+    user = ChatMessage(role="user", content="EVAL_CASE:code_location_reliability")
+
+    first = await _messages_for(provider, [user])
+    first_call = first[-1].message.tool_calls[0]  # type: ignore[union-attr]
+    assert first_call.name == "search_code"
+    assert first_call.arguments["path"] == "src/julycode/tools/builtin.py"
+
+    second = await _messages_for(
+        provider,
+        [
+            user,
+            ChatMessage(
+                role="tool",
+                content=json.dumps({"tool_name": "search_code", "success": True}),
+            ),
+        ],
+    )
+    second_call = second[-1].message.tool_calls[0]  # type: ignore[union-attr]
+    assert second_call.name == "read_file"
+    assert second_call.arguments["offset"] == 1
+    assert second_call.arguments["limit"] == 8
+
+    third = await _messages_for(
+        provider,
+        [
+            user,
+            ChatMessage(
+                role="tool",
+                content=json.dumps({"tool_name": "search_code", "success": True}),
+            ),
+            ChatMessage(
+                role="tool",
+                content=json.dumps({"tool_name": "read_file", "success": True}),
+            ),
+        ],
+    )
+    assert "回退" in third[-1].message.content  # type: ignore[union-attr]
 
 
 @pytest.mark.asyncio
@@ -390,6 +452,31 @@ def test_score_case_missing_required_tool_fails() -> None:
     assert any("缺少必需工具" in item for item in tool_score.evidence)
 
 
+def test_score_case_tool_use_forbidden_tool_fails() -> None:
+    case = EvalCase(
+        "forbidden",
+        "禁用工具",
+        "只读代码搜索",
+        "hi",
+        expectations=EvalExpectations(forbidden_tools=("run_command",)),
+    )
+    trace = EvalRunTrace(
+        (),
+        "完成",
+        "completed",
+        (EvalToolCallSummary("c1", "run_command", {"command": "grep x a.py"}),),
+        (EvalToolResultSummary("c1", "run_command", True),),
+        EvalUsageSummary(1, 1, 2, "scripted"),
+        1,
+    )
+
+    scores = score_case(case, _metrics_for_scoring(), trace)
+    tool_score = next(score for score in scores if score.metric_id == "tool_use")
+
+    assert tool_score.status == "fail"
+    assert any("调用了禁用工具: run_command" in item for item in tool_score.evidence)
+
+
 def test_score_case_file_permission_and_context_branches(tmp_path: Path) -> None:
     case = EvalCase(
         "branches",
@@ -423,9 +510,27 @@ async def test_run_case_basic_qa_uses_real_runner() -> None:
     result = await run_case(case, metrics, offline_options(allow_review=True))
 
     assert result.status == "pass"
-    assert "MewCode" in result.trace.final_message
+    assert "JulyCode" in result.trace.final_message
     assert result.trace.usage is not None
     assert any(event.type == "message_done" for event in result.trace.events)
+
+
+@pytest.mark.asyncio
+async def test_run_case_code_location_reliability_passes_without_command() -> None:
+    metrics = load_metrics(ROOT / "eval/metrics/default_metrics.json")
+    case = next(
+        case
+        for case in load_cases(ROOT / "eval/cases/offline")
+        if case.id == "code_location_reliability"
+    )
+
+    result = await run_case(case, metrics, offline_options(allow_review=True))
+
+    assert result.status == "pass"
+    assert [call.name for call in result.trace.tool_calls] == ["search_code", "read_file"]
+    assert result.trace.tool_calls[1].arguments["offset"] == 1
+    assert result.trace.tool_calls[1].arguments["limit"] == 8
+    assert "run_command" not in [call.name for call in result.trace.tool_calls]
 
 
 @pytest.mark.asyncio
@@ -658,7 +763,7 @@ def test_run_eval_cli_offline_shortcut(tmp_path: Path) -> None:
     assert completed.returncode == 0, completed.stderr
     data = json.loads((output / "results.json").read_text(encoding="utf-8"))
     assert data["provider"]["mode"] == "offline"
-    assert data["summary"]["total_cases"] == 7
+    assert data["summary"]["total_cases"] == 8
 
 
 def test_repo_map_navigation_loader_validates_and_round_trips(tmp_path: Path) -> None:

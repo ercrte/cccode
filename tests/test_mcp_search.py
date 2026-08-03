@@ -4,12 +4,12 @@ import time
 from collections.abc import Mapping
 from typing import Any
 
-from mewcode.mcp.scope import McpTurnState
-from mewcode.mcp.search import McpPromptContext, McpToolCatalog, normalize_search_text
-from mewcode.mcp.tools import McpToolDefinition
-from mewcode.tools.base import ToolContext, ToolResult, ToolSpec
-from mewcode.tools.registry import ToolRegistry
-from mewcode.tools.scheduler import ToolPolicy
+from julycode.mcp.scope import McpTurnState
+from julycode.mcp.search import McpPromptContext, McpToolCatalog, normalize_search_text
+from julycode.mcp.tools import McpToolDefinition
+from julycode.tools.base import ToolContext, ToolResult, ToolSpec
+from julycode.tools.registry import ToolRegistry
+from julycode.tools.scheduler import ToolPolicy
 
 
 def definition(

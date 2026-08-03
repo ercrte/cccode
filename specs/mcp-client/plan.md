@@ -1,7 +1,7 @@
 # MCP 客户端 Plan
 
 ## 架构概览
-本阶段在现有工具系统旁新增 `mewcode.mcp` 子系统。配置层负责解析 `mcp_servers` map，并把用户级和项目级配置按 Server 名合并。MCP 子系统负责连接 Server、完成初始化、列出工具、维护会话和转发工具调用。工具中心仍是唯一对 Agent 暴露工具的入口，MCP 工具通过适配器实现现有 `Tool` 接口。
+本阶段在现有工具系统旁新增 `julycode.mcp` 子系统。配置层负责解析 `mcp_servers` map，并把用户级和项目级配置按 Server 名合并。MCP 子系统负责连接 Server、完成初始化、列出工具、维护会话和转发工具调用。工具中心仍是唯一对 Agent 暴露工具的入口，MCP 工具通过适配器实现现有 `Tool` 接口。
 
 启动流程从“加载配置 → 创建 Provider → 创建内置工具注册中心”扩展为“加载配置 → 创建 Provider → 创建内置工具注册中心 → 创建 MCP Manager → TUI 启动事件循环中初始化 MCP Manager → 注册远端工具”。MCP Manager 会逐个连接配置中的 Server；某个 Server 失败只记录加载失败并跳过该 Server，内置工具和其他 Server 继续注册。
 
@@ -9,7 +9,7 @@ MCP 协议层按 JSON-RPC 2.0 实现请求、响应和通知。stdio 传输通�
 
 远端工具名通过 `server__tool` 映射成全局工具名。`RemoteMcpTool` 的 `ToolSpec` 使用全局工具名、远端描述和远端 `inputSchema`；执行时把全局名还原为 Server 名和远端工具名，调用对应会话的 `tools/call`。远端返回的 `content`、`structuredContent` 和 `isError` 会转换为现有 `ToolResult` 可承载的数据或结构化失败。
 
-MCP Manager 持有所有成功初始化的连接，并在 MewCode 退出时关闭。初始化和关闭必须发生在 TUI 的同一个 asyncio 事件循环中，避免 stdio reader task 或 HTTP client 跨事件循环失效。stdio 关闭时先关闭子进程 stdin，再等待退出，必要时终止子进程；HTTP 关闭时关闭 `httpx.AsyncClient`，如果 Server 给过 session id，则尽力发送 DELETE 结束会话，失败不影响退出。
+MCP Manager 持有所有成功初始化的连接，并在 JulyCode 退出时关闭。初始化和关闭必须发生在 TUI 的同一个 asyncio 事件循环中，避免 stdio reader task 或 HTTP client 跨事件循环失效。stdio 关闭时先关闭子进程 stdin，再等待退出，必要时终止子进程；HTTP 关闭时关闭 `httpx.AsyncClient`，如果 Server 给过 session id，则尽力发送 DELETE 结束会话，失败不影响退出。
 
 ## 核心数据结构
 
@@ -145,7 +145,7 @@ class McpLoadReport:
 
 ## 模块设计
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 解析 `mcp_servers` 配置，执行用户级/项目级 Server map 合并，展开环境变量。  
 **对外接口：** `AppConfig.mcp: McpConfig`。  
 **依赖：** `yaml`、`os.environ`、现有 `ConfigError`。
@@ -168,27 +168,27 @@ mcp_servers:
 
 `mcp_servers` 缺省时为空。项目级和用户级均存在时，仅该 map 按 Server 名深合并；其他顶层字段保持现有“项目级覆盖用户级”语义。字符串中的 `${VAR}` 会展开，变量缺失或为空时抛出 `ConfigError`，错误中包含 Server 名和字段类别。
 
-### `mewcode.mcp.errors`
+### `julycode.mcp.errors`
 **职责：** 定义 MCP 子系统的可展示错误。  
 **对外接口：** `McpError`、`McpConfigError`、`McpConnectionError`、`McpProtocolError`、`McpToolError`。  
-**依赖：** `MewCodeError`。
+**依赖：** `JulyCodeError`。
 
-### `mewcode.mcp.transport`
+### `julycode.mcp.transport`
 **职责：** 实现 JSON-RPC 请求/响应配对和两种传输。  
 **对外接口：** `McpTransport`、`StdioMcpTransport`、`StreamableHttpMcpTransport`、`JsonRpcError`。  
-**依赖：** `asyncio`、`json`、`httpx`、`mewcode.providers.sse.iter_sse_lines`、`redact_secret`。
+**依赖：** `asyncio`、`json`、`httpx`、`julycode.providers.sse.iter_sse_lines`、`redact_secret`。
 
 stdio 会捕获 stderr 的末尾日志供错误诊断，但不会把完整环境变量或请求头写入错误。HTTP 错误会脱敏用户配置的 headers 值。
 
-### `mewcode.mcp.client`
+### `julycode.mcp.client`
 **职责：** 实现 MCP lifecycle 和工具协议。  
 **对外接口：** `McpClientSession.initialize()`、`list_tools()`、`call_tool()`、`close()`。  
 **依赖：** `McpTransport`、`McpToolDefinition`。
 
-初始化请求使用协议版本 `2025-06-18`，client capabilities 为空对象，clientInfo 使用 `MewCode` 和当前包版本。只要求 Server 声明 `tools` capability；不请求 resources、prompts、sampling、roots 或 elicitation。
+初始化请求使用协议版本 `2025-06-18`，client capabilities 为空对象，clientInfo 使用 `JulyCode` 和当前包版本。只要求 Server 声明 `tools` capability；不请求 resources、prompts、sampling、roots 或 elicitation。
 
-### `mewcode.mcp.tools`
-**职责：** 把远端工具定义适配为 MewCode `Tool`。  
+### `julycode.mcp.tools`
+**职责：** 把远端工具定义适配为 JulyCode `Tool`。  
 **对外接口：** `RemoteMcpTool`、`make_global_tool_name(server_name, remote_name)`、`parse_global_tool_name(name)`。  
 **依赖：** `ToolSpec`、`ToolContext`、`ToolExecutionError`、`McpClientSession`。
 
@@ -204,23 +204,23 @@ stdio 会捕获 stderr 的末尾日志供错误诊断，但不会把完整环境
 ```
 当远端返回 `isError: true` 时抛出 `ToolExecutionError(error_type="mcp_tool_error")`；协议 error、超时和非法响应分别映射为 `mcp_protocol_error`、`timeout`、`mcp_invalid_response`。
 
-### `mewcode.mcp.manager`
+### `julycode.mcp.manager`
 **职责：** 管理多个 Server 的初始化、缓存、注册和关闭。  
 **对外接口：** `McpManager.initialize()`、`register_tools()`、`load_report()`、`close()`、`create_mcp_manager(config)`。  
 **依赖：** `McpClientSession`、两种 transport、`ToolRegistry`、`RemoteMcpTool`。
 
 `register_tools()` 注册失败时仅影响当前工具或当前 Server，并把原因写入 report。全局工具名重复按失败处理；按已批准需求，正常情况下 `server__tool` 会避免内置工具和跨 Server 冲突。
 
-### `mewcode.cli`
+### `julycode.cli`
 **职责：** 创建 MCP Manager 并传入 TUI 应用。  
 **对外接口：** 保持 `main(argv=None) -> int` 不变。  
 **依赖：** `create_mcp_manager()`、`create_default_registry()`。
 
-`main()` 创建 registry 和 MCP Manager 后，把 Manager 交给 `MewCodeApp`。MCP 配置格式错误仍作为配置错误退出；单个 Server 连接或发现失败不会退出。
+`main()` 创建 registry 和 MCP Manager 后，把 Manager 交给 `JulyCodeApp`。MCP 配置格式错误仍作为配置错误退出；单个 Server 连接或发现失败不会退出。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 在 Textual 事件循环中初始化 MCP Manager、注册远端工具，并在退出时关闭连接。  
-**对外接口：** `MewCodeApp(..., mcp_manager: McpManager | None = None)`。  
+**对外接口：** `JulyCodeApp(..., mcp_manager: McpManager | None = None)`。  
 **依赖：** `McpManager`、`ToolRegistry`。
 
 `on_mount()` 中运行 MCP 初始化并注册工具，失败报告输出为脱敏 warning；`on_unmount()` 中关闭 MCP Manager。这样 stdio 子进程 reader task、HTTP client 和后续工具调用位于同一个事件循环。
@@ -233,8 +233,8 @@ stdio 会捕获 stderr 的末尾日志供错误诊断，但不会把完整环境
 ## 模块交互
 1. `load_config()` 读取用户级和项目级 YAML，并把 `mcp_servers` 解析为 `AppConfig.mcp`。
 2. `cli.main()` 创建内置 `ToolRegistry`。
-3. `cli.main()` 创建 `McpManager(config.mcp)` 并传入 `MewCodeApp`。
-4. `MewCodeApp.on_mount()` 在 TUI 事件循环中运行 `McpManager.initialize()`。
+3. `cli.main()` 创建 `McpManager(config.mcp)` 并传入 `JulyCodeApp`。
+4. `JulyCodeApp.on_mount()` 在 TUI 事件循环中运行 `McpManager.initialize()`。
 5. `McpManager` 对每个 Server 创建对应 transport。
 6. `McpClientSession.initialize()` 发送 `initialize`，收到成功响应后发送 `notifications/initialized`。
 7. `McpClientSession.list_tools()` 发送 `tools/list`，处理分页并生成 `McpToolDefinition`。
@@ -243,11 +243,11 @@ stdio 会捕获 stderr 的末尾日志供错误诊断，但不会把完整环境
 10. 模型调用 `server__tool` 后，`ToolExecutor` 找到 `RemoteMcpTool` 并执行。
 11. `RemoteMcpTool` 调用对应 session 的 `tools/call`，把返回值转换成现有工具结果。
 12. Agent Loop 将工具结果照常写回会话并继续下一轮。
-13. MewCode 退出时，`MewCodeApp.on_unmount()` 关闭 `McpManager`，Manager 逐个关闭成功创建的 session。
+13. JulyCode 退出时，`JulyCodeApp.on_unmount()` 关闭 `McpManager`，Manager 逐个关闭成功创建的 session。
 
 ## 文件组织
 ```text
-src/mewcode/
+src/julycode/
 ├── config.py                 — 增加 MCP 配置结构、解析、环境变量展开和 Server map 合并
 ├── cli.py                    — 创建 MCP Manager 并传入 TUI 应用
 ├── tui/app.py                — 在 TUI 事件循环中初始化和关闭 MCP Manager
@@ -256,7 +256,7 @@ src/mewcode/
 │   ├── errors.py             — MCP 错误类型
 │   ├── transport.py          — JSON-RPC、stdio、Streamable HTTP 传输实现
 │   ├── client.py             — MCP 初始化、工具发现和工具调用会话
-│   ├── tools.py              — 远端工具到 MewCode Tool 的适配层
+│   ├── tools.py              — 远端工具到 JulyCode Tool 的适配层
 │   └── manager.py            — 多 Server 生命周期、工具注册和加载报告
 tests/
 ├── test_config.py            — MCP 配置解析、合并和环境变量展开测试
@@ -300,7 +300,7 @@ specs/mcp-client/
 
 | 需求 | 架构 owner |
 |------|------------|
-| F1, F6 | `mewcode.config` 的 `mcp_servers` 解析和 Server map 合并 |
+| F1, F6 | `julycode.config` 的 `mcp_servers` 解析和 Server map 合并 |
 | F2, F3, F4, F5 | `McpServerConfig`、配置解析、环境变量展开 |
 | F7, F13 | `McpClientSession.initialize()` |
 | F8 | `McpClientSession.list_tools()` |

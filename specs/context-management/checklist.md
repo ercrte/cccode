@@ -1,4 +1,4 @@
-# MewCode 上下文管理 Checklist
+# JulyCode 上下文管理 Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
@@ -8,8 +8,8 @@
 - [ ] 会话拥有独立上下文状态，支持替换历史消息和设置摘要，摘要不会自动写入普通消息历史（验证：运行 `python -m pytest tests/test_session.py::test_session_has_context_state tests/test_session.py::test_session_can_replace_messages tests/test_session.py::test_session_sets_context_summary -q`，期望通过）
 - [ ] Token 估算能覆盖消息、工具描述、运行时提示和工具调用参数（验证：运行 `python -m pytest tests/test_context_estimator.py::test_estimates_request_footprint_from_messages_tools_and_prompt -q`，期望通过）
 - [ ] Token 估算在有 usage 时使用锚点和字符增量，在无 usage 时使用全量近似估算（验证：运行 `python -m pytest tests/test_context_estimator.py::test_estimates_with_usage_anchor_delta tests/test_context_estimator.py::test_estimates_without_usage_anchor -q`，期望通过）
-- [ ] 外置工具结果保存在项目内 `.mewcode/context/<session_id>/tool-results/`，返回路径可被后续读取工具使用（验证：运行 `python -m pytest tests/test_context_compactor.py::test_context_store_writes_tool_result_under_project tests/test_context_compactor.py::test_context_store_returns_readable_relative_path -q`，期望通过）
-- [ ] `.gitignore` 忽略 `.mewcode/context/`，外置结果不会默认进入版本控制（验证：运行 `python -m pytest tests/test_context_compactor.py::test_context_store_writes_tool_result_under_project -q`，期望断言忽略规则存在）
+- [ ] 外置工具结果保存在项目内 `.julycode/context/<session_id>/tool-results/`，返回路径可被后续读取工具使用（验证：运行 `python -m pytest tests/test_context_compactor.py::test_context_store_writes_tool_result_under_project tests/test_context_compactor.py::test_context_store_returns_readable_relative_path -q`，期望通过）
+- [ ] `.gitignore` 忽略 `.julycode/context/`，外置结果不会默认进入版本控制（验证：运行 `python -m pytest tests/test_context_compactor.py::test_context_store_writes_tool_result_under_project -q`，期望断言忽略规则存在）
 - [ ] 单个超阈值工具结果会被外置，模型请求中只保留预览、规模信息和可读取路径（验证：运行 `python -m pytest tests/test_context_compactor.py::test_compacts_single_large_tool_result -q`，期望通过）
 - [ ] 轻量预防不会改写普通用户消息，也不会重复外置已经压缩过的工具结果（验证：运行 `python -m pytest tests/test_context_compactor.py::test_light_compaction_keeps_user_messages_verbatim tests/test_context_compactor.py::test_compactor_does_not_reexternalize_existing_preview -q`，期望通过）
 - [ ] 同一轮工具结果合计超阈值时，系统优先外置最大结果，保留仍在阈值内的小结果原文（验证：运行 `python -m pytest tests/test_context_compactor.py::test_compacts_largest_results_when_turn_total_exceeds_limit tests/test_context_compactor.py::test_turn_compaction_keeps_small_results_when_under_limit -q`，期望通过）
@@ -43,7 +43,7 @@
 - [ ] Python 文件语法和导入检查通过（验证：运行 `python -m compileall src tests`，期望无编译错误）
 
 ## 端到端场景
-- [ ] 场景 1：大工具结果继续追问。用户在 tmux 中启动 MewCode，输入“生成一个大工具输出后继续根据结果回答”，观察工具结果被外置到 `.mewcode/context/...`，随后模型通过路径读取细节并继续回复（验证：先运行 `python tests/e2e_mock_openai_server.py 18765`，再在另一个 tmux pane 启动指向 mock server 的 `mewcode`，按场景输入并观察报告、工具调用和最终回复）
+- [ ] 场景 1：大工具结果继续追问。用户在 tmux 中启动 JulyCode，输入“生成一个大工具输出后继续根据结果回答”，观察工具结果被外置到 `.julycode/context/...`，随后模型通过路径读取细节并继续回复（验证：先运行 `python tests/e2e_mock_openai_server.py 18765`，再在另一个 tmux pane 启动指向 mock server 的 `julycode`，按场景输入并观察报告、工具调用和最终回复）
 - [ ] 场景 2：手动压缩。用户在已有多轮对话后输入 `/compact`，观察界面显示压缩报告、保留消息数、摘要状态或 no-op 原因，且没有把 `/compact` 作为普通模型任务回复（验证：tmux 中输入 `/compact`，观察状态栏恢复空闲、消息区出现中文压缩报告，mock server 不收到普通用户任务）
 - [ ] 场景 3：自动重量兜底。用户连续触发多轮大输出直到接近窗口上限，观察系统自动生成结构化摘要并补充边界提示，后续追问仍能引用近期原文（验证：tmux 中输入连续大输出场景，观察 `context_compacted` 状态、摘要结构和最终回复）
 - [ ] 场景 4：摘要失败熔断。mock server 连续返回无 `<final_summary>` 摘要响应，系统连续失败 3 次后停止本次请求并显示上下文压缩暂时不可用（验证：tmux 中使用摘要失败 mock 场景，观察第三次后不再重复摘要请求，输入区恢复可用）

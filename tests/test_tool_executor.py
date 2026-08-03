@@ -7,9 +7,9 @@ from typing import Any
 
 import pytest
 
-from mewcode.tools.base import ToolCall, ToolContext, ToolExecutionError, ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry
+from julycode.tools.base import ToolCall, ToolContext, ToolExecutionError, ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry
 
 
 class EchoTool:

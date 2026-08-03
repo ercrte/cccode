@@ -3,8 +3,8 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-from mewcode.repo_map import RankedSymbol, SymbolRecord
-from mewcode.repo_map.renderer import RepoMapRenderer
+from julycode.repo_map import RankedSymbol, SymbolRecord
+from julycode.repo_map.renderer import RepoMapRenderer
 
 
 def _tokens(text: str) -> int:

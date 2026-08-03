@@ -11,7 +11,7 @@ from memory_quality.models import (
     InheritanceExpectation,
     MemoryQualityDataset,
 )
-from mewcode.providers.base import ChatMessage
+from julycode.providers.base import ChatMessage
 
 
 class MemoryQualityConfigError(ValueError):

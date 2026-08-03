@@ -85,7 +85,7 @@ class Handler(BaseHTTPRequestHandler):
                     return "多步任务已完成：已读取并搜索项目信息。"
             return f"工具结果已收到：{messages[-1].get('content', '')[:120]}"
         last = messages[-1].get("content", "") if messages else ""
-        if "你正在为 MewCode 压缩较早的会话历史" in str(last):
+        if "你正在为 JulyCode 压缩较早的会话历史" in str(last):
             return (
                 "<analysis_draft>梳理当前对话和工具结果。</analysis_draft>"
                 "<final_summary>## 当前目标和约束\n继续完成用户请求。\n\n"
@@ -96,8 +96,8 @@ class Handler(BaseHTTPRequestHandler):
                 "## 验证状态与风险\n需要继续按工具结果验证。</final_summary>"
             )
         if (
-            "你正在为 MewCode 更新长期记忆" in str(last)
-            or "你正在为 MewCode 提取可跨会话使用的长期记忆" in str(last)
+            "你正在为 JulyCode 更新长期记忆" in str(last)
+            or "你正在为 JulyCode 提取可跨会话使用的长期记忆" in str(last)
         ):
             return _memory_operations(str(last))
         if str(last).strip() == "慢速审查":
@@ -281,7 +281,7 @@ class Handler(BaseHTTPRequestHandler):
         if "读取" in last or "read" in lowered:
             return [{"name": "read_file", "arguments": {"path": _last_path(last) or "README.md"}}]
         if "写入" in last or "创建" in last or "write" in lowered:
-            return [{"name": "write_file", "arguments": {"path": "tmp/tool-demo.txt", "content": "MewCode tool ok"}}]
+            return [{"name": "write_file", "arguments": {"path": "tmp/tool-demo.txt", "content": "JulyCode tool ok"}}]
         if "修改" in last or "替换" in last or "edit" in lowered:
             return [
                 {
@@ -362,7 +362,7 @@ class Handler(BaseHTTPRequestHandler):
         return bool(messages and "Provider 错误" in str(messages[-1].get("content", "")))
 
     def _write_request_log(self, body: dict[str, Any]) -> None:
-        path = os.environ.get("MEWCODE_MOCK_REQUEST_LOG")
+        path = os.environ.get("JULYCODE_MOCK_REQUEST_LOG")
         if not path:
             return
         with open(path, "a", encoding="utf-8") as handle:
@@ -513,7 +513,7 @@ def _team_e2e_tool_calls(body: dict[str, Any]) -> list[dict[str, Any]] | None:
         for message in messages
         if message.get("role") in {"system", "developer"}
     )
-    member_match = re.search(r'<mewcode_team name="([^"]+)" actor="([^"]+)" kind="member">', system_text)
+    member_match = re.search(r'<julycode_team name="([^"]+)" actor="([^"]+)" kind="member">', system_text)
     if member_match:
         return _team_member_calls(messages, member_match.group(2))
     return _team_lead_calls(messages)

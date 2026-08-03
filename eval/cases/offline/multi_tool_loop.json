@@ -9,13 +9,14 @@
   "max_iterations": 6,
   "setup_files": [
     {
-      "path": "src/mewcode/agent.py",
+      "path": "src/julycode/agent.py",
       "content": "class AgentLoopRunner:\n    def run(self):\n        return 'model tools stopped'\n"
     }
   ],
   "expectations": {
     "final_contains": ["AgentLoopRunner", "模型", "工具", "停止"],
     "required_tools": ["search_code", "read_file"],
+    "forbidden_tools": ["run_command"],
     "min_tool_successes": 2,
     "require_usage": true,
     "max_tool_calls": 4

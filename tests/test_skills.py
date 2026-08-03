@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.commands import CommandDispatcher, create_builtin_command_registry
-from mewcode.prompting.base import RuntimePromptContext
-from mewcode.prompting.builder import PromptBuilder
-from mewcode.skills import LOAD_SKILL_TOOL_NAME, LoadSkillTool, SkillConfigurationError, SkillLoader, SkillManager
-from mewcode.skills.models import SkillRoots
-from mewcode.tools.base import ToolSpec
-from mewcode.tools.base import ToolCall, ToolContext
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import create_default_registry
-from mewcode.tools.scheduler import ToolPolicy
+from julycode.commands import CommandDispatcher, create_builtin_command_registry
+from julycode.prompting.base import RuntimePromptContext
+from julycode.prompting.builder import PromptBuilder
+from julycode.skills import LOAD_SKILL_TOOL_NAME, LoadSkillTool, SkillConfigurationError, SkillLoader, SkillManager
+from julycode.skills.models import SkillRoots
+from julycode.tools.base import ToolSpec
+from julycode.tools.base import ToolCall, ToolContext
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import create_default_registry
+from julycode.tools.scheduler import ToolPolicy
 
 
 async def _collect_ticks(duration: float = 0.18, interval: float = 0.02) -> list[float]:
@@ -30,9 +30,9 @@ async def _collect_ticks(duration: float = 0.18, interval: float = 0.02) -> list
 
 def roots(tmp_path: Path) -> SkillRoots:
     return SkillRoots(
-        project=tmp_path / "project" / ".mewcode" / "skills",
-        user=tmp_path / "user" / ".mewcode" / "skills",
-        builtin=resources.files("mewcode.skills.builtin"),
+        project=tmp_path / "project" / ".julycode" / "skills",
+        user=tmp_path / "user" / ".julycode" / "skills",
+        builtin=resources.files("julycode.skills.builtin"),
     )
 
 
@@ -176,11 +176,11 @@ def test_prompt_builder_includes_skill_summary_and_active_sop(tmp_path: Path) ->
         )
     )[-1]
 
-    assert "<mewcode_skills>" in block.text
+    assert "<julycode_skills>" in block.text
     assert "- review:" in block.text
     assert 'name="review"' in block.text
     assert "你正在执行内置 review Skill" in block.text
-    assert block.text.index("<mewcode_skills>") < block.text.index("本轮约束")
+    assert block.text.index("<julycode_skills>") < block.text.index("本轮约束")
 
 
 @pytest.mark.asyncio

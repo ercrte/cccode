@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from mewcode.errors import ConfigError
-from mewcode.hooks.config import parse_hook_config
+from julycode.errors import ConfigError
+from julycode.hooks.config import parse_hook_config
 
 
 def test_parse_hook_config_defaults_to_empty() -> None:

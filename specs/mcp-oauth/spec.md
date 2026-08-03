@@ -1,7 +1,7 @@
 # MCP OAuth 2.1 Spec
 
 ## 背景
-MewCode 已支持通过 Streamable HTTP 连接远程 MCP Server，也支持在配置中注入静态请求头。当前客户端遇到需要 OAuth 的远程 Server 时，只会把首次 `401 Unauthorized` 视为连接失败，不能发现授权服务器、引导用户登录、获取或刷新令牌。GitHub Remote MCP 等服务因此只能依赖用户手工配置 PAT，不能使用标准 OAuth 授权。
+JulyCode 已支持通过 Streamable HTTP 连接远程 MCP Server，也支持在配置中注入静态请求头。当前客户端遇到需要 OAuth 的远程 Server 时，只会把首次 `401 Unauthorized` 视为连接失败，不能发现授权服务器、引导用户登录、获取或刷新令牌。GitHub Remote MCP 等服务因此只能依赖用户手工配置 PAT，不能使用标准 OAuth 授权。
 
 本阶段在现有 MCP `2025-06-18` 协议范围内补齐通用 OAuth 2.1 授权能力，遵循该版本要求的受保护资源元数据、授权服务器元数据、Authorization Code、PKCE、动态客户端注册和资源指示语义。OAuth 仅适用于 Streamable HTTP，stdio 的凭据行为保持不变。
 
@@ -23,7 +23,7 @@ MewCode 已支持通过 Streamable HTTP 连接远程 MCP Server，也支持在�
 - F1: Streamable HTTP MCP Server 必须可以声明使用 OAuth；未声明 OAuth 的 HTTP Server 继续沿用现有静态请求头行为。
 - F2: OAuth Server 配置必须支持可选的预注册客户端标识、客户端凭据和请求 scope；敏感配置必须支持环境变量引用。
 - F3: 同一个 Server 不得同时使用静态 `Authorization` 请求头和 OAuth，冲突时必须在启动阶段给出明确且脱敏的配置错误。
-- F4: 使用 OAuth 的 Server 在启动连接时必须优先复用尚可用的令牌；没有令牌或远端返回 `401` 时，必须进入“需要授权”状态，不自动打开浏览器，也不得阻止 MewCode 正常启动。
+- F4: 使用 OAuth 的 Server 在启动连接时必须优先复用尚可用的令牌；没有令牌或远端返回 `401` 时，必须进入“需要授权”状态，不自动打开浏览器，也不得阻止 JulyCode 正常启动。
 - F5: 用户必须能够通过 `/mcp auth <server>` 显式启动指定 Server 的授权；未知 Server、非 HTTP Server、未启用 OAuth 的 Server 和重复进行中的授权必须返回明确提示。
 - F6: 客户端必须从 `401` 响应的 `WWW-Authenticate` 中发现受保护资源元数据地址，并按 RFC 9728 获取资源标识、授权服务器和 scope 信息。
 - F7: 客户端必须按 RFC 8414 获取授权服务器元数据，并验证授权端点、令牌端点、PKCE 能力以及必要的授权能力；不满足安全要求时必须拒绝继续授权。
@@ -31,7 +31,7 @@ MewCode 已支持通过 Streamable HTTP 连接远程 MCP Server，也支持在�
 - F9: 用户授权必须使用 Authorization Code Flow 和 PKCE S256，并使用高熵 `state` 防止请求伪造。
 - F10: 授权时必须在 `127.0.0.1` 随机可用端口建立临时回调地址，尝试打开系统浏览器，同时向用户显示可手动访问的授权 URL；等待时间最多 120 秒，完成、失败、取消或超时后必须关闭回调监听。
 - F11: 回调处理必须拒绝错误 `state`、缺少授权码、远端授权错误和重复回调；错误信息必须可诊断且不得包含授权码、令牌或客户端凭据。
-- F12: 授权请求和令牌请求必须携带目标 MCP 资源标识；令牌交换成功后必须立即重试 MCP 初始化并注册远端工具，无需重启 MewCode。
+- F12: 授权请求和令牌请求必须携带目标 MCP 资源标识；令牌交换成功后必须立即重试 MCP 初始化并注册远端工具，无需重启 JulyCode。
 - F13: access token 必须附加到该 MCP Server 的每个 HTTP 请求中，包括初始化、通知、工具请求和会话关闭请求；令牌不得放入 URL 查询参数。
 - F14: 有 refresh token 时，客户端必须在 access token 过期前或收到令牌失效的 `401` 后尝试刷新；服务端返回新的 refresh token 时必须替换旧值；刷新失败后必须回到“需要授权”状态。
 - F15: access token、refresh token 和动态注册得到的敏感客户端凭据必须优先持久化到操作系统安全凭据存储；安全凭据存储不可用时只能保存在当前进程内存，并向用户明确提示重启后需要重新授权。
@@ -39,7 +39,7 @@ MewCode 已支持通过 Streamable HTTP 连接远程 MCP Server，也支持在�
 - F17: `/status` 必须展示每个 OAuth MCP Server 的认证状态摘要，并区分需要授权、授权中、已授权、刷新失败和认证错误。
 - F18: 多个 OAuth MCP Server 的元数据、客户端注册信息、令牌和授权状态必须按 Server 隔离；一个 Server 授权失败不得影响其他 MCP Server、内置工具或普通对话。
 - F19: scope 选择必须优先采用初始认证挑战明确要求的 scope；挑战未给出时使用用户配置的 scope；仍未给出时使用受保护资源元数据声明的基础 scope。
-- F20: 所有 OAuth 元数据获取、动态注册、令牌交换和刷新请求必须有有限超时；用户退出 MewCode 时，进行中的授权和回调监听必须被取消并清理。
+- F20: 所有 OAuth 元数据获取、动态注册、令牌交换和刷新请求必须有有限超时；用户退出 JulyCode 时，进行中的授权和回调监听必须被取消并清理。
 - F21: 用户文档必须说明 OAuth 配置、预注册客户端回退、授权与登出命令、安全凭据存储、内存回退、GitHub App/OAuth App 前置条件和不支持范围。
 - F22: 现有 PAT Header 配置、非 OAuth HTTP MCP、stdio MCP、MCP 工具命名、权限检查和 Agent 工具执行行为必须保持不变。
 
@@ -58,7 +58,7 @@ MewCode 已支持通过 Streamable HTTP 连接远程 MCP Server，也支持在�
 - 不实现 MCP `2025-11-25` 新增的 Client ID Metadata Documents 和相关 OIDC Discovery 扩展。
 - 不实现 Device Authorization Grant。
 - 不支持 SSH 跨机器回调、远程回调中继或用户手工粘贴回调 URL。
-- 不为 MewCode 内置或分发 GitHub App、GitHub OAuth App 的客户端凭据。
+- 不为 JulyCode 内置或分发 GitHub App、GitHub OAuth App 的客户端凭据。
 - 不实现 Client Credentials Grant。
 - 不为 stdio MCP 引入 OAuth。
 - 不实现远端 token revocation；logout 仅删除本地令牌。
@@ -69,7 +69,7 @@ MewCode 已支持通过 Streamable HTTP 连接远程 MCP Server，也支持在�
 ## 验收标准
 - AC1: 未启用 OAuth 的 HTTP MCP、PAT Header MCP 和 stdio MCP 的配置与连接行为保持原样。（覆盖 F1、F22）
 - AC2: OAuth 配置能加载预注册客户端信息和 scope；静态 `Authorization` 与 OAuth 冲突、缺失环境变量时产生明确脱敏错误。（覆盖 F2、F3）
-- AC3: OAuth Server 没有可用令牌时，MewCode 正常进入 TUI，该 Server 显示需要授权，其他 Server 和内置工具仍可使用，且不会自动打开浏览器。（覆盖 F4、F18）
+- AC3: OAuth Server 没有可用令牌时，JulyCode 正常进入 TUI，该 Server 显示需要授权，其他 Server 和内置工具仍可使用，且不会自动打开浏览器。（覆盖 F4、F18）
 - AC4: `/mcp auth <server>` 对有效目标启动授权，对未知、非 HTTP、未启用 OAuth和重复授权目标给出准确提示。（覆盖 F5）
 - AC5: 模拟 MCP Server 返回 `401` 后，客户端能解析 `WWW-Authenticate`，获取受保护资源元数据和授权服务器元数据，并拒绝非 HTTPS端点或不支持 PKCE S256 的授权服务器。（覆盖 F6、F7、N3）
 - AC6: 支持 DCR 的模拟授权服务器会被自动注册；不支持 DCR 时使用预注册客户端；两种方式都不可用时提示用户配置客户端信息。（覆盖 F8）

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.repo_map.discovery import RepositoryDiscovery, build_workspace_state, scan_repository
+from julycode.repo_map.discovery import RepositoryDiscovery, build_workspace_state, scan_repository
 
 
 def _git(path: Path, *args: str) -> None:

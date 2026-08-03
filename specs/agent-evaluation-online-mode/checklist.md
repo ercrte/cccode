@@ -6,7 +6,7 @@
 - [ ] CLI 默认运行模式是在线真实模型模式，而不是脚本化离线模式（验证：运行 `python eval/run_eval.py --help`，期望看到 `--mode {online,offline}` 且说明默认 online；运行默认命令在无配置环境下返回在线配置错误）
 - [ ] CLI 显式支持离线 smoke 模式（验证：运行 `python eval/run_eval.py --mode offline --output eval/results/offline --allow-review`，期望退出码 0 并生成报告）
 - [ ] 未传 `--cases` 时 online 默认加载 `eval/cases/online`，offline 默认加载 `eval/cases/offline`（验证：运行 `python -m pytest tests/test_eval_framework.py -k run_eval_cli -q`，期望通过）
-- [ ] 在线 Provider 通过 MewCode 配置和 Provider 工厂创建，runner 只接收注入 Provider，不隐式加载配置（验证：运行 `python -m pytest tests/test_eval_framework.py -k "online_provider or run_case" -q`，期望通过）
+- [ ] 在线 Provider 通过 JulyCode 配置和 Provider 工厂创建，runner 只接收注入 Provider，不隐式加载配置（验证：运行 `python -m pytest tests/test_eval_framework.py -k "online_provider or run_case" -q`，期望通过）
 - [ ] 数据结构能表达运行模式、Provider 信息、模型、prompt cache、用例标签、online/offline only（验证：运行 `python -m pytest tests/test_eval_framework.py::test_eval_models_have_expected_defaults -q`，期望通过）
 - [ ] loader 能解析 `tags`、`online_only`、`offline_only`，非法组合给出明确错误（验证：运行 `python -m pytest tests/test_eval_framework.py -k "load_cases or invalid_eval" -q`，期望通过）
 - [ ] 在线默认用例至少 30 个（验证：运行 `python -m pytest tests/test_eval_framework.py::test_online_cases_cover_required_scenarios -q`，期望通过）
@@ -34,5 +34,5 @@
 - [ ] 场景 1：离线 smoke 端到端通过（验证：在 tmux 中运行 `python eval/run_eval.py --mode offline --output eval/results/tmux-offline --allow-review; printf "\\nEXIT:$?\\n"`，期望输出用例数 7、失败 0、错误 0、`EXIT:0`）
 - [ ] 场景 2：检查离线 tmux 报告（验证：运行 `python - <<'PY'\nimport json\nfrom pathlib import Path\nreport=Path('eval/results/tmux-offline/report.md').read_text(encoding='utf-8')\ndata=json.loads(Path('eval/results/tmux-offline/results.json').read_text(encoding='utf-8'))\nassert data['provider']['mode'] == 'offline'\nassert data['summary']['total_cases'] == 7\nfor s in ['运行环境','总体摘要','维度均分','关键证据']:\n    assert s in report, s\nprint('ok')\nPY`，期望输出 `ok`）
 - [ ] 场景 3：默认在线命令在无配置环境中清晰失败（验证：在 tmux 中使用空 HOME 运行 `python eval/run_eval.py --output eval/results/tmux-online-config --allow-review; printf "\\nEXIT:$?\\n"`，期望 `EXIT:2` 且输出包含“在线评测配置错误”）
-- [ ] 场景 4：如果当前环境有有效 MewCode 配置和网络，真实在线单用例能生成报告（验证：运行 `python eval/run_eval.py --case online_basic_project_summary --output eval/results/online-single --allow-review`；有配置时报告包含 provider/model/usage，无配置时退出码 2 且错误清晰）
+- [ ] 场景 4：如果当前环境有有效 JulyCode 配置和网络，真实在线单用例能生成报告（验证：运行 `python eval/run_eval.py --case online_basic_project_summary --output eval/results/online-single --allow-review`；有配置时报告包含 provider/model/usage，无配置时退出码 2 且错误清晰）
 - [ ] 场景 5：对照本 checklist 逐项验收（验证：提交验收报告，期望所有非环境依赖项通过；真实在线单用例如因缺配置或网络不可用，应记录为环境阻塞而不是实现失败）

@@ -4,9 +4,9 @@
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/tools/builtin.py` | 内置工具非阻塞执行 |
-| 修改 | `src/mewcode/skills/tools.py` | Skill 脚本工具非阻塞执行 |
-| 修改 | `src/mewcode/tools/scheduler.py` | 只读并发批次逐项完成事件 |
+| 修改 | `src/julycode/tools/builtin.py` | 内置工具非阻塞执行 |
+| 修改 | `src/julycode/skills/tools.py` | Skill 脚本工具非阻塞执行 |
+| 修改 | `src/julycode/tools/scheduler.py` | 只读并发批次逐项完成事件 |
 | 修改 | `tests/test_tools.py` | 内置工具非阻塞与兼容测试 |
 | 修改 | `tests/test_skills.py` | Skill 脚本工具非阻塞测试 |
 | 修改 | `tests/test_tool_scheduler.py` | 调度器逐项完成事件测试 |
@@ -14,7 +14,7 @@
 
 ## T1: 内置工具非阻塞执行
 
-**文件：** `src/mewcode/tools/builtin.py`  
+**文件：** `src/julycode/tools/builtin.py`  
 **依赖：** 无  
 **步骤：**
 1. 移除内置工具在主事件循环线程内执行阻塞式 `subprocess.run` 的路径。
@@ -27,7 +27,7 @@
 
 ## T2: Skill 脚本工具非阻塞执行
 
-**文件：** `src/mewcode/skills/tools.py`  
+**文件：** `src/julycode/skills/tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 用 daemon 工作线程承载 `SkillScriptTool.execute()` 内的阻塞式脚本执行。
@@ -38,7 +38,7 @@
 
 ## T3: 只读并发批次逐项完成反馈
 
-**文件：** `src/mewcode/tools/scheduler.py`  
+**文件：** `src/julycode/tools/scheduler.py`  
 **依赖：** T1  
 **步骤：**
 1. 为只读并发批次增加内部执行辅助逻辑，为每个工具创建独立任务。
@@ -69,7 +69,7 @@
 **步骤：**
 1. 运行相关单元测试和全量测试。
 2. 运行编译检查。
-3. 按 AGENTS.md 要求用 tmux 启动 MewCode，输入真实请求触发工具调用，观察状态与回复。
+3. 按 AGENTS.md 要求用 tmux 启动 JulyCode，输入真实请求触发工具调用，观察状态与回复。
 4. 对照 checklist 逐项记录证据。
 
 **验证：** 运行 `python -m pytest -q`、`python -m compileall -q src tests`，并完成 tmux 端到端观察。

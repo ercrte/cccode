@@ -7,15 +7,16 @@ from typing import Any
 
 import pytest
 
-from mewcode.commands import AgentCommand
-from mewcode.config import AppConfig
-from mewcode.context.models import ContextConfig
-from mewcode.permissions.models import PermissionConfig
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent, TokenUsage
-from mewcode.session import ChatSession
-from mewcode.subagents.loader import SubAgentRoleLoader, default_sub_agent_roots
-from mewcode.subagents.manager import SubAgentManager, _completion_notice
-from mewcode.subagents.models import (
+from julycode.commands import AgentCommand
+from julycode.config import AppConfig
+from julycode.context.models import ContextConfig
+from julycode.memory.models import SessionMemoryConfig
+from julycode.permissions.models import PermissionConfig
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent, TokenUsage
+from julycode.session import ChatSession
+from julycode.subagents.loader import SubAgentRoleLoader, default_sub_agent_roots
+from julycode.subagents.manager import SubAgentManager, _completion_notice
+from julycode.subagents.models import (
     BackgroundSubAgentRecord,
     ParentAgentContext,
     SubAgentConfig,
@@ -28,14 +29,14 @@ from mewcode.subagents.models import (
     SubAgentWorkingContext,
     SubAgentWorktreeInfo,
 )
-from mewcode.subagents.runtime import SubAgentRunnerFactory
-from mewcode.subagents.tools import DELEGATE_AGENT_TOOL_NAME, DelegateAgentTool
-from mewcode.subagents.tools import _result_payload
-from mewcode.tools.base import ToolCall, ToolContext, ToolExecutionError, ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry, create_default_registry
-from mewcode.tools.scheduler import ToolPolicy
-from mewcode.worktrees import WorktreeConfig, WorktreeDisposition, WorktreeLease, WorktreeMetadata
+from julycode.subagents.runtime import SubAgentRunnerFactory
+from julycode.subagents.tools import DELEGATE_AGENT_TOOL_NAME, DelegateAgentTool
+from julycode.subagents.tools import _result_payload
+from julycode.tools.base import ToolCall, ToolContext, ToolExecutionError, ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry, create_default_registry
+from julycode.tools.scheduler import ToolPolicy
+from julycode.worktrees import WorktreeConfig, WorktreeDisposition, WorktreeLease, WorktreeMetadata
 
 
 class FakeProvider:
@@ -366,7 +367,7 @@ def test_working_context_and_worktree_result_defaults_are_compatible(tmp_path: P
     info = SubAgentWorktreeInfo(
         root=str(tmp_path / "worktree"),
         cwd=str(tmp_path / "worktree"),
-        branch="mewcode/reviewer/task-1",
+        branch="julycode/reviewer/task-1",
         base_commit="a" * 40,
         disposition="retained",
         reason="存在修改",
@@ -443,7 +444,7 @@ class StubWorktreeManager:
                 task_id="placeholder",
                 role="writer",
                 relative_name="writer/placeholder",
-                branch="mewcode/writer/placeholder",
+                branch="julycode/writer/placeholder",
                 base_commit="a" * 40,
                 created_at="2026-01-01T00:00:00+00:00",
             ),
@@ -462,7 +463,7 @@ class StubWorktreeManager:
             task_id=task_id,
             role=role,
             relative_name=f"{role}/{task_id}",
-            branch=f"mewcode/{role}/{task_id}",
+            branch=f"julycode/{role}/{task_id}",
             base_commit="a" * 40,
             created_at="2026-01-01T00:00:00+00:00",
         )
@@ -589,7 +590,7 @@ def test_worktree_payload_and_completion_notice_include_disposition(tmp_path: Pa
     info = SubAgentWorktreeInfo(
         root=str(tmp_path / "worktree"),
         cwd=str(tmp_path / "worktree"),
-        branch="mewcode/writer/task-1",
+        branch="julycode/writer/task-1",
         base_commit="a" * 40,
         disposition="retained",
         reason="存在未提交修改",
@@ -659,7 +660,7 @@ def real_worktree_manager(
     session = ChatSession()
     manager = SubAgentManager(
         roots=SubAgentRoleRoots(
-            project=repository / ".mewcode/agents",
+            project=repository / ".julycode/agents",
             user=repository / "user-agents",
             builtin=repository / "builtin-agents",
         ),
@@ -868,19 +869,19 @@ def write_role(path: Path, name: str, description: str, *, isolation: str | None
 
 
 def call(call_id: str, name: str):
-    from mewcode.tools.base import ToolCall
+    from julycode.tools.base import ToolCall
 
     return ToolCall(id=call_id, name=name)
 
 
 def make_app_config(tmp_path: Path, *, sub_agents: SubAgentConfig | None = None) -> AppConfig:
-    _ = tmp_path
     return AppConfig(
         protocol="openai",
         model="base-model",
         base_url="http://localhost",
         api_key="test-key",
         context=ContextConfig(enabled=False),
+        memory=SessionMemoryConfig(user_dir=str(tmp_path / ".julycode-user")),
         permissions=PermissionConfig(mode="permissive"),
         sub_agents=sub_agents or SubAgentConfig(),
     )

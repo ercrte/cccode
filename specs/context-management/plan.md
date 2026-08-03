@@ -1,9 +1,9 @@
-# MewCode 上下文管理 Plan
+# JulyCode 上下文管理 Plan
 
 ## 架构概览
 上下文管理作为独立子系统接入 Agent Loop 和 TUI 命令层。核心入口是 `ContextManager`：每次模型请求前，Agent Loop 把当前会话、候选工具、运行时提示构造函数和模型供应商交给它；它先执行轻量预防，再按预算决定是否执行重量兜底，最后用最新上下文状态重新构造运行时提示，返回可发送的 `ChatRequest` 和压缩报告。
 
-轻量预防由 `ToolResultCompactor` 负责。它只处理 `role="tool"` 的消息，先按单条工具结果阈值外置保存，再按同一工具轮次的合计阈值从大到小外置保存。外置内容由 `ContextStore` 写入项目目录下 `.mewcode/context/<session_id>/...`，确保后续 `read_file` 可以重新读取。
+轻量预防由 `ToolResultCompactor` 负责。它只处理 `role="tool"` 的消息，先按单条工具结果阈值外置保存，再按同一工具轮次的合计阈值从大到小外置保存。外置内容由 `ContextStore` 写入项目目录下 `.julycode/context/<session_id>/...`，确保后续 `read_file` 可以重新读取。
 
 重量兜底由 `HistorySummarizer` 和 `ConversationSegmenter` 配合完成。`ConversationSegmenter` 按协议安全边界切分历史，避免截断 assistant 工具调用和对应 tool 结果；`HistorySummarizer` 用无工具的 LLM 请求生成正式摘要，只保存 `<final_summary>` 内容，丢弃草稿。压缩后，早期消息从 `ChatSession.messages` 移除，正式摘要和边界提示存入 `ChatSession.context_state`，并通过运行时系统提示注入后续请求。
 
@@ -28,7 +28,7 @@ class ContextConfig:
     manual_reserve_tokens: int = 3_000
     summary_failure_limit: int = 3
     chars_per_token: float = 4.0
-    store_dir: str = ".mewcode/context"
+    store_dir: str = ".julycode/context"
 ```
 挂到 `AppConfig.context`。`window_tokens` 表示模型上下文窗口；可用输入预算按 `window_tokens - max_tokens - reserve_tokens` 计算。
 
@@ -123,7 +123,7 @@ Agent Loop 使用 `request` 调模型；模型返回 usage 后，把 `footprint`
 
 ### ContextLimitError
 ```python
-class ContextLimitError(MewCodeError):
+class ContextLimitError(JulyCodeError):
     report: ContextCompactionReport | None
 ```
 当摘要熔断或压缩后仍明显超预算时抛出。Agent Loop 将它转换成 `stopped(context_limit)` 事件。
@@ -196,7 +196,7 @@ class TokenEstimator:
 class ToolResultCompactor:
     def compact(self, session: ChatSession) -> ToolCompactionResult: ...
 ```
-扫描 `ChatSession.messages` 中的工具结果。已包含 `mewcode_externalized=true` 的工具结果不会重复外置。
+扫描 `ChatSession.messages` 中的工具结果。已包含 `julycode_externalized=true` 的工具结果不会重复外置。
 
 ### ContextStore
 ```python
@@ -247,67 +247,67 @@ class HistorySummarizer:
 
 ## 模块设计
 
-### `mewcode.context.models`
+### `julycode.context.models`
 **职责：** 定义 `ContextConfig`、`ContextState`、`ContextSummary`、`TokenAnchor`、`ContextCompactionReport` 等数据结构。  
 **对外接口：** 上述 dataclass。  
 **依赖：** 标准库 dataclasses、typing。
 
-### `mewcode.context.estimator`
+### `julycode.context.estimator`
 **职责：** 近似估算消息、提示、工具描述和完整请求的 token 规模，并维护锚点估算算法。  
 **对外接口：** `TokenEstimator`。  
 **依赖：** `ChatMessage`、`ToolSpec`、`PromptBundle`。
 
-### `mewcode.context.store`
-**职责：** 在项目目录内创建 `.mewcode/context/<session_id>/tool-results/`，保存完整工具结果，返回可读相对路径。  
+### `julycode.context.store`
+**职责：** 在项目目录内创建 `.julycode/context/<session_id>/tool-results/`，保存完整工具结果，返回可读相对路径。  
 **对外接口：** `ContextStore.write_tool_result()`。  
 **依赖：** `Path`、`ChatMessage`。
 
-### `mewcode.context.compactor`
+### `julycode.context.compactor`
 **职责：** 执行轻量预防，识别超大工具结果并替换为预览 JSON。  
 **对外接口：** `ToolResultCompactor.compact(session)`。  
 **依赖：** `TokenEstimator`、`ContextStore`、`ChatSession`。
 
-### `mewcode.context.segmenter`
+### `julycode.context.segmenter`
 **职责：** 按协议安全边界切分历史，并选择近期原文保留范围。  
 **对外接口：** `ConversationSegmenter.split()`、`select_recent()`。  
 **依赖：** `ChatMessage`、`TokenEstimator`。
 
-### `mewcode.context.summarizer`
+### `julycode.context.summarizer`
 **职责：** 生成结构化摘要，解析正式摘要并丢弃草稿。  
 **对外接口：** `HistorySummarizer.summarize()`。  
 **依赖：** `LLMProvider`、`ChatRequest`、`ChatMessage`、`ContextSummary`。
 
-### `mewcode.context.manager`
+### `julycode.context.manager`
 **职责：** 编排轻量预防、预算判断、重量兜底、熔断、报告和 usage 锚点更新。  
 **对外接口：** `ContextManager.prepare_request()`、`manual_compact()`、`record_usage()`。  
 **依赖：** context 子模块、`ChatSession`、`PromptBundle`、`LLMProvider`、`Callable`。
 
-### `mewcode.session`
+### `julycode.session`
 **职责：** 继续保存当前运行期消息和待执行计划，并新增上下文状态。  
 **对外接口：** 新增 `context_state` 字段、`replace_messages(messages)`、`set_context_summary(summary)`。  
 **依赖：** `ContextState`。为避免循环导入，运行期导入放在 `TYPE_CHECKING` 或模型模块保持轻量。
 
-### `mewcode.prompting`
+### `julycode.prompting`
 **职责：** 在运行时补充中注入上下文摘要和边界提示。  
-**对外接口：** `RuntimePromptContext` 新增 `context_summary` 字段；`PromptBuilder.build_runtime_prompt()` 在存在摘要时追加 `<mewcode_context_summary>` 块。  
+**对外接口：** `RuntimePromptContext` 新增 `context_summary` 字段；`PromptBuilder.build_runtime_prompt()` 在存在摘要时追加 `<julycode_context_summary>` 块。  
 **依赖：** `ContextSummary`。
 
-### `mewcode.commands`
+### `julycode.commands`
 **职责：** 解析 `/compact`。  
 **对外接口：** `parse_agent_command()` 返回 `CompactCommand`。  
 **依赖：** `ChatSession`。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 在每次 Provider 请求前调用 `ContextManager.prepare_request()`；请求完成后用 usage 更新锚点。  
 **对外接口：** `AgentLoopRunner` 新增可选 `context_manager` 参数；`TurnEventType` 增加 `context_compacted`；`AgentStopReason` 增加 `context_limit`。  
 **依赖：** `ContextManager`、`ContextCompactionReport`。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 共享同一个 `ContextManager` 给 TUI 手动压缩和 Agent Loop 自动压缩；显示 `/compact` 报告和自动压缩状态。  
-**对外接口：** `MewCodeApp` 新增可选 `context_manager` 参数。  
+**对外接口：** `JulyCodeApp` 新增可选 `context_manager` 参数。  
 **依赖：** `CompactCommand`、`ContextManager`。
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 解析 `context:` 配置并提供默认值。  
 **对外接口：** `AppConfig.context: ContextConfig`、`_parse_context()`。  
 **依赖：** `ContextConfig`。
@@ -362,7 +362,7 @@ HistorySummarizer 失败
 
 ## 文件组织
 ```text
-src/mewcode/
+src/julycode/
 ├── context/
 │   ├── __init__.py                 — 导出上下文管理公开类型
 │   ├── models.py                   — ContextConfig、ContextState、报告和摘要模型
@@ -390,7 +390,7 @@ tests/
 ├── test_agent.py                   — Agent Loop 请求前压缩和 context_limit 停止
 ├── test_tui_smoke.py               — /compact TUI 报告和既有行为不回退
 └── e2e_mock_openai_server.py       — 支持摘要响应和大工具输出场景
-.gitignore                         — 忽略 .mewcode/context/
+.gitignore                         — 忽略 .julycode/context/
 README.md                          — 说明 context 配置、/compact 和外置路径
 ```
 
@@ -399,7 +399,7 @@ README.md                          — 说明 context 配置、/compact 和外�
 | 决策点 | 选择 | 理由 |
 |--------|------|------|
 | 压缩入口 | Agent Loop 请求前统一调用 `ContextManager` | 满足每次请求前执行，且不污染 Provider 协议层。 |
-| 外置目录 | 项目内 `.mewcode/context/<session_id>/` | 符合读取工具的项目目录边界，后续模型可用 `read_file` 取回。 |
+| 外置目录 | 项目内 `.julycode/context/<session_id>/` | 符合读取工具的项目目录边界，后续模型可用 `read_file` 取回。 |
 | 外置格式 | JSON 保存原始工具消息和元数据 | 对模型和测试都可读，且能保留成功/失败、调用标识和错误信息。 |
 | 轻量压缩对象 | 只处理 tool 消息 | 符合 Token 大头优先处理工具结果，并避免改写用户原始消息。 |
 | 历史切分 | 按工具调用段不可拆分 | 防止 Provider 收到 assistant tool call 缺少对应 tool result 的无效历史。 |
@@ -424,4 +424,4 @@ README.md                          — 说明 context 配置、/compact 和外�
 | F15 | `CompactCommand`、`manual_compact()`、TUI 报告 |
 | F16-F18 | `consecutive_summary_failures`、`ContextLimitError`、成功摘要清零 |
 | F19 | Agent/TUI 只在请求前接入，工具、权限、Plan Mode 流程保留 |
-| F20 | `.mewcode/context/...` 项目相对路径，可被 `read_file` 读取 |
+| F20 | `.julycode/context/...` 项目相对路径，可被 `read_file` 读取 |

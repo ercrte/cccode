@@ -1,7 +1,7 @@
 # 记忆索引注入优化 Spec
 
 ## 背景
-当前每轮模型请求都注入完整的记忆索引文本（`<mewcode_memory_index>`），放在 runtime prompt 的不可缓存区块中。每次注入相同内容，浪费 token 且无法享受 Anthropic prompt caching。记忆索引在会话启动到下一轮之间有变化的概率极低（后台异步更新需要时间），实际不需要每轮完整注入。
+当前每轮模型请求都注入完整的记忆索引文本（`<julycode_memory_index>`），放在 runtime prompt 的不可缓存区块中。每次注入相同内容，浪费 token 且无法享受 Anthropic prompt caching。记忆索引在会话启动到下一轮之间有变化的概率极低（后台异步更新需要时间），实际不需要每轮完整注入。
 
 ## 目标
 - 记忆索引从"每轮注入"改为"会话级注入"，享受 prompt caching

@@ -1,4 +1,4 @@
-# MewCode 跨会话记忆质量 Checklist
+# JulyCode 跨会话记忆质量 Checklist
 
 > 每一项必须通过运行命令、检查报告或观察真实行为验证。离线脚本结果只验证流程，不能作为真实模型质量达标证据。
 
@@ -39,7 +39,7 @@
 - [ ] 临时格式、一次性任务和短期进度负例不产生 accepted 长期记忆。（验证：运行离线专项评测后检查 `results.json` 中 `negative_temporary` 标签用例均无 accepted/FP；同时运行 `python -m pytest tests/test_memory_extraction.py -q -k temporary`）
 - [ ] 模型猜测、不确定陈述和闲聊负例不产生 accepted 长期记忆。（验证：检查离线报告中 `negative_uncertain`、`negative_chat` 标签用例无 FP，并运行对应 validator 测试）
 - [ ] 仅出现在助手回复或工具结果中的内容不会成为用户偏好或纠正。（验证：检查离线报告中 `negative_assistant`、`negative_tool` 标签用例无 FP，并运行 `python -m pytest tests/test_memory_extraction.py -q -k evidence`）
-- [ ] 敏感信息负例不产生长期笔记，报告和落盘文件也不包含完整测试凭据。（验证：运行 `rg -n "BEGIN .*PRIVATE KEY|Bearer [A-Za-z0-9._~-]{8,}|sk-[A-Za-z0-9_-]{8,}" eval/results/memory-quality tests/.pytest_cache .mewcode 2>/dev/null`，期望无未脱敏测试值；并检查负例结果无 FP）
+- [ ] 敏感信息负例不产生长期笔记，报告和落盘文件也不包含完整测试凭据。（验证：运行 `rg -n "BEGIN .*PRIVATE KEY|Bearer [A-Za-z0-9._~-]{8,}|sk-[A-Za-z0-9_-]{8,}" eval/results/memory-quality tests/.pytest_cache .julycode 2>/dev/null`，期望无未脱敏测试值；并检查负例结果无 FP）
 - [ ] 重复和冲突序列执行后索引中无重复或相互矛盾的有效规则，最新用户纠正生效。（验证：运行 `python -m pytest tests/test_memory_updater.py -q -k 'duplicate or conflict or supersede'`，期望最终索引断言通过）
 - [ ] 在线完整提取评测整体 F1 不低于 85%。（验证：运行 `python eval/run_memory_eval.py --mode online --output eval/results/memory-quality/latest` 后读取 `results.json` 的 `extraction_metrics.f1`，期望 `>= 0.85`）
 - [ ] 在线完整提取评测关键偏好 Precision 不低于 98%。（验证：读取同一报告的 `extraction_metrics.critical_precision`，期望 `>= 0.98`）
@@ -81,16 +81,16 @@
 - [ ] 所有 memory、session recovery、prompting、agent 和 config 定向测试通过。（验证：运行 `python -m pytest tests/test_memory_*.py tests/test_session_recovery.py tests/test_prompting.py tests/test_agent.py tests/test_config.py -q`，期望退出码 0）
 - [ ] 项目全量测试通过。（验证：运行 `python -m pytest -q`，期望零失败、零错误）
 - [ ] 自动记忆 Provider 失败只产生 warning，不终止普通会话或破坏已有索引。（验证：运行 `python -m pytest tests/test_memory_updater.py tests/test_agent.py -q -k 'failure or warning'`，期望失败隔离测试通过）
-- [ ] 专项评测失败只影响评测退出码和报告，不修改真实项目记忆或用户记忆。（验证：运行失败 fixture 后比较隔离 HOME 与项目真实 `.mewcode/memory`，期望真实目录无新增或修改）
+- [ ] 专项评测失败只影响评测退出码和报告，不修改真实项目记忆或用户记忆。（验证：运行失败 fixture 后比较隔离 HOME 与项目真实 `.julycode/memory`，期望真实目录无新增或修改）
 - [ ] 普通聊天、工具调用、权限和上下文压缩现有测试未回退。（验证：运行 `python -m pytest tests/test_agent.py tests/test_tools.py tests/test_permissions.py tests/test_context_manager.py tests/test_context_compactor.py -q`，期望全部通过）
 
 ## tmux 端到端场景（AC11）
 
-- [ ] 场景 1：第一会话提取两类长期记忆。使用隔离 HOME 和项目目录，在 tmux 中启动 mock Provider 与 MewCode；输入“请长期记住：本项目统一使用 pytest；以后始终用中文回答”，等待自然结束后，用户级关键偏好和项目级技术约定分别落盘并出现在索引。（验证：运行 `tmux capture-pane -p -S -200 -t mew-memory-quality-e2e`，并检查隔离目录的 user/project memory Markdown，期望包含来源证据、critical 标记、pytest 和中文偏好）
-- [ ] 场景 2：第二会话严格为空白新会话。退出第一会话后，以同项目和 HOME 运行 `mewcode --new-session`，界面显示空会话启动而不是恢复旧会话。（验证：捕获第二会话 pane，并检查最新 session 在首次输入前没有旧消息）
+- [ ] 场景 1：第一会话提取两类长期记忆。使用隔离 HOME 和项目目录，在 tmux 中启动 mock Provider 与 JulyCode；输入“请长期记住：本项目统一使用 pytest；以后始终用中文回答”，等待自然结束后，用户级关键偏好和项目级技术约定分别落盘并出现在索引。（验证：运行 `tmux capture-pane -p -S -200 -t mew-memory-quality-e2e`，并检查隔离目录的 user/project memory Markdown，期望包含来源证据、critical 标记、pytest 和中文偏好）
+- [ ] 场景 2：第二会话严格为空白新会话。退出第一会话后，以同项目和 HOME 运行 `julycode --new-session`，界面显示空会话启动而不是恢复旧会话。（验证：捕获第二会话 pane，并检查最新 session 在首次输入前没有旧消息）
 - [ ] 场景 3：第二会话无需背景复述。直接输入“按既定项目约定说明应使用什么测试框架，并按我的长期偏好回答”；最终首轮回复同时包含 pytest 和中文，不询问测试框架或语言偏好。（验证：tmux pane 最终回复及 mock 请求日志同时证明 memory index 已注入、上一会话消息不在 history、回复未命中询问背景词组）
 - [ ] 场景 4：当前明确指令覆盖旧偏好。在同一空白新会话再输入“这一次改用英文回答”，回复使用英文但长期中文偏好笔记未被临时要求覆盖或删除。（验证：tmux 输出为英文；检查原偏好 Markdown 和索引仍保留，后台提取不产生相反长期偏好）
-- [ ] 场景 5：验收环境清理。关闭 MewCode、mock Provider 和 tmux，删除隔离 HOME、配置、会话与请求日志。（验证：运行 `tmux ls`、`ps -ef | rg "e2e_mock_openai_server|mewcode"` 和 `git status --short`，期望无本次残留进程或临时文件，工作区只含预期实现与报告）
+- [ ] 场景 5：验收环境清理。关闭 JulyCode、mock Provider 和 tmux，删除隔离 HOME、配置、会话与请求日志。（验证：运行 `tmux ls`、`ps -ef | rg "e2e_mock_openai_server|julycode"` 和 `git status --short`，期望无本次残留进程或临时文件，工作区只含预期实现与报告）
 
 ## 最终证据汇总
 

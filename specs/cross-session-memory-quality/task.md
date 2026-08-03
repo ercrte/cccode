@@ -1,17 +1,17 @@
-# MewCode 跨会话记忆质量 Tasks
+# JulyCode 跨会话记忆质量 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |---|---|---|
-| 修改 | `src/mewcode/memory/models.py` | 增加关键偏好阈值、笔记证据和提取结果模型 |
-| 修改 | `src/mewcode/memory/__init__.py` | 导出新增生产模型 |
-| 新建 | `src/mewcode/memory/extraction.py` | 解析和校验记忆候选 |
-| 修改 | `src/mewcode/memory/updater.py` | 拆分 extract/apply/update 并强化 Prompt |
-| 修改 | `src/mewcode/memory/notes.py` | 新元信息兼容读写、敏感检查和删除 |
-| 修改 | `src/mewcode/memory/index.py` | 关键偏好优先索引 |
-| 修改 | `src/mewcode/config.py` | 解析并校验关键偏好置信阈值 |
-| 修改 | `src/mewcode/prompting/builder.py` | 注入长期记忆使用边界 |
+| 修改 | `src/julycode/memory/models.py` | 增加关键偏好阈值、笔记证据和提取结果模型 |
+| 修改 | `src/julycode/memory/__init__.py` | 导出新增生产模型 |
+| 新建 | `src/julycode/memory/extraction.py` | 解析和校验记忆候选 |
+| 修改 | `src/julycode/memory/updater.py` | 拆分 extract/apply/update 并强化 Prompt |
+| 修改 | `src/julycode/memory/notes.py` | 新元信息兼容读写、敏感检查和删除 |
+| 修改 | `src/julycode/memory/index.py` | 关键偏好优先索引 |
+| 修改 | `src/julycode/config.py` | 解析并校验关键偏好置信阈值 |
+| 修改 | `src/julycode/prompting/builder.py` | 注入长期记忆使用边界 |
 | 新建 | `eval/memory_quality/__init__.py` | 专项评测包导出 |
 | 新建 | `eval/memory_quality/models.py` | 数据集、结果和报告模型 |
 | 新建 | `eval/memory_quality/loader.py` | 人工标注数据加载和校验 |
@@ -39,7 +39,7 @@
 
 ## T1: 扩展生产记忆模型
 
-**文件：** `src/mewcode/memory/models.py`、`src/mewcode/memory/__init__.py`
+**文件：** `src/julycode/memory/models.py`、`src/julycode/memory/__init__.py`
 
 **依赖：** 无
 
@@ -47,13 +47,13 @@
 1. 在 `SessionMemoryConfig` 增加默认值为 `0.95` 的关键偏好置信阈值。
 2. 在 `MemoryNote` 末尾增加有默认值的 `source_evidence`、`critical` 和 `confidence` 字段。
 3. 增加 Plan 中定义的候选、校验操作、拒绝和提取结果数据结构与 Literal 类型。
-4. 从 `mewcode.memory` 导出需要被 updater、测试和评测器使用的新类型。
+4. 从 `julycode.memory` 导出需要被 updater、测试和评测器使用的新类型。
 
 **验证：** 运行 `python -m pytest tests/test_session_id.py tests/test_memory_notes.py -q`，期望既有模型构造与笔记测试通过。
 
 ## T2: 解析关键偏好阈值配置
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`
+**文件：** `src/julycode/config.py`、`tests/test_config.py`
 
 **依赖：** T1
 
@@ -66,7 +66,7 @@
 
 ## T3: 兼容读写笔记质量元信息
 
-**文件：** `src/mewcode/memory/notes.py`、`tests/test_memory_notes.py`
+**文件：** `src/julycode/memory/notes.py`、`tests/test_memory_notes.py`
 
 **依赖：** T1
 
@@ -80,7 +80,7 @@
 
 ## T4: 增加敏感检查与安全删除
 
-**文件：** `src/mewcode/memory/notes.py`、`tests/test_memory_notes.py`
+**文件：** `src/julycode/memory/notes.py`、`tests/test_memory_notes.py`
 
 **依赖：** T3
 
@@ -94,7 +94,7 @@
 
 ## T5: 实现候选 JSON 解析
 
-**文件：** `src/mewcode/memory/extraction.py`、`tests/test_memory_extraction.py`
+**文件：** `src/julycode/memory/extraction.py`、`tests/test_memory_extraction.py`
 
 **依赖：** T1
 
@@ -109,7 +109,7 @@
 
 ## T6: 实现长期性与用户证据校验
 
-**文件：** `src/mewcode/memory/extraction.py`、`tests/test_memory_extraction.py`
+**文件：** `src/julycode/memory/extraction.py`、`tests/test_memory_extraction.py`
 
 **依赖：** T4、T5
 
@@ -123,7 +123,7 @@
 
 ## T7: 实现关键偏好与敏感内容门控
 
-**文件：** `src/mewcode/memory/extraction.py`、`tests/test_memory_extraction.py`
+**文件：** `src/julycode/memory/extraction.py`、`tests/test_memory_extraction.py`
 
 **依赖：** T2、T6
 
@@ -138,7 +138,7 @@
 
 ## T8: 实现重复、更新和替代校验
 
-**文件：** `src/mewcode/memory/extraction.py`、`tests/test_memory_extraction.py`
+**文件：** `src/julycode/memory/extraction.py`、`tests/test_memory_extraction.py`
 
 **依赖：** T3、T6
 
@@ -152,7 +152,7 @@
 
 ## T9: 拆分 MemoryNoteUpdater.extract
 
-**文件：** `src/mewcode/memory/updater.py`、`tests/test_memory_updater.py`
+**文件：** `src/julycode/memory/updater.py`、`tests/test_memory_updater.py`
 
 **依赖：** T5、T6、T7、T8
 
@@ -167,7 +167,7 @@
 
 ## T10: 实现 MemoryNoteUpdater.apply 与兼容 update
 
-**文件：** `src/mewcode/memory/updater.py`、`tests/test_memory_updater.py`
+**文件：** `src/julycode/memory/updater.py`、`tests/test_memory_updater.py`
 
 **依赖：** T8、T9
 
@@ -182,7 +182,7 @@
 
 ## T11: 验证后台更新集成与失败隔离
 
-**文件：** `src/mewcode/memory/manager.py`、`tests/test_memory_updater.py`、`tests/test_agent.py`
+**文件：** `src/julycode/memory/manager.py`、`tests/test_memory_updater.py`、`tests/test_agent.py`
 
 **依赖：** T10
 
@@ -196,7 +196,7 @@
 
 ## T12: 将关键偏好优先写入索引
 
-**文件：** `src/mewcode/memory/index.py`、`tests/test_memory_index.py`
+**文件：** `src/julycode/memory/index.py`、`tests/test_memory_index.py`
 
 **依赖：** T3
 
@@ -210,7 +210,7 @@
 
 ## T13: 强化长期记忆运行时提示
 
-**文件：** `src/mewcode/prompting/builder.py`、`tests/test_prompting.py`
+**文件：** `src/julycode/prompting/builder.py`、`tests/test_prompting.py`
 
 **依赖：** T12
 
@@ -244,7 +244,7 @@
 
 **步骤：**
 1. 实现 Plan 中的 Extraction、Inheritance、Metrics、RunOptions 和 Report dataclass。
-2. 复用 `mew_eval.models.EvalProviderInfo` 记录 Provider 元数据。
+2. 复用 `july_eval.models.EvalProviderInfo` 记录 Provider 元数据。
 3. 为元组和可选减少率设置安全默认值。
 4. 导出 Loader、Runner 和报告模块需要的公共类型。
 
@@ -708,7 +708,7 @@
 
 ## T49: 运行生产链路定向回归
 
-**文件：** `src/mewcode/`、`tests/test_memory_*.py`、`tests/test_session_recovery.py`、`tests/test_prompting.py`、`tests/test_agent.py`、`tests/test_config.py`
+**文件：** `src/julycode/`、`tests/test_memory_*.py`、`tests/test_session_recovery.py`、`tests/test_prompting.py`、`tests/test_agent.py`、`tests/test_config.py`
 
 **依赖：** T1–T14、T47
 
@@ -717,7 +717,7 @@
 2. 运行全部 memory、session recovery、prompting、agent 和 config 测试。
 3. 修复失败后重复运行，不能以跳过测试收束。
 
-**验证：** 运行 `python -m compileall -q src/mewcode tests`，再运行 `python -m pytest tests/test_memory_*.py tests/test_session_recovery.py tests/test_prompting.py tests/test_agent.py tests/test_config.py -q`，期望退出码均为 0。
+**验证：** 运行 `python -m compileall -q src/julycode tests`，再运行 `python -m pytest tests/test_memory_*.py tests/test_session_recovery.py tests/test_prompting.py tests/test_agent.py tests/test_config.py -q`，期望退出码均为 0。
 
 ## T50: 运行完整离线专项评测
 
@@ -754,7 +754,7 @@
 **依赖：** T51
 
 **步骤：**
-1. 使用当前有效 MewCode Provider 配置运行完整 online 数据集。
+1. 使用当前有效 JulyCode Provider 配置运行完整 online 数据集。
 2. 记录实际模型、Provider、数据集版本和时间。
 3. 检查整体 F1、关键偏好 Precision/Recall、首轮理解率和背景重复说明减少率。
 4. 若未达标，依据 FP/FN 明细调整生产提取规则或 Prompt，重新运行相关测试与在线评测。
@@ -768,10 +768,10 @@
 **依赖：** T47、T51
 
 **步骤：**
-1. 在隔离临时目录和 HOME 中配置 MewCode 指向 mock OpenAI server。
+1. 在隔离临时目录和 HOME 中配置 JulyCode 指向 mock OpenAI server。
 2. 在 tmux 启动第一会话，输入同时包含项目技术决策和关键用户偏好的真实对话请求。
 3. 等待最终回复和后台记忆写入，检查两类 Markdown 笔记和索引。
-4. 退出后以 `mewcode --new-session` 启动第二会话，直接输入依赖两项背景的任务。
+4. 退出后以 `julycode --new-session` 启动第二会话，直接输入依赖两项背景的任务。
 5. 捕获 pane 和 mock 请求日志，确认第二会话未恢复旧消息、首个请求含两类长期记忆、最终回复不询问背景并遵循两项约定。
 
 **验证：** 运行 `tmux capture-pane -p -S -300 -t mew-memory-quality-e2e`，期望看到第一会话完成、第二会话空白启动和按既定技术决策及关键偏好完成的首轮回复；同时检查隔离目录中的记忆文件和请求日志。
@@ -785,10 +785,10 @@
 **步骤：**
 1. 关闭专项 tmux 会话和 mock server。
 2. 删除临时 HOME、配置、会话和请求日志，不删除项目内正式评测报告。
-3. 检查没有残留 mock/MewCode 进程。
+3. 检查没有残留 mock/JulyCode 进程。
 4. 检查 git diff 只包含本功能预期文件。
 
-**验证：** 运行 `tmux ls`、`ps -ef | rg "e2e_mock_openai_server|mewcode"` 和 `git status --short`，期望无本次验收残留进程或临时文件，工作区只包含预期改动。
+**验证：** 运行 `tmux ls`、`ps -ef | rg "e2e_mock_openai_server|julycode"` 和 `git status --short`，期望无本次验收残留进程或临时文件，工作区只包含预期改动。
 
 ## 执行顺序
 

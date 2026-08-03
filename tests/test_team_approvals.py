@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.teams.approvals import ApprovalService
-from mewcode.teams.models import TaskDraft, TeamActor, TeamDataError, TeamMemberRecord
-from mewcode.teams.store import TeamStore
-from mewcode.teams.tasks import TaskService
+from julycode.teams.approvals import ApprovalService
+from julycode.teams.models import TaskDraft, TeamActor, TeamDataError, TeamMemberRecord
+from julycode.teams.store import TeamStore
+from julycode.teams.tasks import TaskService
 from tests.test_worktrees import init_repository
 
 

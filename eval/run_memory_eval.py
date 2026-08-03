@@ -14,14 +14,14 @@ from memory_quality.loader import MemoryQualityConfigError, MemoryQualityDataset
 from memory_quality.models import MemoryQualityRunOptions  # noqa: E402
 from memory_quality.report import write_json_report, write_markdown_report  # noqa: E402
 from memory_quality.runner import MemoryQualityRunner  # noqa: E402
-from mew_eval.models import EvalProviderInfo  # noqa: E402
-from mewcode.config import load_config  # noqa: E402
-from mewcode.errors import ConfigError  # noqa: E402
-from mewcode.providers.factory import create_provider  # noqa: E402
+from july_eval.models import EvalProviderInfo  # noqa: E402
+from julycode.config import load_config  # noqa: E402
+from julycode.errors import ConfigError  # noqa: E402
+from julycode.providers.factory import create_provider  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="运行 MewCode 跨会话记忆质量评测")
+    parser = argparse.ArgumentParser(description="运行 JulyCode 跨会话记忆质量评测")
     parser.add_argument("--mode", choices=("offline", "online"), default="offline", help="默认 offline，在线模式会消耗真实模型额度")
     parser.add_argument("--cases", default="eval/cases/memory_quality", help="专项数据集目录")
     parser.add_argument("--output", default="eval/results/memory-quality/latest", help="报告输出目录")

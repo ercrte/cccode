@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from mewcode.providers.sse import iter_sse_lines
+from julycode.providers.sse import iter_sse_lines
 
 
 async def collect(body: str):

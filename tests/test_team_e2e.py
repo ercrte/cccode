@@ -7,22 +7,22 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.config import AgentConfig, AppConfig
-from mewcode.context.models import ContextConfig
-from mewcode.memory.models import SessionMemoryConfig
-from mewcode.permissions import PermissionConfig
-from mewcode.permissions.controller import create_permission_controller
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
-from mewcode.providers.openai import OpenAIProvider
-from mewcode.session import ChatSession
-from mewcode.subagents.models import SubAgentConfig
-from mewcode.teams.models import MessageDraft
-from mewcode.teams.sessions import TeamMemberSessionStore
-from mewcode.tools.base import RuntimePrincipal, ToolCall, ToolContext
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import create_default_registry
-from mewcode.tui.app import MewCodeApp
-from mewcode.tui.widgets import Composer, MessageView
+from julycode.config import AgentConfig, AppConfig
+from julycode.context.models import ContextConfig
+from julycode.memory.models import SessionMemoryConfig
+from julycode.permissions import PermissionConfig
+from julycode.permissions.controller import create_permission_controller
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from julycode.providers.openai import OpenAIProvider
+from julycode.session import ChatSession
+from julycode.subagents.models import SubAgentConfig
+from julycode.teams.models import MessageDraft
+from julycode.teams.sessions import TeamMemberSessionStore
+from julycode.tools.base import RuntimePrincipal, ToolCall, ToolContext
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import create_default_registry
+from julycode.tui.app import JulyCodeApp
+from julycode.tui.widgets import Composer, MessageView
 from tests.e2e_mock_openai_server import Handler, _team_e2e_tool_calls
 from tests.test_worktrees import git, init_repository
 
@@ -60,7 +60,7 @@ async def test_real_tui_team_end_to_end_without_tmux_wrapper(
 ) -> None:
     """沙箱不能创建 socket 时，仍验证同一 TUI、mock 决策和 Git 完整链路。"""
     repository = init_repository(tmp_path / "repo")
-    role_dir = repository / ".mewcode" / "agents"
+    role_dir = repository / ".julycode" / "agents"
     role_dir.mkdir(parents=True)
     (role_dir / "team-writer.md").write_text(
         """---
@@ -76,7 +76,7 @@ permission_mode: permissive
 """,
         encoding="utf-8",
     )
-    git(repository, "add", ".mewcode/agents/team-writer.md")
+    git(repository, "add", ".julycode/agents/team-writer.md")
     git(repository, "commit", "-qm", "add team writer role")
     home = tmp_path / "home"
     home.mkdir()
@@ -95,7 +95,7 @@ permission_mode: permissive
     )
     registry = create_default_registry()
     executor = ToolExecutor(registry, ToolContext(repository))
-    app = MewCodeApp(
+    app = JulyCodeApp(
         ChatSession(),
         InProcessTeamMockProvider(config),
         config,
@@ -131,7 +131,7 @@ permission_mode: permissive
     assert approval is not None and approval.status == "approved"
     assert "本阶段未自动执行 Git 合并" in rendered
 
-    mailbox_root = home / ".mewcode" / "teams" / "e2e-team" / "mailboxes"
+    mailbox_root = home / ".julycode" / "teams" / "e2e-team" / "mailboxes"
     direct_messages = []
     for path in mailbox_root.glob("*.json"):
         direct_messages.extend(json.loads(path.read_text(encoding="utf-8"))["messages"])
@@ -145,7 +145,7 @@ permission_mode: permissive
     before_size = Path(alice.session_path).stat().st_size
     second_registry = create_default_registry()
     second_executor = ToolExecutor(second_registry, ToolContext(repository))
-    second = MewCodeApp(
+    second = JulyCodeApp(
         ChatSession(),
         InProcessTeamMockProvider(config),
         config,

@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
-from mewcode.mcp.errors import McpProtocolError, McpToolError
-from mewcode.mcp.search import McpToolMatch, McpToolSearchResult
-from mewcode.mcp.tools import (
+from julycode.mcp.errors import McpProtocolError, McpToolError
+from julycode.mcp.search import McpToolMatch, McpToolSearchResult
+from julycode.mcp.tools import (
     SEARCH_MCP_TOOLS_NAME,
     McpToolDefinition,
     RemoteMcpTool,
@@ -16,7 +16,7 @@ from mewcode.mcp.tools import (
     make_global_tool_name,
     parse_global_tool_name,
 )
-from mewcode.tools.base import ToolContext, ToolExecutionError
+from julycode.tools.base import ToolContext, ToolExecutionError
 
 
 class FakeSession:

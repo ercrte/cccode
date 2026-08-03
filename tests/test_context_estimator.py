@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from mewcode.context.estimator import TokenEstimator
-from mewcode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, RequestFootprint, TokenAnchor
-from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
-from mewcode.providers.base import ChatMessage
-from mewcode.tools.base import ToolCall, ToolSpec
+from julycode.context.estimator import TokenEstimator
+from julycode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, RequestFootprint, TokenAnchor
+from julycode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
+from julycode.providers.base import ChatMessage
+from julycode.tools.base import ToolCall, ToolSpec
 
 
 def test_context_config_defaults() -> None:
@@ -15,7 +15,7 @@ def test_context_config_defaults() -> None:
     assert config.auto_reserve_tokens == 13_000
     assert config.manual_reserve_tokens == 3_000
     assert config.summary_failure_limit == 3
-    assert config.store_dir == ".mewcode/context"
+    assert config.store_dir == ".julycode/context"
 
 
 def test_context_limit_error_carries_report() -> None:
@@ -55,7 +55,7 @@ def test_estimator_counts_complete_generated_context_block() -> None:
     block = GeneratedContextBlock(
         name="repo_map",
         title="仓库地图",
-        text="<mewcode_repo_map>路径与边界</mewcode_repo_map>",
+        text="<julycode_repo_map>路径与边界</julycode_repo_map>",
         kind="repo_map",
         snapshot_id="snapshot-1",
     )

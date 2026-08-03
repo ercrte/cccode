@@ -1,23 +1,23 @@
-# MewCode Agent Loop Tasks
+# JulyCode Agent Loop Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/config.py` | 增加 Agent Loop 配置与解析 |
-| 修改 | `src/mewcode/providers/base.py` | 增加 Token 用量结构和 usage 流事件 |
-| 修改 | `src/mewcode/providers/openai.py` | 解析 OpenAI 流式 usage |
-| 修改 | `src/mewcode/providers/anthropic.py` | 解析 Anthropic 流式 usage |
-| 修改 | `src/mewcode/tools/base.py` | 增加工具安全等级 |
-| 修改 | `src/mewcode/tools/builtin.py` | 标注六个内置工具的安全等级 |
-| 修改 | `src/mewcode/tools/registry.py` | 支持按安全等级筛选工具描述 |
-| 新建 | `src/mewcode/tools/scheduler.py` | 实现工具策略、分批和多工具调度 |
-| 修改 | `src/mewcode/session.py` | 增加待执行计划运行期状态 |
-| 新建 | `src/mewcode/commands.py` | 解析普通输入、`/plan` 和 `/do` |
-| 修改 | `src/mewcode/agent.py` | 实现流式收集器、AgentLoopRunner、停止条件和 Plan Mode |
-| 修改 | `src/mewcode/tui/widgets.py` | 展示进度、Token 用量和多工具状态 |
-| 修改 | `src/mewcode/tui/app.py` | 接入 AgentLoopRunner、命令解析和取消 |
-| 修改 | `src/mewcode/cli.py` | 传入 Agent 配置 |
+| 修改 | `src/julycode/config.py` | 增加 Agent Loop 配置与解析 |
+| 修改 | `src/julycode/providers/base.py` | 增加 Token 用量结构和 usage 流事件 |
+| 修改 | `src/julycode/providers/openai.py` | 解析 OpenAI 流式 usage |
+| 修改 | `src/julycode/providers/anthropic.py` | 解析 Anthropic 流式 usage |
+| 修改 | `src/julycode/tools/base.py` | 增加工具安全等级 |
+| 修改 | `src/julycode/tools/builtin.py` | 标注六个内置工具的安全等级 |
+| 修改 | `src/julycode/tools/registry.py` | 支持按安全等级筛选工具描述 |
+| 新建 | `src/julycode/tools/scheduler.py` | 实现工具策略、分批和多工具调度 |
+| 修改 | `src/julycode/session.py` | 增加待执行计划运行期状态 |
+| 新建 | `src/julycode/commands.py` | 解析普通输入、`/plan` 和 `/do` |
+| 修改 | `src/julycode/agent.py` | 实现流式收集器、AgentLoopRunner、停止条件和 Plan Mode |
+| 修改 | `src/julycode/tui/widgets.py` | 展示进度、Token 用量和多工具状态 |
+| 修改 | `src/julycode/tui/app.py` | 接入 AgentLoopRunner、命令解析和取消 |
+| 修改 | `src/julycode/cli.py` | 传入 Agent 配置 |
 | 修改 | `tests/test_config.py` | 覆盖 Agent 配置解析 |
 | 修改 | `tests/test_openai_provider.py` | 覆盖 OpenAI usage 解析 |
 | 修改 | `tests/test_anthropic_provider.py` | 覆盖 Anthropic usage 解析 |
@@ -32,7 +32,7 @@
 
 ## T1: 增加 Agent 配置
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** 无  
 **步骤：**
 1. 增加 `AgentConfig`，默认 `max_iterations` 为 8。
@@ -44,7 +44,7 @@
 
 ## T2: 扩展 Provider 统一事件
 
-**文件：** `src/mewcode/providers/base.py`、`tests/test_openai_provider.py`、`tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/base.py`、`tests/test_openai_provider.py`、`tests/test_anthropic_provider.py`  
 **依赖：** T1  
 **步骤：**
 1. 增加 `TokenUsage` 数据结构。
@@ -56,7 +56,7 @@
 
 ## T3: 解析 OpenAI Token 用量
 
-**文件：** `src/mewcode/providers/openai.py`、`tests/test_openai_provider.py`  
+**文件：** `src/julycode/providers/openai.py`、`tests/test_openai_provider.py`  
 **依赖：** T2  
 **步骤：**
 1. 在 OpenAI 请求 payload 中加入流式 usage 请求选项。
@@ -68,7 +68,7 @@
 
 ## T4: 解析 Anthropic Token 用量
 
-**文件：** `src/mewcode/providers/anthropic.py`、`tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/anthropic.py`、`tests/test_anthropic_provider.py`  
 **依赖：** T2  
 **步骤：**
 1. 解析 Anthropic `message_start` 中的 usage。
@@ -80,7 +80,7 @@
 
 ## T5: 标注工具安全等级
 
-**文件：** `src/mewcode/tools/base.py`、`src/mewcode/tools/builtin.py`、`src/mewcode/tools/registry.py`、`tests/test_tools.py`  
+**文件：** `src/julycode/tools/base.py`、`src/julycode/tools/builtin.py`、`src/julycode/tools/registry.py`、`tests/test_tools.py`  
 **依赖：** 无  
 **步骤：**
 1. 增加 `ToolSafety = Literal["read_only", "side_effect"]`。
@@ -94,7 +94,7 @@
 
 ## T6: 实现工具策略
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
 **依赖：** T5  
 **步骤：**
 1. 新建 `ToolPolicy`，支持 `normal`、`plan`、`do` 三种模式。
@@ -106,7 +106,7 @@
 
 ## T7: 实现多工具分批调度
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
 **依赖：** T6  
 **步骤：**
 1. 增加 `ToolBatch` 和 `ToolCallScheduler`。
@@ -119,7 +119,7 @@
 
 ## T8: 增加待执行计划状态
 
-**文件：** `src/mewcode/session.py`、`tests/test_session.py`  
+**文件：** `src/julycode/session.py`、`tests/test_session.py`  
 **依赖：** 无  
 **步骤：**
 1. 增加 `PendingPlan` 数据结构。
@@ -131,7 +131,7 @@
 
 ## T9: 实现命令解析
 
-**文件：** `src/mewcode/commands.py`、`tests/test_commands.py`  
+**文件：** `src/julycode/commands.py`、`tests/test_commands.py`  
 **依赖：** T8  
 **步骤：**
 1. 新建 `AgentCommand` 和 `AgentMode`。
@@ -144,7 +144,7 @@
 
 ## T10: 实现流式收集器
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T2、T9  
 **步骤：**
 1. 增加 `AgentProgress`、`AgentStopReason` 和新版 `TurnEvent`。
@@ -158,7 +158,7 @@
 
 ## T11: 实现基础 Agent Loop
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T7、T10  
 **步骤：**
 1. 新建 `AgentLoopRunner`，接收会话、Provider、工具注册表、执行器和 Agent 配置。
@@ -173,7 +173,7 @@
 
 ## T12: 实现停止条件
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T11  
 **步骤：**
 1. 实现迭代上限停止，最后一轮若仍请求工具则不再执行工具。
@@ -186,7 +186,7 @@
 
 ## T13: 接入 Plan Mode 到 Agent Loop
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T9、T12  
 **步骤：**
 1. `plan` 模式使用只读工具策略构建模型请求。
@@ -200,7 +200,7 @@
 
 ## T14: 更新 TUI 状态组件
 
-**文件：** `src/mewcode/tui/widgets.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/widgets.py`、`tests/test_tui_smoke.py`  
 **依赖：** T2、T10  
 **步骤：**
 1. 扩展 `StatusBar`，支持显示 Agent 模式、轮次、阶段和 Token 用量。
@@ -212,7 +212,7 @@
 
 ## T15: TUI 接入 AgentLoopRunner 和命令解析
 
-**文件：** `src/mewcode/tui/app.py`、`src/mewcode/cli.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`src/julycode/cli.py`、`tests/test_tui_smoke.py`  
 **依赖：** T11、T14  
 **步骤：**
 1. 将 TUI 编排入口从单轮 Runner 切换为 `AgentLoopRunner`。
@@ -226,7 +226,7 @@
 
 ## T16: 实现 TUI 取消行为
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`  
 **依赖：** T15  
 **步骤：**
 1. 调整 `Ctrl+C` 行为：运行中取消当前生成任务，空闲时退出。
@@ -255,7 +255,7 @@
 **文件：** `README.md`  
 **依赖：** T15  
 **步骤：**
-1. 更新简介，说明 MewCode 已支持 Agent Loop。
+1. 更新简介，说明 JulyCode 已支持 Agent Loop。
 2. 更新工具章节，删除“最多一轮工具调用”的旧边界。
 3. 增加 Plan Mode 使用说明：`/plan <需求>` 和 `/do`。
 4. 增加停止条件和本阶段不做事项说明。
@@ -277,7 +277,7 @@
 
 ## T20: 运行全量编译和测试
 
-**文件：** `src/mewcode/**/*.py`、`tests/**/*.py`  
+**文件：** `src/julycode/**/*.py`、`tests/**/*.py`  
 **依赖：** T19  
 **步骤：**
 1. 运行 Python 编译检查。
@@ -292,7 +292,7 @@
 **依赖：** T20  
 **步骤：**
 1. 在 tmux 中启动 mock OpenAI 服务。
-2. 在 tmux 中配置并启动 `mewcode`。
+2. 在 tmux 中配置并启动 `julycode`。
 3. 输入一个多步真实请求，观察 Agent Loop 是否连续调用多个工具并最终回复。
 4. 输入 `/plan <需求>`，观察只读规划是否生成并保存计划。
 5. 输入 `/do`，观察是否执行保存计划并在完成后清理计划。

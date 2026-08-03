@@ -1,9 +1,9 @@
-# MewCode 命令系统 Checklist
+# JulyCode 命令系统 Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
 ## 实现完整性
-- [ ] 命令系统包已替换旧硬编码解析入口，公共导入 `mewcode.commands` 可用（验证：运行 `python -m py_compile src/mewcode/commands/__init__.py src/mewcode/commands/models.py src/mewcode/commands/registry.py src/mewcode/commands/dispatcher.py src/mewcode/commands/builtin.py`，期望无错误）
+- [ ] 命令系统包已替换旧硬编码解析入口，公共导入 `julycode.commands` 可用（验证：运行 `python -m py_compile src/julycode/commands/__init__.py src/julycode/commands/models.py src/julycode/commands/registry.py src/julycode/commands/dispatcher.py src/julycode/commands/builtin.py`，期望无错误）
 - [ ] 十个内置命令均已登记且元数据完整：`/help`、`/compact`、`/clear`、`/plan`、`/do`、`/session`、`/memory`、`/permission`、`/status`、`/review`（验证：运行 `python -m pytest tests/test_commands.py -q -k "builtin or help"`，期望通过）
 - [ ] 命令注册中心能在启动前发现命令名和别名冲突，并报告冲突入口和涉及命令（验证：运行 `python -m pytest tests/test_commands.py -q -k "conflict"`，期望通过）
 - [ ] 命令处理函数只通过抽象上下文完成显示、模式切换、压缩、状态查询和发送预设请求（验证：运行 `python -m pytest tests/test_commands.py -q -k "dispatcher or session or memory or permission or status or review"`，期望 fake context 测试通过）
@@ -44,15 +44,15 @@
 - [ ] README 已说明十个内置命令、持久模式标记、Tab 补全和未知命令 `/help` 引导（验证：运行 `rg -n "/help|/compact|/clear|/plan|/do|/session|/memory|/permission|/status|/review|\\[DEFAULT\\]|\\[PLAN\\]" README.md`，期望都有匹配）
 
 ## 编译与测试
-- [ ] 命令系统相关文件可编译（验证：运行 `python -m py_compile src/mewcode/commands/__init__.py src/mewcode/commands/models.py src/mewcode/commands/registry.py src/mewcode/commands/dispatcher.py src/mewcode/commands/builtin.py`，期望无错误）
+- [ ] 命令系统相关文件可编译（验证：运行 `python -m py_compile src/julycode/commands/__init__.py src/julycode/commands/models.py src/julycode/commands/registry.py src/julycode/commands/dispatcher.py src/julycode/commands/builtin.py`，期望无错误）
 - [ ] 命令、Agent、工具策略、提示词和 TUI smoke 测试通过（验证：运行 `python -m pytest tests/test_commands.py tests/test_agent.py tests/test_tool_scheduler.py tests/test_prompting.py tests/test_tui_smoke.py -q`，期望全部通过）
 - [ ] 项目全量测试通过（验证：运行 `python -m pytest -q`，期望全部通过；如存在外部环境失败，记录具体错误和影响范围）
 - [ ] 当前项目没有配置独立 lint 工具时，不额外要求 lint；如后续新增 lint 配置，应纳入本项（验证：运行 `rg -n "\\[tool\\.(ruff|mypy|black|isort)|ruff|mypy|black|isort" pyproject.toml`，期望确认是否存在 lint 配置）
 
 ## 端到端场景
-- [ ] 场景 1：在 tmux 中启动 MewCode，输入 `/help`，看到十个内置命令及中文说明，输入区保持可用（验证：运行 `tmux new-session -d -s mewcode-command-test 'mewcode'` 后向 pane 发送 `/help` 和 Enter，观察 pane 输出）
-- [ ] 场景 2：在 tmux 中输入 `/plan` 后看到状态栏 `[PLAN]`，再输入一个真实规划请求，观察 MewCode 以计划模式回复且不会执行写入或命令工具（验证：同一 tmux 会话中发送 `/plan`、Enter、`请阅读 README 并规划如何改进命令帮助`、Enter，观察状态栏和工具行为）
+- [ ] 场景 1：在 tmux 中启动 JulyCode，输入 `/help`，看到十个内置命令及中文说明，输入区保持可用（验证：运行 `tmux new-session -d -s julycode-command-test 'julycode'` 后向 pane 发送 `/help` 和 Enter，观察 pane 输出）
+- [ ] 场景 2：在 tmux 中输入 `/plan` 后看到状态栏 `[PLAN]`，再输入一个真实规划请求，观察 JulyCode 以计划模式回复且不会执行写入或命令工具（验证：同一 tmux 会话中发送 `/plan`、Enter、`请阅读 README 并规划如何改进命令帮助`、Enter，观察状态栏和工具行为）
 - [ ] 场景 3：在 tmux 中输入 `/do` 后看到状态栏 `[DEFAULT]`，再输入一个普通对话请求，观察请求按默认模式交给 AI（验证：同一 tmux 会话中发送 `/do`、Enter、`查看当前项目状态并说明下一步`、Enter，观察状态栏和回复）
 - [ ] 场景 4：在 tmux 中输入 `/status`、`/session`、`/memory`、`/permission`，每条都快速返回本地状态且不触发模型生成（验证：观察无工具调用和无流式模型生成，只显示本地状态）
-- [ ] 场景 5：在 tmux 中输入 `/review README.md`，界面显示触发的审查请求，MewCode 调用 AI 进行代码审查流程（验证：观察用户可见请求、AI 回复和必要工具调用）
+- [ ] 场景 5：在 tmux 中输入 `/review README.md`，界面显示触发的审查请求，JulyCode 调用 AI 进行代码审查流程（验证：观察用户可见请求、AI 回复和必要工具调用）
 - [ ] 场景 6：在 tmux 中输入未知命令 `/wat`，看到 `/help` 引导；输入 `/cl` 后按 Tab 能补全或显示候选菜单，输入仍可继续编辑（验证：观察提示和补全菜单，不遮挡输入）

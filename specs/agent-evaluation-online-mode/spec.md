@@ -1,9 +1,9 @@
 # Agent Evaluation Online Mode Spec
 
 ## 背景
-当前 `eval/` 评测框架默认使用离线脚本化 Provider。它能稳定验证评测框架、Agent Loop、工具、权限、上下文和报告链路，但不能真实衡量模型在 MewCode 中是否会主动选择正确工具、是否能自然完成复杂任务、是否稳定处理真实上下文。
+当前 `eval/` 评测框架默认使用离线脚本化 Provider。它能稳定验证评测框架、Agent Loop、工具、权限、上下文和报告链路，但不能真实衡量模型在 JulyCode 中是否会主动选择正确工具、是否能自然完成复杂任务、是否稳定处理真实上下文。
 
-用户希望把评测改成“在线的”，也就是默认使用 MewCode 当前配置的真实 Provider 和真实模型来评估 Agent 效果，并增加更多评测用例，让报告更接近“这个 agent 靠不靠谱、好不好用”的判断。
+用户希望把评测改成“在线的”，也就是默认使用 JulyCode 当前配置的真实 Provider 和真实模型来评估 Agent 效果，并增加更多评测用例，让报告更接近“这个 agent 靠不靠谱、好不好用”的判断。
 
 ## 目标
 - 将评测默认运行模式改为在线真实模型评测，优先评估真实 Agent 行为。
@@ -13,7 +13,7 @@
 - 在线评测失败时应能区分“评测框架错误”“模型行为未达标”“环境或配置不可用”。
 
 ## 功能需求
-- F1: 默认评测命令必须使用真实 MewCode 配置加载 Provider，并通过真实模型驱动 Agent，而不是默认使用脚本化 Provider。
+- F1: 默认评测命令必须使用真实 JulyCode 配置加载 Provider，并通过真实模型驱动 Agent，而不是默认使用脚本化 Provider。
 - F2: CLI 必须显式支持 `online` 和 `offline` 两种模式；`online` 为默认模式，`offline` 仅用于 smoke 或本地回归。
 - F3: 在线模式缺少配置、API key、网络或 Provider 初始化失败时，必须返回清晰错误，不能伪装成 Agent 能力失败。
 - F4: 在线模式必须继续复用真实 `AgentLoopRunner`、工具、权限、上下文和 Provider 抽象，不绕过核心 Agent 路径。

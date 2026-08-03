@@ -1,4 +1,4 @@
-# MewCode Repo Map Tasks
+# JulyCode Repo Map Tasks
 
 ## 执行约束
 
@@ -14,14 +14,14 @@
 
 | 操作 | 文件 | 职责 |
 | --- | --- | --- |
-| 新建 | `src/mewcode/repo_map/__init__.py` | 导出 Repo Map 稳定公共接口 |
-| 新建 | `src/mewcode/repo_map/models.py` | 仓库、解析、关系图、快照和状态数据模型 |
-| 新建 | `src/mewcode/repo_map/discovery.py` | 根目录、文件发现、越界防护、内容指纹和 revision |
-| 新建 | `src/mewcode/repo_map/parser.py` | Python 编码、AST 符号、导入、引用和安全签名解析 |
-| 新建 | `src/mewcode/repo_map/graph.py` | 关系解析和确定性 PageRank-like 图重要度 |
-| 新建 | `src/mewcode/repo_map/ranking.py` | 请求提示提取、评分和稳定排序 |
-| 新建 | `src/mewcode/repo_map/renderer.py` | 原子条目、预算裁剪、边界与地图文本 |
-| 新建 | `src/mewcode/repo_map/manager.py` | 后台索引、LRU 缓存、turn、revision 刷新和状态 |
+| 新建 | `src/julycode/repo_map/__init__.py` | 导出 Repo Map 稳定公共接口 |
+| 新建 | `src/julycode/repo_map/models.py` | 仓库、解析、关系图、快照和状态数据模型 |
+| 新建 | `src/julycode/repo_map/discovery.py` | 根目录、文件发现、越界防护、内容指纹和 revision |
+| 新建 | `src/julycode/repo_map/parser.py` | Python 编码、AST 符号、导入、引用和安全签名解析 |
+| 新建 | `src/julycode/repo_map/graph.py` | 关系解析和确定性 PageRank-like 图重要度 |
+| 新建 | `src/julycode/repo_map/ranking.py` | 请求提示提取、评分和稳定排序 |
+| 新建 | `src/julycode/repo_map/renderer.py` | 原子条目、预算裁剪、边界与地图文本 |
+| 新建 | `src/julycode/repo_map/manager.py` | 后台索引、LRU 缓存、turn、revision 刷新和状态 |
 | 新建 | `tests/test_repo_map_discovery.py` | 仓库发现、路径安全、指纹与身份测试 |
 | 新建 | `tests/test_repo_map_parser.py` | Python 解析与不可信内容清理测试 |
 | 新建 | `tests/test_repo_map_graph.py` | 关系、图分数、请求排序与确定性测试 |
@@ -41,18 +41,18 @@
 
 | 操作 | 文件 | 职责 |
 | --- | --- | --- |
-| 修改 | `src/mewcode/config.py` | `RepoMapConfig`、默认值、合并与校验 |
-| 修改 | `src/mewcode/prompting/base.py` | `GeneratedContextBlock` 和 PromptBundle 扩展 |
-| 修改 | `src/mewcode/prompting/__init__.py` | 导出新增 Prompt 类型 |
-| 修改 | `src/mewcode/context/estimator.py` | 文本和生成上下文估算入口 |
-| 修改 | `src/mewcode/context/manager.py` | 低优先级上下文预算授权和最终复核 |
-| 修改 | `src/mewcode/tools/scheduler.py` | 通用执行观察者和统一工具执行包装 |
-| 修改 | `src/mewcode/agent.py` | RepoMapTurn、请求期生成块和工具刷新接入 |
-| 修改 | `src/mewcode/providers/openai.py` | Repo Map 序列化与长期缓存身份隔离 |
-| 修改 | `src/mewcode/providers/anthropic.py` | Repo Map system block 与次级缓存断点 |
-| 修改 | `src/mewcode/tui/app.py` | RepoMapManager 生命周期、主 Agent 注入和状态快照 |
-| 修改 | `src/mewcode/commands/models.py` | Repo Map 运行状态字段 |
-| 修改 | `src/mewcode/commands/builtin.py` | `/status` 的 Repo Map 状态输出 |
+| 修改 | `src/julycode/config.py` | `RepoMapConfig`、默认值、合并与校验 |
+| 修改 | `src/julycode/prompting/base.py` | `GeneratedContextBlock` 和 PromptBundle 扩展 |
+| 修改 | `src/julycode/prompting/__init__.py` | 导出新增 Prompt 类型 |
+| 修改 | `src/julycode/context/estimator.py` | 文本和生成上下文估算入口 |
+| 修改 | `src/julycode/context/manager.py` | 低优先级上下文预算授权和最终复核 |
+| 修改 | `src/julycode/tools/scheduler.py` | 通用执行观察者和统一工具执行包装 |
+| 修改 | `src/julycode/agent.py` | RepoMapTurn、请求期生成块和工具刷新接入 |
+| 修改 | `src/julycode/providers/openai.py` | Repo Map 序列化与长期缓存身份隔离 |
+| 修改 | `src/julycode/providers/anthropic.py` | Repo Map system block 与次级缓存断点 |
+| 修改 | `src/julycode/tui/app.py` | RepoMapManager 生命周期、主 Agent 注入和状态快照 |
+| 修改 | `src/julycode/commands/models.py` | Repo Map 运行状态字段 |
+| 修改 | `src/julycode/commands/builtin.py` | `/status` 的 Repo Map 状态输出 |
 | 修改 | `README.md` | Repo Map 配置、行为和安全边界说明 |
 | 修改 | `eval/README.md` | 质量评测运行与指标说明 |
 | 修改 | `tests/test_config.py` | 默认启用、关闭、预算和配置覆盖测试 |
@@ -72,7 +72,7 @@
 
 ## T1：建立 Repo Map 核心数据模型
 
-**文件：** `src/mewcode/repo_map/models.py`、`src/mewcode/repo_map/__init__.py`、`tests/test_repo_map_manager.py`
+**文件：** `src/julycode/repo_map/models.py`、`src/julycode/repo_map/__init__.py`、`tests/test_repo_map_manager.py`
 **依赖：** 无
 
 **步骤：**
@@ -84,7 +84,7 @@
 
 ## T2：增加 Repo Map 配置
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`
+**文件：** `src/julycode/config.py`、`tests/test_config.py`
 **依赖：** T1
 
 **步骤：**
@@ -96,7 +96,7 @@
 
 ## T3：实现 Git Worktree 根目录与身份识别
 
-**文件：** `src/mewcode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
+**文件：** `src/julycode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
 **依赖：** T1
 
 **步骤：**
@@ -108,7 +108,7 @@
 
 ## T4：实现 Git 候选文件集合
 
-**文件：** `src/mewcode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
+**文件：** `src/julycode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
 **依赖：** T3
 
 **步骤：**
@@ -120,7 +120,7 @@
 
 ## T5：实现非 Git 安全文件发现
 
-**文件：** `src/mewcode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
+**文件：** `src/julycode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
 **依赖：** T1
 
 **步骤：**
@@ -132,7 +132,7 @@
 
 ## T6：加入 symlink、越界与路径规范化防护
 
-**文件：** `src/mewcode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
+**文件：** `src/julycode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
 **依赖：** T4、T5
 
 **步骤：**
@@ -144,7 +144,7 @@
 
 ## T7：实现内容指纹与 workspace revision
 
-**文件：** `src/mewcode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
+**文件：** `src/julycode/repo_map/discovery.py`、`tests/test_repo_map_discovery.py`
 **依赖：** T6
 
 **步骤：**
@@ -156,7 +156,7 @@
 
 ## T8：解析编码和基础 Python 符号
 
-**文件：** `src/mewcode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
+**文件：** `src/julycode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
 **依赖：** T1
 
 **步骤：**
@@ -168,7 +168,7 @@
 
 ## T9：实现结构化安全签名
 
-**文件：** `src/mewcode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
+**文件：** `src/julycode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
 **依赖：** T8
 
 **步骤：**
@@ -180,7 +180,7 @@
 
 ## T10：完成不可信源码清理
 
-**文件：** `src/mewcode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
+**文件：** `src/julycode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
 **依赖：** T9
 
 **步骤：**
@@ -192,7 +192,7 @@
 
 ## T11：提取模块名和导入记录
 
-**文件：** `src/mewcode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
+**文件：** `src/julycode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
 **依赖：** T8
 
 **步骤：**
@@ -204,7 +204,7 @@
 
 ## T12：提取引用并隔离解析错误
 
-**文件：** `src/mewcode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
+**文件：** `src/julycode/repo_map/parser.py`、`tests/test_repo_map_parser.py`
 **依赖：** T10、T11
 
 **步骤：**
@@ -216,7 +216,7 @@
 
 ## T13：解析模块和符号导入关系
 
-**文件：** `src/mewcode/repo_map/graph.py`、`tests/test_repo_map_graph.py`
+**文件：** `src/julycode/repo_map/graph.py`、`tests/test_repo_map_graph.py`
 **依赖：** T12
 
 **步骤：**
@@ -228,7 +228,7 @@
 
 ## T14：解析唯一引用并处理歧义
 
-**文件：** `src/mewcode/repo_map/graph.py`、`tests/test_repo_map_graph.py`
+**文件：** `src/julycode/repo_map/graph.py`、`tests/test_repo_map_graph.py`
 **依赖：** T13
 
 **步骤：**
@@ -240,7 +240,7 @@
 
 ## T15：实现确定性 PageRank-like 图分数
 
-**文件：** `src/mewcode/repo_map/graph.py`、`tests/test_repo_map_graph.py`
+**文件：** `src/julycode/repo_map/graph.py`、`tests/test_repo_map_graph.py`
 **依赖：** T14
 
 **步骤：**
@@ -252,7 +252,7 @@
 
 ## T16：提取当前请求提示
 
-**文件：** `src/mewcode/repo_map/ranking.py`、`tests/test_repo_map_graph.py`
+**文件：** `src/julycode/repo_map/ranking.py`、`tests/test_repo_map_graph.py`
 **依赖：** T12
 
 **步骤：**
@@ -264,7 +264,7 @@
 
 ## T17：实现请求优先评分和稳定最终排序
 
-**文件：** `src/mewcode/repo_map/ranking.py`、`tests/test_repo_map_graph.py`
+**文件：** `src/julycode/repo_map/ranking.py`、`tests/test_repo_map_graph.py`
 **依赖：** T15、T16
 
 **步骤：**
@@ -276,7 +276,7 @@
 
 ## T18：实现地图边界和原子条目
 
-**文件：** `src/mewcode/repo_map/renderer.py`、`tests/test_repo_map_renderer.py`
+**文件：** `src/julycode/repo_map/renderer.py`、`tests/test_repo_map_renderer.py`
 **依赖：** T17
 
 **步骤：**
@@ -288,7 +288,7 @@
 
 ## T19：实现完整 Token 预算与短签名降级
 
-**文件：** `src/mewcode/repo_map/renderer.py`、`tests/test_repo_map_renderer.py`
+**文件：** `src/julycode/repo_map/renderer.py`、`tests/test_repo_map_renderer.py`
 **依赖：** T18
 
 **步骤：**
@@ -312,7 +312,7 @@
 
 ## T21：实现三层有界 LRU 缓存
 
-**文件：** `src/mewcode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
+**文件：** `src/julycode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
 **依赖：** T7、T12、T15、T17、T20
 
 **步骤：**
@@ -324,7 +324,7 @@
 
 ## T22：实现后台初始索引与取消
 
-**文件：** `src/mewcode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
+**文件：** `src/julycode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
 **依赖：** T21
 
 **步骤：**
@@ -336,7 +336,7 @@
 
 ## T23：实现 RepoMapTurn 与快照复用
 
-**文件：** `src/mewcode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
+**文件：** `src/julycode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
 **依赖：** T22
 
 **步骤：**
@@ -348,7 +348,7 @@
 
 ## T24：实现精确源码工具失效
 
-**文件：** `src/mewcode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
+**文件：** `src/julycode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
 **依赖：** T23
 
 **步骤：**
@@ -360,7 +360,7 @@
 
 ## T25：实现 command 与未知副作用的全仓比较
 
-**文件：** `src/mewcode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
+**文件：** `src/julycode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
 **依赖：** T24
 
 **步骤：**
@@ -372,7 +372,7 @@
 
 ## T26：完成状态与安全降级
 
-**文件：** `src/mewcode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
+**文件：** `src/julycode/repo_map/manager.py`、`tests/test_repo_map_manager.py`
 **依赖：** T25
 
 **步骤：**
@@ -384,7 +384,7 @@
 
 ## T27：增加请求期 GeneratedContextBlock
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/__init__.py`、`tests/test_prompting.py`
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/__init__.py`、`tests/test_prompting.py`
 **依赖：** T1
 
 **步骤：**
@@ -396,7 +396,7 @@
 
 ## T28：扩展 TokenEstimator 估算生成块
 
-**文件：** `src/mewcode/context/estimator.py`、`tests/test_context_estimator.py`
+**文件：** `src/julycode/context/estimator.py`、`tests/test_context_estimator.py`
 **依赖：** T27
 
 **步骤：**
@@ -408,7 +408,7 @@
 
 ## T29：在 ContextManager 授予最低优先级预算
 
-**文件：** `src/mewcode/context/manager.py`、`tests/test_context_manager.py`
+**文件：** `src/julycode/context/manager.py`、`tests/test_context_manager.py`
 **依赖：** T27、T28
 
 **步骤：**
@@ -420,7 +420,7 @@
 
 ## T30：实现合并后的最终预算复核
 
-**文件：** `src/mewcode/context/manager.py`、`tests/test_context_manager.py`
+**文件：** `src/julycode/context/manager.py`、`tests/test_context_manager.py`
 **依赖：** T29
 
 **步骤：**
@@ -432,7 +432,7 @@
 
 ## T31：定义工具执行观察者协议
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
 **依赖：** 无
 
 **步骤：**
@@ -444,7 +444,7 @@
 
 ## T32：统一真实工具执行包装
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
 **依赖：** T31
 
 **步骤：**
@@ -456,7 +456,7 @@
 
 ## T33：接入 Agent Loop 的 turn 生命周期
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T23、T30、T32
 
 **步骤：**
@@ -468,7 +468,7 @@
 
 ## T34：接入每次模型调用的地图与 revision 刷新
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T26、T27、T30、T33
 
 **步骤：**
@@ -480,7 +480,7 @@
 
 ## T35：序列化 OpenAI Repo Map 生成块
 
-**文件：** `src/mewcode/providers/openai.py`、`tests/test_openai_provider.py`
+**文件：** `src/julycode/providers/openai.py`、`tests/test_openai_provider.py`
 **依赖：** T27
 
 **步骤：**
@@ -504,7 +504,7 @@
 
 ## T37：序列化 Anthropic Repo Map 与两级断点
 
-**文件：** `src/mewcode/providers/anthropic.py`、`tests/test_anthropic_provider.py`
+**文件：** `src/julycode/providers/anthropic.py`、`tests/test_anthropic_provider.py`
 **依赖：** T27
 
 **步骤：**
@@ -540,11 +540,11 @@
 
 ## T40：接入 TUI Manager 生命周期并限定主 Agent
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`
 **依赖：** T2、T26、T34
 
 **步骤：**
-1. MewCodeApp 持有跨轮次 manager，启用时在 mount 非阻塞 start，unmount close。
+1. JulyCodeApp 持有跨轮次 manager，启用时在 mount 非阻塞 start，unmount close。
 2. 以工具上下文启动 cwd 创建 manager，并复用 ContextManager 的估算规则。
 3. 仅主 `_run_agent_command` 注入；Skill、子 Agent、团队和隔离 Worktree 路径保持空依赖。
 
@@ -552,7 +552,7 @@
 
 ## T41：在 `/status` 暴露 Repo Map 状态
 
-**文件：** `src/mewcode/commands/models.py`、`src/mewcode/commands/builtin.py`、`src/mewcode/tui/app.py`、`tests/test_commands.py`
+**文件：** `src/julycode/commands/models.py`、`src/julycode/commands/builtin.py`、`src/julycode/tui/app.py`、`tests/test_commands.py`
 **依赖：** T26、T40
 
 **步骤：**
@@ -581,7 +581,7 @@
 
 **步骤：**
 1. 随机化发现/解析结果顺序和散列种子，精确比较快照字节。
-2. 当前 MewCode 仓库预热后采集至少 100 次缓存命中组装耗时并计算 P95。
+2. 当前 JulyCode 仓库预热后采集至少 100 次缓存命中组装耗时并计算 P95。
 3. 用 asyncio heartbeat 包围初次索引和重建，记录主线程最大同步延迟。
 
 **验证：** 运行 `python -m pytest tests/test_repo_map_graph.py tests/test_repo_map_renderer.py tests/test_repo_map_manager.py -q`，期望字节一致、P95 `< 50ms`、Repo Map 同步阻塞 `< 16ms`。
@@ -594,7 +594,7 @@
 **步骤：**
 1. 定义任务请求、目标文件、Top-K、运行模式和结果结构。
 2. 加载并严格校验 JSON 数据集，拒绝目标路径直接泄露到请求的 case。
-3. 编写覆盖 MewCode 入口、上下文、Provider、工具调度等模块的导航任务。
+3. 编写覆盖 JulyCode 入口、上下文、Provider、工具调度等模块的导航任务。
 
 **验证：** 运行 `python -m pytest tests/test_eval_framework.py -q`，期望数据集加载、非法 case 拒绝和结构往返测试通过。
 
@@ -624,7 +624,7 @@
 
 ## T47：运行全量自动回归
 
-**文件：** `tests/`、`src/mewcode/`、`eval/`
+**文件：** `tests/`、`src/julycode/`、`eval/`
 **依赖：** T39、T40、T42、T43、T45、T46
 
 **步骤：**
@@ -640,12 +640,12 @@
 **依赖：** T47
 
 **步骤：**
-1. 使用 `tmux new-session -d -s mewcode-repomap 'mewcode'` 启动真实 MewCode。
+1. 使用 `tmux new-session -d -s julycode-repomap 'julycode'` 启动真实 JulyCode。
 2. 发送一段不包含准确路径的仓库导航请求，观察 Repo Map 状态、工具调用和最终回复。
 3. 再发送会修改 Python 签名的真实请求，观察同一 Agent Loop 后续模型调用使用新 revision。
 4. 捕获 pane 输出，并按已批准 checklist 逐项记录真实结果与 Prompt Cache usage 证据。
 
-**验证：** 运行 `tmux capture-pane -pt mewcode-repomap`，期望看到 MewCode 正常回复、相关工具调用、Repo Map 可观察状态，且修改后 revision 变化；最后运行 `tmux kill-session -t mewcode-repomap` 清理会话。
+**验证：** 运行 `tmux capture-pane -pt julycode-repomap`，期望看到 JulyCode 正常回复、相关工具调用、Repo Map 可观察状态，且修改后 revision 变化；最后运行 `tmux kill-session -t julycode-repomap` 清理会话。
 
 ## 执行顺序
 

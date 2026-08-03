@@ -1,0 +1,24 @@
+{
+  "id": "code_location_reliability",
+  "title": "专用工具代码定位",
+  "category": "只读代码搜索",
+  "tags": ["offline_smoke", "code_reading", "code_location", "readonly"],
+  "offline_only": true,
+  "prompt": "EVAL_CASE:code_location_reliability\n请在指定单文件中定位 SearchCodeTool，再局部读取命中附近代码，说明 ripgrep 失败时如何回退。只做只读分析。",
+  "permission_mode": "permissive",
+  "max_iterations": 6,
+  "setup_files": [
+    {
+      "path": "src/julycode/tools/builtin.py",
+      "content": "class SearchCodeTool:\n    async def execute(self, candidates):\n        rg_result = await self._search_with_rg(candidates)\n        if rg_result is not None:\n            return rg_result\n        return self._search_with_python(candidates)\n\n    def _search_with_python(self, candidates):\n        return list(candidates)\n"
+    }
+  ],
+  "expectations": {
+    "final_contains": ["SearchCodeTool", "ripgrep", "Python", "回退"],
+    "required_tools": ["search_code", "read_file"],
+    "forbidden_tools": ["run_command", "write_file", "edit_file"],
+    "min_tool_successes": 2,
+    "require_usage": true,
+    "max_tool_calls": 3
+  }
+}

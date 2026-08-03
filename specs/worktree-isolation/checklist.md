@@ -1,4 +1,4 @@
-# MewCode Worktree 隔离 Checklist
+# JulyCode Worktree 隔离 Checklist
 
 > 每一项都通过运行代码、临时 Git 仓库或 tmux 中的真实对话验证；不以阅读实现代码代替验收。
 >
@@ -50,7 +50,7 @@
 
 ## 架构与集成完整性
 
-- [x] Worktree 领域模块可独立导入，不依赖 TUI、Provider 或 Agent Loop。（验证：运行 `python -c "from mewcode.worktrees import WorktreeConfig, WorktreeManager, WorktreeJanitor; print(WorktreeConfig())"`，期望成功输出默认配置）
+- [x] Worktree 领域模块可独立导入，不依赖 TUI、Provider 或 Agent Loop。（验证：运行 `python -c "from julycode.worktrees import WorktreeConfig, WorktreeManager, WorktreeJanitor; print(WorktreeConfig())"`，期望成功输出默认配置）
 - [x] Worktree 管理没有注册新的模型工具或斜杠命令，`delegate_agent` 输入字段保持原集合。（验证：运行 `python -m pytest tests/test_subagents.py::test_delegate_agent_tool_schema_is_stable tests/test_commands.py -q`，期望全部通过）
 - [x] defined 隔离角色的工具、权限、Hook、上下文和记忆使用同一个 `SubAgentWorkingContext.cwd`，共享角色与 Fork 仍使用主 cwd。（验证：运行 `python -m pytest tests/test_subagents.py -q -k 'runner_factory or real_git_isolation'`，期望全部通过）
 - [x] 完成、模型失败、取消和 runner 构造异常四条路径均执行一次退出处置，不泄漏 active lease。（验证：运行 `python -m pytest tests/test_subagents.py -q -k 'manager_worktree_lifecycle'`，期望全部通过）
@@ -59,12 +59,12 @@
 
 ## 编译与测试
 
-- [x] 源码和 E2E mock 脚本可编译。（验证：运行 `python -m compileall -q src/mewcode tests/e2e_mock_openai_server.py`，期望退出码为 0）
+- [x] 源码和 E2E mock 脚本可编译。（验证：运行 `python -m compileall -q src/julycode tests/e2e_mock_openai_server.py`，期望退出码为 0）
 - [x] Worktree、子 Agent、配置、提示、记忆、工具和 TUI 聚焦测试全部通过。（验证：运行 `python -m pytest tests/test_worktrees.py tests/test_subagents.py tests/test_config.py tests/test_prompting.py tests/test_memory_instructions.py tests/test_tools.py tests/test_tui_smoke.py -q`，期望全部通过）
 - [x] 全项目无回归且没有未处理异步任务告警。（验证：运行 `python -m pytest -q`，期望全部通过且输出中没有 `Task was destroyed` 或 `coroutine was never awaited`）
 
 ## 端到端场景
 
-- [x] 场景 1：主目录有未提交文件时，请求 Worktree 隔离子 Agent 修改同名文件；主目录内容保持原样，子 Agent 结果报告 retained 目录和分支。（验证：在临时 Git 仓库和 tmux 中启动 mock provider 与 MewCode，输入“请派一个 Worktree 隔离子 Agent 创建 isolated.txt，并告诉我隔离目录和分支”，用 `tmux capture-pane -p -S -200` 确认 `delegate_agent`/`write_file` 成功，再分别读取主目录与返回的 Worktree 路径）
-- [x] 场景 2：隔离子 Agent 只读取文件且不产生修改或提交；任务结束后目录和临时分支消失，回复报告 cleaned。（验证：在 tmux 中输入只读隔离委派请求，捕获回复中的 cleaned，再运行 `git worktree list` 和 `git branch --list 'mewcode/*'`，期望找不到对应任务）
+- [x] 场景 1：主目录有未提交文件时，请求 Worktree 隔离子 Agent 修改同名文件；主目录内容保持原样，子 Agent 结果报告 retained 目录和分支。（验证：在临时 Git 仓库和 tmux 中启动 mock provider 与 JulyCode，输入“请派一个 Worktree 隔离子 Agent 创建 isolated.txt，并告诉我隔离目录和分支”，用 `tmux capture-pane -p -S -200` 确认 `delegate_agent`/`write_file` 成功，再分别读取主目录与返回的 Worktree 路径）
+- [x] 场景 2：隔离子 Agent 只读取文件且不产生修改或提交；任务结束后目录和临时分支消失，回复报告 cleaned。（验证：在 tmux 中输入只读隔离委派请求，捕获回复中的 cleaned，再运行 `git worktree list` 和 `git branch --list 'julycode/*'`，期望找不到对应任务）
 - [x] 场景 3：保留目录含未提交文件后触发过期清理；即使元数据时间已过期，目录和分支仍存在，主会话可继续回答下一条请求。（验证：在临时仓库将测试保留期设为短值，等待至少两次清理间隔后检查目录/分支，并在同一 tmux 会话发送“读取 README”，期望工具与回复正常）

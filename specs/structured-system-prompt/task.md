@@ -1,28 +1,28 @@
-# MewCode Structured System Prompt Tasks
+# JulyCode Structured System Prompt Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/prompting/__init__.py` | 导出提示构造公共类型和构造器 |
-| 新建 | `src/mewcode/prompting/base.py` | 定义 PromptBlock、PromptBundle、RuntimePromptContext 和注入级别类型 |
-| 新建 | `src/mewcode/prompting/modules.py` | 定义固定系统提示模块文本和顺序 |
-| 新建 | `src/mewcode/prompting/builder.py` | 实现 PromptBuilder、运行时补充标签和轮次注入策略 |
+| 新建 | `src/julycode/prompting/__init__.py` | 导出提示构造公共类型和构造器 |
+| 新建 | `src/julycode/prompting/base.py` | 定义 PromptBlock、PromptBundle、RuntimePromptContext 和注入级别类型 |
+| 新建 | `src/julycode/prompting/modules.py` | 定义固定系统提示模块文本和顺序 |
+| 新建 | `src/julycode/prompting/builder.py` | 实现 PromptBuilder、运行时补充标签和轮次注入策略 |
 | 新建 | `tests/test_prompting.py` | 覆盖提示模块顺序、稳定性、动态补充和注入频率 |
-| 修改 | `src/mewcode/providers/base.py` | 扩展 ChatRequest、TokenUsage 和缓存观测结构 |
-| 修改 | `src/mewcode/session.py` | build_request 支持携带 PromptBundle |
-| 修改 | `src/mewcode/commands.py` | /plan 与 /do 不再拼接系统控制指令 |
+| 修改 | `src/julycode/providers/base.py` | 扩展 ChatRequest、TokenUsage 和缓存观测结构 |
+| 修改 | `src/julycode/session.py` | build_request 支持携带 PromptBundle |
+| 修改 | `src/julycode/commands.py` | /plan 与 /do 不再拼接系统控制指令 |
 | 修改 | `tests/test_commands.py` | 更新命令解析期望 |
 | 修改 | `tests/test_session.py` | 验证 prompt 可携带且不污染历史 |
-| 修改 | `src/mewcode/agent.py` | 每轮构造 RuntimePromptContext 和 PromptBundle |
+| 修改 | `src/julycode/agent.py` | 每轮构造 RuntimePromptContext 和 PromptBundle |
 | 修改 | `tests/test_agent.py` | 验证 Agent 请求携带提示、Plan/Do 注入行为不回退 |
-| 修改 | `src/mewcode/providers/openai.py` | 映射 system 消息并解析 cached_tokens |
+| 修改 | `src/julycode/providers/openai.py` | 映射 system 消息并解析 cached_tokens |
 | 修改 | `tests/test_openai_provider.py` | 覆盖 OpenAI 系统提示 payload 和缓存用量解析 |
-| 修改 | `src/mewcode/providers/anthropic.py` | 映射 system 文本块、cache_control 和缓存用量 |
+| 修改 | `src/julycode/providers/anthropic.py` | 映射 system 文本块、cache_control 和缓存用量 |
 | 修改 | `tests/test_anthropic_provider.py` | 覆盖 Anthropic 系统提示 payload 和缓存用量解析 |
-| 修改 | `src/mewcode/tools/builtin.py` | 强化内置工具描述中的关键约束 |
+| 修改 | `src/julycode/tools/builtin.py` | 强化内置工具描述中的关键约束 |
 | 修改 | `tests/test_tools.py` | 验证工具描述包含关键约束且工具行为不变 |
-| 修改 | `src/mewcode/tui/widgets.py` | 状态栏显示统一缓存观测状态 |
+| 修改 | `src/julycode/tui/widgets.py` | 状态栏显示统一缓存观测状态 |
 | 修改 | `tests/test_tui_smoke.py` | 验证缓存状态展示 |
 | 修改 | `tests/e2e_mock_openai_server.py` | mock usage 增加缓存字段，支持端到端观察 |
 | 修改 | `README.md` | 记录结构化系统提示、缓存观测和 Plan Mode 注入变化 |
@@ -30,7 +30,7 @@
 
 ## T1: 定义提示基础类型
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/__init__.py`、`src/mewcode/providers/base.py`  
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/__init__.py`、`src/julycode/providers/base.py`  
 **依赖：** 无  
 **步骤：**
 1. 新建 `PromptBlock`，包含 `name`、`title`、`text`、`stable`、`cacheable`。
@@ -38,13 +38,13 @@
 3. 新建 `RuntimeInstructionLevel` 和 `RuntimePromptContext`。
 4. 在 Provider 基础类型中新增 `CacheStatus`、`PromptCacheUsage`。
 5. 扩展 `TokenUsage` 增加 `cache` 字段，扩展 `ChatRequest` 增加可选 `prompt` 字段。
-6. 在 `src/mewcode/prompting/__init__.py` 导出新类型。
+6. 在 `src/julycode/prompting/__init__.py` 导出新类型。
 
 **验证：** 运行 `python -m pytest tests/test_openai_provider.py::test_openai_streams_usage_event tests/test_anthropic_provider.py::test_anthropic_streams_usage_events tests/test_session.py::test_empty_session_builds_empty_request -q`，期望全部通过。
 
 ## T2: 实现固定系统提示模块
 
-**文件：** `src/mewcode/prompting/modules.py`、`tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/modules.py`、`tests/test_prompting.py`  
 **依赖：** T1  
 **步骤：**
 1. 定义七个固定模块：身份、系统约束、任务模式、动作执行、工具使用、语气风格、文本输出。
@@ -57,11 +57,11 @@
 
 ## T3: 实现运行时补充构造器
 
-**文件：** `src/mewcode/prompting/builder.py`、`src/mewcode/prompting/__init__.py`、`tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/builder.py`、`src/julycode/prompting/__init__.py`、`tests/test_prompting.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `PromptBuilder.build_stable_prompt()`，返回固定模块。
-2. 实现 `PromptBuilder.build_runtime_prompt(context)`，生成带 `<mewcode_runtime_context>` 标签的动态补充块。
+2. 实现 `PromptBuilder.build_runtime_prompt(context)`，生成带 `<julycode_runtime_context>` 标签的动态补充块。
 3. 实现 `PromptBuilder.build_bundle(context)`，按稳定块在前、运行时块在后的顺序返回 bundle。
 4. 实现注入级别计算：第 1 轮 `full`，之后每 3 轮 `refresh`，其余为 `brief`。
 5. 在 `plan` 模式完整补充中写入只读工具约束，在 `do` 模式补充中写入当前待执行计划和全工具状态。
@@ -71,7 +71,7 @@
 
 ## T4: 会话请求携带 PromptBundle
 
-**文件：** `src/mewcode/session.py`、`tests/test_session.py`  
+**文件：** `src/julycode/session.py`、`tests/test_session.py`  
 **依赖：** T3  
 **步骤：**
 1. 修改 `ChatSession.build_request()`，新增 `prompt` 参数并传给 `ChatRequest`。
@@ -83,7 +83,7 @@
 
 ## T5: 收窄命令解析中的模型文本
 
-**文件：** `src/mewcode/commands.py`、`tests/test_commands.py`  
+**文件：** `src/julycode/commands.py`、`tests/test_commands.py`  
 **依赖：** T4  
 **步骤：**
 1. 修改 `/plan <需求>` 的 `model_text`，只保留用户真实需求。
@@ -95,7 +95,7 @@
 
 ## T6: Agent Loop 注入结构化提示
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T5  
 **步骤：**
 1. 在 `AgentLoopRunner` 初始化时创建或接收 `PromptBuilder`。
@@ -109,7 +109,7 @@
 
 ## T7: OpenAI Provider 映射提示和缓存用量
 
-**文件：** `src/mewcode/providers/openai.py`、`tests/test_openai_provider.py`  
+**文件：** `src/julycode/providers/openai.py`、`tests/test_openai_provider.py`  
 **依赖：** T6  
 **步骤：**
 1. 在 `_payload()` 中把 `request.prompt.stable_blocks` 拼成首个 `system` 消息。
@@ -124,7 +124,7 @@
 
 ## T8: Anthropic Provider 映射提示和缓存用量
 
-**文件：** `src/mewcode/providers/anthropic.py`、`tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/anthropic.py`、`tests/test_anthropic_provider.py`  
 **依赖：** T6  
 **步骤：**
 1. 在 `_payload()` 中把 `request.prompt.stable_blocks` 映射为 `system` 文本块数组前缀。
@@ -140,7 +140,7 @@
 
 ## T9: 强化工具描述
 
-**文件：** `src/mewcode/tools/builtin.py`、`tests/test_tools.py`、`tests/test_openai_provider.py`、`tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/tools/builtin.py`、`tests/test_tools.py`、`tests/test_openai_provider.py`、`tests/test_anthropic_provider.py`  
 **依赖：** T7、T8  
 **步骤：**
 1. 更新 `read_file` 描述，强调用于读取已知文件内容和编辑前确认现状。
@@ -155,7 +155,7 @@
 
 ## T10: TUI 展示缓存状态
 
-**文件：** `src/mewcode/tui/widgets.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/widgets.py`、`tests/test_tui_smoke.py`  
 **依赖：** T7、T8  
 **步骤：**
 1. 在 `StatusBar.refresh_status()` 中读取 `TokenUsage.cache`。

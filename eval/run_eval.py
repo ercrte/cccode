@@ -10,17 +10,17 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from mew_eval.loader import EvalConfigError, load_cases, load_metrics  # noqa: E402
-from mew_eval.models import EvalProviderInfo, EvalRunOptions  # noqa: E402
-from mew_eval.report import write_json_report, write_markdown_report  # noqa: E402
-from mew_eval.runner import run_suite  # noqa: E402
-from mewcode.config import load_config  # noqa: E402
-from mewcode.errors import ConfigError  # noqa: E402
-from mewcode.providers.factory import create_provider  # noqa: E402
+from july_eval.loader import EvalConfigError, load_cases, load_metrics  # noqa: E402
+from july_eval.models import EvalProviderInfo, EvalRunOptions  # noqa: E402
+from july_eval.report import write_json_report, write_markdown_report  # noqa: E402
+from july_eval.runner import run_suite  # noqa: E402
+from julycode.config import load_config  # noqa: E402
+from julycode.errors import ConfigError  # noqa: E402
+from julycode.providers.factory import create_provider  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="运行 MewCode Agent 评测")
+    parser = argparse.ArgumentParser(description="运行 JulyCode Agent 评测")
     parser.add_argument("--mode", choices=("online", "offline"), default="online", help="评测模式，默认 online")
     parser.add_argument("--offline", action="store_true", help="快捷启用离线 smoke 模式，等价于 --mode offline")
     parser.add_argument("--cases", default=None, help="用例 JSON 文件或目录；未传时按 mode 选择默认目录")

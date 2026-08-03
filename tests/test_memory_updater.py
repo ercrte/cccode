@@ -7,15 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.memory.index import MemoryIndexBuilder
-from mewcode.memory.manager import SessionMemoryManager
-from mewcode.memory.models import KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
-from mewcode.memory.notes import MemoryNoteStore
-from mewcode.memory.updater import MemoryNoteUpdater, MemoryUpdateError
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
-from mewcode.prompting.base import GeneratedContextBlock, PromptBundle
-from mewcode.session import ChatSession
-from mewcode.session_id import SessionId
+from julycode.memory.index import MemoryIndexBuilder
+from julycode.memory.manager import SessionMemoryManager
+from julycode.memory.models import KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
+from julycode.memory.notes import MemoryNoteStore
+from julycode.memory.updater import MemoryNoteUpdater, MemoryUpdateError
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from julycode.prompting.base import GeneratedContextBlock, PromptBundle
+from julycode.session import ChatSession
+from julycode.session_id import SessionId
 from tests.test_memory_notes import note
 
 
@@ -34,14 +34,14 @@ class FakeProvider:
             return
         message = ChatMessage(role="assistant", content=self.content)
         if self.tool_call:
-            from mewcode.tools.base import ToolCall
+            from julycode.tools.base import ToolCall
 
             message.tool_calls = (ToolCall("call-1", "read_file"),)
         yield StreamEvent(type="message_done", message=message)
 
 
 def make_updater(tmp_path: Path) -> tuple[MemoryNoteUpdater, MemoryNoteStore]:
-    config = SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode"))
+    config = SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode"))
     store = MemoryNoteStore(tmp_path, config)
     return MemoryNoteUpdater(store, MemoryIndexBuilder(store, config)), store
 
@@ -124,7 +124,7 @@ async def test_updater_never_receives_repo_map_request_context(tmp_path: Path) -
                 GeneratedContextBlock(
                     name="repo_map",
                     title="仓库地图",
-                    text='<mewcode_repo_map revision="abc123">\ntarget.py:1\n</mewcode_repo_map>',
+                    text='<julycode_repo_map revision="abc123">\ntarget.py:1\n</julycode_repo_map>',
                     kind="repo_map",
                     snapshot_id="snapshot-secret-id",
                 ),
@@ -142,7 +142,7 @@ async def test_updater_never_receives_repo_map_request_context(tmp_path: Path) -
     await updater.update(job=job, provider=provider)
 
     prompt = provider.requests[0].messages[0].content
-    assert "<mewcode_repo_map" not in prompt
+    assert "<julycode_repo_map" not in prompt
     assert "snapshot-secret-id" not in prompt
 
 
@@ -249,7 +249,7 @@ async def test_updater_supersedes_old_note_after_new_write(tmp_path: Path) -> No
 
 @pytest.mark.asyncio
 async def test_memory_manager_background_update_failure_is_captured(tmp_path: Path) -> None:
-    config = SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".mewcode"))
+    config = SessionMemoryConfig(user_dir=str(tmp_path / "home" / ".julycode"))
     updater, _store = make_updater(tmp_path)
 
     class FailingUpdater:

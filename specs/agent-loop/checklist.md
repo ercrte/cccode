@@ -1,4 +1,4 @@
-# MewCode Agent Loop Checklist
+# JulyCode Agent Loop Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
@@ -47,11 +47,11 @@
 - [ ] 配置、会话、命令解析、工具、调度、Provider、Agent 和 TUI 分层测试全部通过（验证：运行 `python -m pytest tests/test_config.py tests/test_session.py tests/test_commands.py tests/test_tools.py tests/test_tool_scheduler.py tests/test_openai_provider.py tests/test_anthropic_provider.py tests/test_agent.py tests/test_tui_smoke.py -q`，期望通过）
 - [ ] Python 文件无语法错误（验证：运行 `python -m compileall src tests`，期望无编译错误）
 - [ ] 全部自动化测试通过（验证：运行 `python -m pytest -q`，期望通过）
-- [ ] 命令入口仍可导入（验证：运行 `python -c "from mewcode.cli import main; print(callable(main))"`，期望输出 `True`）
+- [ ] 命令入口仍可导入（验证：运行 `python -c "from julycode.cli import main; print(callable(main))"`，期望输出 `True`）
 - [ ] 项目未配置 lint 命令时记录为不适用；如后续配置 lint，则 lint 检查通过（验证：查看 `pyproject.toml` 是否有 lint 配置；若有则运行对应命令，期望退出码为 0）
 
 ## 端到端场景
-- [ ] 场景 1：普通聊天不触发工具调用时仍流式输出最终回复（验证：在 tmux 中启动 `python tests/e2e_mock_openai_server.py 18765`，配置 MewCode 指向该服务，启动 `mewcode`，输入“用一句话解释递归”，观察文本逐步出现且输入区恢复可用）
+- [ ] 场景 1：普通聊天不触发工具调用时仍流式输出最终回复（验证：在 tmux 中启动 `python tests/e2e_mock_openai_server.py 18765`，配置 JulyCode 指向该服务，启动 `julycode`，输入“用一句话解释递归”，观察文本逐步出现且输入区恢复可用）
 - [ ] 场景 2：多步 Agent Loop 能一次请求连续调用多个工具并最终回复（验证：tmux 中输入一个需要搜索代码、读取文件并总结的请求，观察界面依次显示多个工具状态，最终回复引用工具结果且输入区恢复可用）
 - [ ] 场景 3：一次模型响应返回多个读类工具时，界面显示多个工具调用，并最终收到汇总回复（验证：使用 mock 场景触发多个 `read_only` 工具调用，观察多个工具状态均完成，最终回复包含所有结果）
 - [ ] 场景 4：有副作用工具按顺序执行（验证：使用 mock 场景触发连续写入/修改工具，观察工具状态按顺序完成；随后检查目标文件内容符合预期）
@@ -62,6 +62,6 @@
 - [ ] 场景 9：`/plan <需求>` 只读规划（验证：tmux 中输入 `/plan 给这个项目加一个简单文件总结功能`，观察只出现读类工具调用，最终展示计划并保存为待执行计划）
 - [ ] 场景 10：`/plan <需求>` 阻止有副作用工具（验证：使用 mock 场景让规划阶段请求写入/修改/命令工具，观察该工具未实际执行，模型收到受限失败结果并继续输出计划）
 - [ ] 场景 11：`/do` 执行已保存计划并清理计划（验证：完成场景 9 后输入 `/do`，观察执行阶段可调用全工具，最终完成后再次输入 `/do` 会提示没有待执行计划）
-- [ ] 场景 12：无计划 `/do` 不启动空执行（验证：重启 MewCode 或清空计划后输入 `/do`，观察界面直接提示没有待执行计划，mock Provider 没有收到请求）
+- [ ] 场景 12：无计划 `/do` 不启动空执行（验证：重启 JulyCode 或清空计划后输入 `/do`，观察界面直接提示没有待执行计划，mock Provider 没有收到请求）
 - [ ] 场景 13：连续生成两个计划时以后一个为准（验证：依次输入两个不同 `/plan <需求>`，再输入 `/do`，观察执行内容对应第二个计划）
 - [ ] 场景 14：Anthropic Provider 的 Agent Loop 事件行为与 OpenAI 一致（验证：运行 Anthropic Provider usage 和工具协议相关测试；如有可用 Anthropic 配置，再在 tmux 中输入读文件/Plan Mode 请求，观察工具状态、进度和最终回复行为与 OpenAI 场景一致）

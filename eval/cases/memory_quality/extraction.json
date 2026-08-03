@@ -2283,7 +2283,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "请长期记住：配置文件名是 .mewcode.yaml。"
+          "content": "请长期记住：配置文件名是 .julycode.yaml。"
         }
       ],
       "expected": [
@@ -2293,11 +2293,11 @@
           "category": "reference",
           "critical": false,
           "evidence": [
-            "请长期记住：配置文件名是 .mewcode.yaml。"
+            "请长期记住：配置文件名是 .julycode.yaml。"
           ],
           "content_term_groups": [
             [
-              ".mewcode.yaml"
+              ".julycode.yaml"
             ]
           ]
         }

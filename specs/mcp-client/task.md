@@ -4,15 +4,15 @@
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/config.py` | 增加 MCP 配置结构、解析、环境变量展开和 Server map 合并 |
-| 修改 | `src/mewcode/cli.py` | 创建 MCP Manager 并传入 TUI 应用 |
-| 修改 | `src/mewcode/tui/app.py` | 在 TUI 事件循环中初始化和关闭 MCP Manager |
-| 新建 | `src/mewcode/mcp/__init__.py` | 导出 MCP 子系统公开入口 |
-| 新建 | `src/mewcode/mcp/errors.py` | 定义 MCP 错误类型 |
-| 新建 | `src/mewcode/mcp/transport.py` | 实现 JSON-RPC、stdio、Streamable HTTP 传输 |
-| 新建 | `src/mewcode/mcp/client.py` | 实现 MCP 初始化、工具发现和工具调用会话 |
-| 新建 | `src/mewcode/mcp/tools.py` | 实现远端工具到 MewCode Tool 的适配层 |
-| 新建 | `src/mewcode/mcp/manager.py` | 实现多 Server 生命周期、注册和加载报告 |
+| 修改 | `src/julycode/config.py` | 增加 MCP 配置结构、解析、环境变量展开和 Server map 合并 |
+| 修改 | `src/julycode/cli.py` | 创建 MCP Manager 并传入 TUI 应用 |
+| 修改 | `src/julycode/tui/app.py` | 在 TUI 事件循环中初始化和关闭 MCP Manager |
+| 新建 | `src/julycode/mcp/__init__.py` | 导出 MCP 子系统公开入口 |
+| 新建 | `src/julycode/mcp/errors.py` | 定义 MCP 错误类型 |
+| 新建 | `src/julycode/mcp/transport.py` | 实现 JSON-RPC、stdio、Streamable HTTP 传输 |
+| 新建 | `src/julycode/mcp/client.py` | 实现 MCP 初始化、工具发现和工具调用会话 |
+| 新建 | `src/julycode/mcp/tools.py` | 实现远端工具到 JulyCode Tool 的适配层 |
+| 新建 | `src/julycode/mcp/manager.py` | 实现多 Server 生命周期、注册和加载报告 |
 | 修改 | `README.md` | 增加 MCP 配置示例、命名规则和不支持范围 |
 | 修改 | `tests/test_config.py` | 覆盖 MCP 配置解析、合并和环境变量展开 |
 | 新建 | `tests/test_mcp_transport.py` | 覆盖 JSON-RPC 配对、stdio、HTTP JSON/SSE 传输 |
@@ -25,11 +25,11 @@
 
 ## T1: 增加 MCP 配置默认值
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** 无  
 **步骤：**
 1. 在 `tests/test_config.py` 增加 `test_mcp_config_defaults_to_empty`，断言未配置 MCP 时 `config.mcp.servers == {}`。
-2. 在 `src/mewcode/config.py` 新增 `McpServerConfig` 和 `McpConfig` 数据结构。
+2. 在 `src/julycode/config.py` 新增 `McpServerConfig` 和 `McpConfig` 数据结构。
 3. 在 `AppConfig` 增加 `mcp: McpConfig` 默认值。
 4. 保持现有配置测试中的 `AppConfig` 构造不需要额外传参。
 
@@ -37,31 +37,31 @@
 
 ## T2: 解析 stdio 和 HTTP Server 配置
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** T1  
 **步骤：**
 1. 在 `tests/test_config.py` 增加 `test_loads_stdio_mcp_server_config`，覆盖 `type: stdio`、`command`、`args`、`env`。
 2. 在 `tests/test_config.py` 增加 `test_loads_http_mcp_server_config`，覆盖 `type: http`、`url`、`headers`。
-3. 在 `src/mewcode/config.py` 增加 `_parse_mcp_config()` 和单个 Server 解析逻辑。
+3. 在 `src/julycode/config.py` 增加 `_parse_mcp_config()` 和单个 Server 解析逻辑。
 4. 对缺失 `command`、缺失 `url`、未知 `type`、非 map 的 `mcp_servers` 抛出 `ConfigError`。
 
 **验证：** 运行 `python -m pytest tests/test_config.py::test_loads_stdio_mcp_server_config tests/test_config.py::test_loads_http_mcp_server_config tests/test_config.py::test_rejects_invalid_mcp_server_config -q`，期望全部通过。
 
 ## T3: 支持 MCP 配置环境变量展开
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** T2  
 **步骤：**
 1. 在 `tests/test_config.py` 增加 `test_mcp_config_expands_environment_values`，覆盖 stdio `env`、HTTP `url` 和 `headers`。
 2. 在 `tests/test_config.py` 增加 `test_mcp_config_rejects_missing_environment_value`，断言错误信息包含 Server 名和字段类别，不包含原始密钥值。
-3. 在 `src/mewcode/config.py` 增加 MCP 专用字符串展开函数，支持整值 `${VAR}` 和字符串片段中的 `${VAR}`。
+3. 在 `src/julycode/config.py` 增加 MCP 专用字符串展开函数，支持整值 `${VAR}` 和字符串片段中的 `${VAR}`。
 4. 只对 stdio `env`、HTTP `url` 和 HTTP `headers` 执行展开。
 
 **验证：** 运行 `python -m pytest tests/test_config.py::test_mcp_config_expands_environment_values tests/test_config.py::test_mcp_config_rejects_missing_environment_value -q`，期望全部通过。
 
 ## T4: 合并用户级和项目级 MCP Server
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** T3  
 **步骤：**
 1. 在 `tests/test_config.py` 增加 `test_project_mcp_servers_override_user_servers_by_name`。
@@ -73,15 +73,15 @@
 
 ## T5: 定义 MCP 错误类型和包入口
 
-**文件：** `src/mewcode/mcp/__init__.py`、`src/mewcode/mcp/errors.py`  
+**文件：** `src/julycode/mcp/__init__.py`、`src/julycode/mcp/errors.py`  
 **依赖：** T1  
 **步骤：**
-1. 创建 `src/mewcode/mcp/errors.py`，定义 `McpError`、`McpConfigError`、`McpConnectionError`、`McpProtocolError`、`McpToolError`。
-2. 让 `McpError` 继承现有 `MewCodeError`。
+1. 创建 `src/julycode/mcp/errors.py`，定义 `McpError`、`McpConfigError`、`McpConnectionError`、`McpProtocolError`、`McpToolError`。
+2. 让 `McpError` 继承现有 `JulyCodeError`。
 3. 让 `McpProtocolError` 可携带 JSON-RPC error code、message 和 data。
-4. 创建 `src/mewcode/mcp/__init__.py`，导出后续开发需要的错误类型。
+4. 创建 `src/julycode/mcp/__init__.py`，导出后续开发需要的错误类型。
 
-**验证：** 运行 `python -c "from mewcode.mcp.errors import McpError, McpProtocolError; assert issubclass(McpProtocolError, McpError)"`，期望退出码为 0。
+**验证：** 运行 `python -c "from julycode.mcp.errors import McpError, McpProtocolError; assert issubclass(McpProtocolError, McpError)"`，期望退出码为 0。
 
 ## T6: 创建 stdio MCP 测试 Server
 
@@ -109,11 +109,11 @@
 
 ## T8: 实现 stdio transport 基础请求
 
-**文件：** `src/mewcode/mcp/transport.py`、`tests/test_mcp_transport.py`  
+**文件：** `src/julycode/mcp/transport.py`、`tests/test_mcp_transport.py`  
 **依赖：** T5、T6  
 **步骤：**
 1. 在 `tests/test_mcp_transport.py` 增加 `test_stdio_transport_sends_request_and_notification`。
-2. 在 `src/mewcode/mcp/transport.py` 定义 `JsonRpcError`、`McpTransport` 和 `StdioMcpTransport`。
+2. 在 `src/julycode/mcp/transport.py` 定义 `JsonRpcError`、`McpTransport` 和 `StdioMcpTransport`。
 3. 用 `asyncio.create_subprocess_exec()` 启动 stdio Server，并写入 UTF-8 JSON-RPC 行。
 4. 实现 `request()`、`notify()` 和 `close()` 的基础路径。
 
@@ -121,7 +121,7 @@
 
 ## T9: 实现 stdio JSON-RPC 异步配对和错误处理
 
-**文件：** `src/mewcode/mcp/transport.py`、`tests/test_mcp_transport.py`  
+**文件：** `src/julycode/mcp/transport.py`、`tests/test_mcp_transport.py`  
 **依赖：** T8  
 **步骤：**
 1. 在 `tests/test_mcp_transport.py` 增加 `test_stdio_transport_matches_out_of_order_responses_by_id`。
@@ -134,11 +134,11 @@
 
 ## T10: 实现 Streamable HTTP JSON 响应
 
-**文件：** `src/mewcode/mcp/transport.py`、`tests/test_mcp_transport.py`  
+**文件：** `src/julycode/mcp/transport.py`、`tests/test_mcp_transport.py`  
 **依赖：** T5、T7  
 **步骤：**
 1. 在 `tests/test_mcp_transport.py` 增加 `test_http_transport_sends_json_request_and_uses_session_headers`。
-2. 在 `src/mewcode/mcp/transport.py` 实现 `StreamableHttpMcpTransport` 的 JSON 响应路径。
+2. 在 `src/julycode/mcp/transport.py` 实现 `StreamableHttpMcpTransport` 的 JSON 响应路径。
 3. 每次请求设置 `Accept: application/json, text/event-stream`。
 4. 初始化后保存 `Mcp-Session-Id`，后续请求带 `Mcp-Session-Id` 和 `MCP-Protocol-Version`。
 
@@ -146,11 +146,11 @@
 
 ## T11: 实现 Streamable HTTP SSE 响应
 
-**文件：** `src/mewcode/mcp/transport.py`、`tests/test_mcp_transport.py`  
+**文件：** `src/julycode/mcp/transport.py`、`tests/test_mcp_transport.py`  
 **依赖：** T10  
 **步骤：**
 1. 在 `tests/test_mcp_transport.py` 增加 `test_http_transport_reads_sse_response_until_matching_id`。
-2. 复用 `mewcode.providers.sse.iter_sse_lines()` 解析 SSE。
+2. 复用 `julycode.providers.sse.iter_sse_lines()` 解析 SSE。
 3. 忽略与当前请求无关的通知。
 4. 当 SSE 中出现匹配 id 的 response 时返回对应 result 或抛出协议错误。
 
@@ -158,7 +158,7 @@
 
 ## T12: 完成 transport 关闭和脱敏
 
-**文件：** `src/mewcode/mcp/transport.py`、`tests/test_mcp_transport.py`  
+**文件：** `src/julycode/mcp/transport.py`、`tests/test_mcp_transport.py`  
 **依赖：** T9、T11  
 **步骤：**
 1. 在 `tests/test_mcp_transport.py` 增加 `test_stdio_transport_close_terminates_process`。
@@ -171,20 +171,20 @@
 
 ## T13: 实现 MCP 初始化会话
 
-**文件：** `src/mewcode/mcp/client.py`、`tests/test_mcp_client.py`  
+**文件：** `src/julycode/mcp/client.py`、`tests/test_mcp_client.py`  
 **依赖：** T5、T8、T10  
 **步骤：**
 1. 在 `tests/test_mcp_client.py` 增加 `test_client_initialize_sends_initialize_and_initialized_notification`。
 2. 在 `tests/test_mcp_client.py` 增加 `test_client_initialize_requires_tools_capability`。
 3. 创建 `McpClientSession`，实现 `initialize()`。
-4. 初始化请求使用协议版本 `2025-06-18`、空 client capabilities 和 MewCode clientInfo。
+4. 初始化请求使用协议版本 `2025-06-18`、空 client capabilities 和 JulyCode clientInfo。
 5. 初始化成功后发送 `notifications/initialized`。
 
 **验证：** 运行 `python -m pytest tests/test_mcp_client.py::test_client_initialize_sends_initialize_and_initialized_notification tests/test_mcp_client.py::test_client_initialize_requires_tools_capability -q`，期望全部通过。
 
 ## T14: 实现 MCP 工具列表分页
 
-**文件：** `src/mewcode/mcp/client.py`、`tests/test_mcp_client.py`  
+**文件：** `src/julycode/mcp/client.py`、`tests/test_mcp_client.py`  
 **依赖：** T13  
 **步骤：**
 1. 在 `tests/test_mcp_client.py` 增加 `test_client_list_tools_handles_pagination`。
@@ -197,7 +197,7 @@
 
 ## T15: 实现 MCP 工具调用会话
 
-**文件：** `src/mewcode/mcp/client.py`、`tests/test_mcp_client.py`  
+**文件：** `src/julycode/mcp/client.py`、`tests/test_mcp_client.py`  
 **依赖：** T13  
 **步骤：**
 1. 在 `tests/test_mcp_client.py` 增加 `test_client_call_tool_sends_tools_call`。
@@ -209,7 +209,7 @@
 
 ## T16: 实现 MCP 工具命名和 ToolSpec 适配
 
-**文件：** `src/mewcode/mcp/tools.py`、`tests/test_mcp_tools.py`  
+**文件：** `src/julycode/mcp/tools.py`、`tests/test_mcp_tools.py`  
 **依赖：** T14  
 **步骤：**
 1. 在 `tests/test_mcp_tools.py` 增加 `test_global_tool_name_uses_server_prefix`。
@@ -222,7 +222,7 @@
 
 ## T17: 实现 MCP 工具结果和错误映射
 
-**文件：** `src/mewcode/mcp/tools.py`、`tests/test_mcp_tools.py`  
+**文件：** `src/julycode/mcp/tools.py`、`tests/test_mcp_tools.py`  
 **依赖：** T15、T16  
 **步骤：**
 1. 在 `tests/test_mcp_tools.py` 增加 `test_remote_mcp_tool_returns_success_payload`。
@@ -236,7 +236,7 @@
 
 ## T18: 实现 MCP Manager 成功加载和注册
 
-**文件：** `src/mewcode/mcp/manager.py`、`tests/test_mcp_manager.py`  
+**文件：** `src/julycode/mcp/manager.py`、`tests/test_mcp_manager.py`  
 **依赖：** T12、T17  
 **步骤：**
 1. 在 `tests/test_mcp_manager.py` 增加 `test_manager_initializes_servers_and_registers_tools`。
@@ -249,7 +249,7 @@
 
 ## T19: 实现 Manager 失败隔离和关闭
 
-**文件：** `src/mewcode/mcp/manager.py`、`tests/test_mcp_manager.py`  
+**文件：** `src/julycode/mcp/manager.py`、`tests/test_mcp_manager.py`  
 **依赖：** T18  
 **步骤：**
 1. 在 `tests/test_mcp_manager.py` 增加 `test_manager_isolates_failed_server_and_keeps_successful_server`。
@@ -262,16 +262,16 @@
 
 ## T20: 接入 CLI/TUI 启动和退出流程
 
-**文件：** `src/mewcode/cli.py`、`src/mewcode/tui/app.py`、`tests/test_mcp_manager.py`  
+**文件：** `src/julycode/cli.py`、`src/julycode/tui/app.py`、`tests/test_mcp_manager.py`  
 **依赖：** T19  
 **步骤：**
 1. 在 `tests/test_mcp_manager.py` 增加 `test_cli_initializes_mcp_manager_and_closes_it`，验证 CLI 创建并传入 Manager。
 2. 在 `tests/test_mcp_manager.py` 增加 `test_cli_reports_mcp_config_error_without_secret`。
 3. 在 `tests/test_mcp_manager.py` 增加 `test_tui_lifecycle_initializes_and_closes_mcp_manager`，验证 TUI 事件循环内初始化、注册和关闭。
-4. 修改 `cli.main()`，创建默认 registry 和 `McpManager`，并把 Manager 传给 `MewCodeApp`。
-5. 修改 `MewCodeApp.on_mount()`，在 TUI 事件循环内初始化 MCP Manager 并注册工具。
+4. 修改 `cli.main()`，创建默认 registry 和 `McpManager`，并把 Manager 传给 `JulyCodeApp`。
+5. 修改 `JulyCodeApp.on_mount()`，在 TUI 事件循环内初始化 MCP Manager 并注册工具。
 6. 对单 Server 加载失败输出 warning 到 stderr，不退出。
-7. 修改 `MewCodeApp.on_unmount()`，在同一事件循环内关闭 MCP Manager。
+7. 修改 `JulyCodeApp.on_unmount()`，在同一事件循环内关闭 MCP Manager。
 8. 对 MCP 配置错误按现有配置错误路径退出。
 
 **验证：** 运行 `python -m pytest tests/test_mcp_manager.py::test_cli_initializes_mcp_manager_and_closes_it tests/test_mcp_manager.py::test_tui_lifecycle_initializes_and_closes_mcp_manager tests/test_mcp_manager.py::test_cli_reports_mcp_config_error_without_secret tests/test_config.py::test_cli_reports_config_error_without_secret -q`，期望全部通过。
@@ -314,7 +314,7 @@
 
 ## T24: 运行 MCP 相关回归
 
-**文件：** `src/mewcode/config.py`、`src/mewcode/cli.py`、`src/mewcode/mcp/*.py`、`tests/test_*.py`、`README.md`  
+**文件：** `src/julycode/config.py`、`src/julycode/cli.py`、`src/julycode/mcp/*.py`、`tests/test_*.py`、`README.md`  
 **依赖：** T1 至 T23  
 **步骤：**
 1. 运行 MCP 新增测试和受影响的配置、工具、Agent、Provider 测试。

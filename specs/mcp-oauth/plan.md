@@ -145,7 +145,7 @@ class OAuthCredentialStore(Protocol):
 - `MemoryCredentialStore`：只保存在当前进程内存。
 - `FallbackCredentialStore`：优先 Keyring；后端不可用、锁定或操作失败时转入内存，并暴露一次脱敏警告。
 
-Keyring service 固定为 `mewcode.mcp.oauth`。账户 key 由规范化 MCP URL 的 SHA-256 和 Server 名构成，防止 Server URL 变化后误用旧 token。Keyring 同步调用通过线程执行，并设置有限等待时间。
+Keyring service 固定为 `julycode.mcp.oauth`。账户 key 由规范化 MCP URL 的 SHA-256 和 Server 名构成，防止 Server URL 变化后误用旧 token。Keyring 同步调用通过线程执行，并设置有限等待时间。
 
 ### `McpHttpAuthProvider`
 
@@ -326,7 +326,7 @@ OAuth 仅允许出现在 `type: http` Server。`client_id` 和 `client_secret` �
 ### 首次启动与授权
 
 ```text
-MewCodeApp.on_mount
+JulyCodeApp.on_mount
   → McpManager.initialize
     → McpOAuthSession.initialize_credentials
       → OAuthCredentialStore.load
@@ -370,15 +370,15 @@ project/
 ├── pyproject.toml                         — 增加 Keyring 运行时依赖
 ├── requirements.txt                      — 同步 Keyring 依赖
 ├── README.md                             — OAuth 与 GitHub Remote MCP 使用说明
-├── src/mewcode/config.py                 — OAuth 配置模型、解析和冲突校验
-├── src/mewcode/commands/models.py        — MCP 命令上下文接口和状态快照
-├── src/mewcode/commands/builtin.py       — /mcp 命令与 /status OAuth 展示
-├── src/mewcode/tui/app.py                — 命令上下文实现和授权 URL 本地展示
-├── src/mewcode/mcp/errors.py             — 认证挑战与 OAuth 结构化错误
-├── src/mewcode/mcp/transport.py          — Bearer 注入、401 恢复与单次重试
-├── src/mewcode/mcp/tools.py              — MCP 工具 origin 标识
-├── src/mewcode/mcp/manager.py            — OAuth Session 生命周期与重初始化
-├── src/mewcode/mcp/oauth/
+├── src/julycode/config.py                 — OAuth 配置模型、解析和冲突校验
+├── src/julycode/commands/models.py        — MCP 命令上下文接口和状态快照
+├── src/julycode/commands/builtin.py       — /mcp 命令与 /status OAuth 展示
+├── src/julycode/tui/app.py                — 命令上下文实现和授权 URL 本地展示
+├── src/julycode/mcp/errors.py             — 认证挑战与 OAuth 结构化错误
+├── src/julycode/mcp/transport.py          — Bearer 注入、401 恢复与单次重试
+├── src/julycode/mcp/tools.py              — MCP 工具 origin 标识
+├── src/julycode/mcp/manager.py            — OAuth Session 生命周期与重初始化
+├── src/julycode/mcp/oauth/
 │   ├── __init__.py                       — OAuth 对外接口
 │   ├── models.py                         — 公开元数据、token 和状态模型
 │   ├── discovery.py                      — Challenge、RFC 9728/RFC 8414 发现与校验

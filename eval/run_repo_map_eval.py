@@ -15,13 +15,13 @@ from repo_map_quality.loader import NavigationDatasetLoader, RepoMapQualityConfi
 from repo_map_quality.models import RepoMapQualityRunOptions  # noqa: E402
 from repo_map_quality.report import write_json_report, write_markdown_report  # noqa: E402
 from repo_map_quality.runner import RepoMapQualityRunner  # noqa: E402
-from mewcode.config import load_config  # noqa: E402
-from mewcode.errors import ConfigError  # noqa: E402
-from mewcode.providers.factory import create_provider  # noqa: E402
+from julycode.config import load_config  # noqa: E402
+from julycode.errors import ConfigError  # noqa: E402
+from julycode.providers.factory import create_provider  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="运行 MewCode Repo Map 导航质量评测")
+    parser = argparse.ArgumentParser(description="运行 JulyCode Repo Map 导航质量评测")
     parser.add_argument(
         "--mode",
         choices=("offline", "paired"),

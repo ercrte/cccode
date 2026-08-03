@@ -1,22 +1,22 @@
-# MewCode 命令系统 Tasks
+# JulyCode 命令系统 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 删除 | `src/mewcode/commands.py` | 移除旧的硬编码斜杠命令解析单文件 |
-| 新建 | `src/mewcode/commands/__init__.py` | 重导出命令系统公共类型和工厂函数，保持 `mewcode.commands` 导入入口 |
-| 新建 | `src/mewcode/commands/models.py` | 定义命令元数据、解析结果、上下文协议、状态快照和 Agent 模式 |
-| 新建 | `src/mewcode/commands/registry.py` | 实现命令注册、冲突检测、大小写不敏感查找、解析和补全 |
-| 新建 | `src/mewcode/commands/dispatcher.py` | 实现输入分流和命令处理调度 |
-| 新建 | `src/mewcode/commands/builtin.py` | 实现十个内置命令的元数据和 handler |
-| 修改 | `src/mewcode/agent.py` | 使用新的命令模型，移除旧 `do` 命令入口语义和 pending plan 副作用 |
-| 修改 | `src/mewcode/tools/scheduler.py` | 将工具策略收敛为默认模式和计划模式 |
-| 修改 | `src/mewcode/prompting/modules.py` | 更新稳定提示中的模式说明 |
-| 修改 | `src/mewcode/prompting/builder.py` | 更新运行时提示，只处理默认模式和计划模式 |
-| 修改 | `src/mewcode/tui/app.py` | 接入命令注册中心、分发器、持久模式、状态快照和命令上下文 |
-| 修改 | `src/mewcode/tui/widgets.py` | 增加状态栏模式标记和命令补全菜单 |
-| 修改 | `src/mewcode/cli.py` | 启动阶段创建命令注册中心，命令冲突时中文报错退出 |
+| 删除 | `src/julycode/commands.py` | 移除旧的硬编码斜杠命令解析单文件 |
+| 新建 | `src/julycode/commands/__init__.py` | 重导出命令系统公共类型和工厂函数，保持 `julycode.commands` 导入入口 |
+| 新建 | `src/julycode/commands/models.py` | 定义命令元数据、解析结果、上下文协议、状态快照和 Agent 模式 |
+| 新建 | `src/julycode/commands/registry.py` | 实现命令注册、冲突检测、大小写不敏感查找、解析和补全 |
+| 新建 | `src/julycode/commands/dispatcher.py` | 实现输入分流和命令处理调度 |
+| 新建 | `src/julycode/commands/builtin.py` | 实现十个内置命令的元数据和 handler |
+| 修改 | `src/julycode/agent.py` | 使用新的命令模型，移除旧 `do` 命令入口语义和 pending plan 副作用 |
+| 修改 | `src/julycode/tools/scheduler.py` | 将工具策略收敛为默认模式和计划模式 |
+| 修改 | `src/julycode/prompting/modules.py` | 更新稳定提示中的模式说明 |
+| 修改 | `src/julycode/prompting/builder.py` | 更新运行时提示，只处理默认模式和计划模式 |
+| 修改 | `src/julycode/tui/app.py` | 接入命令注册中心、分发器、持久模式、状态快照和命令上下文 |
+| 修改 | `src/julycode/tui/widgets.py` | 增加状态栏模式标记和命令补全菜单 |
+| 修改 | `src/julycode/cli.py` | 启动阶段创建命令注册中心，命令冲突时中文报错退出 |
 | 修改 | `tests/test_commands.py` | 覆盖命令注册、解析、补全、分发和内置命令 handler |
 | 修改 | `tests/test_agent.py` | 更新 Agent 模式行为，删除旧 `/do` 执行待计划断言 |
 | 修改 | `tests/test_tool_scheduler.py` | 更新工具策略测试，移除旧 `do` 模式覆盖 |
@@ -26,19 +26,19 @@
 
 ## T1: 建立命令包骨架
 
-**文件：** `src/mewcode/commands.py`, `src/mewcode/commands/__init__.py`, `src/mewcode/commands/models.py`  
+**文件：** `src/julycode/commands.py`, `src/julycode/commands/__init__.py`, `src/julycode/commands/models.py`  
 **依赖：** 无  
 **步骤：**
-1. 删除旧 `src/mewcode/commands.py`。
-2. 新建 `src/mewcode/commands/` 包。
+1. 删除旧 `src/julycode/commands.py`。
+2. 新建 `src/julycode/commands/` 包。
 3. 在 `models.py` 中定义 `AgentMode = Literal["normal", "plan"]`、`AgentCommand`、命令元数据、解析结果、补全结果、状态快照和 `CommandContext` 协议。
 4. 在 `__init__.py` 中重导出 `AgentCommand`、`AgentMode` 和命令模型公共类型。
 
-**验证：** 运行 `python -m py_compile src/mewcode/commands/__init__.py src/mewcode/commands/models.py`，期望无错误。
+**验证：** 运行 `python -m py_compile src/julycode/commands/__init__.py src/julycode/commands/models.py`，期望无错误。
 
 ## T2: 实现注册中心
 
-**文件：** `src/mewcode/commands/registry.py`, `src/mewcode/commands/__init__.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/commands/registry.py`, `src/julycode/commands/__init__.py`, `tests/test_commands.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `CommandRegistry`、`CommandRegistryError` 和命令入口规范化逻辑。
@@ -50,7 +50,7 @@
 
 ## T3: 实现命令分发器
 
-**文件：** `src/mewcode/commands/dispatcher.py`, `src/mewcode/commands/__init__.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/commands/dispatcher.py`, `src/julycode/commands/__init__.py`, `tests/test_commands.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `CommandDispatcher.dispatch()`。
@@ -64,7 +64,7 @@
 
 ## T4: 登记十个内置命令和帮助命令
 
-**文件：** `src/mewcode/commands/builtin.py`, `src/mewcode/commands/__init__.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/commands/builtin.py`, `src/julycode/commands/__init__.py`, `tests/test_commands.py`  
 **依赖：** T3  
 **步骤：**
 1. 实现 `create_builtin_command_registry()` 并登记 `/help`、`/compact`、`/clear`、`/plan`、`/do`、`/session`、`/memory`、`/permission`、`/status`、`/review`。
@@ -77,7 +77,7 @@
 
 ## T5: 实现本地状态查询命令
 
-**文件：** `src/mewcode/commands/builtin.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/commands/builtin.py`, `tests/test_commands.py`  
 **依赖：** T4  
 **步骤：**
 1. 实现 `/session`，展示会话标识、恢复状态、消息数量和当前模式。
@@ -90,7 +90,7 @@
 
 ## T6: 实现界面状态命令和预设提示词命令
 
-**文件：** `src/mewcode/commands/builtin.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/commands/builtin.py`, `tests/test_commands.py`  
 **依赖：** T5  
 **步骤：**
 1. 实现 `/plan`，调用 `set_mode("plan")`、`refresh_status()` 并展示进入计划模式提示。
@@ -104,7 +104,7 @@
 
 ## T7: 更新 Agent 模式语义
 
-**文件：** `src/mewcode/agent.py`, `src/mewcode/tools/scheduler.py`, `tests/test_agent.py`, `tests/test_tool_scheduler.py`  
+**文件：** `src/julycode/agent.py`, `src/julycode/tools/scheduler.py`, `tests/test_agent.py`, `tests/test_tool_scheduler.py`  
 **依赖：** T1  
 **步骤：**
 1. 将 Agent 相关类型和测试中的模式范围收敛为 `normal` 和 `plan`。
@@ -117,7 +117,7 @@
 
 ## T8: 更新提示词模式说明
 
-**文件：** `src/mewcode/prompting/modules.py`, `src/mewcode/prompting/builder.py`, `tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/modules.py`, `src/julycode/prompting/builder.py`, `tests/test_prompting.py`  
 **依赖：** T7  
 **步骤：**
 1. 将稳定提示中的模式说明改为默认模式和计划模式。
@@ -129,12 +129,12 @@
 
 ## T9: 接入 TUI 状态栏和命令上下文快照
 
-**文件：** `src/mewcode/tui/widgets.py`, `src/mewcode/tui/app.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/widgets.py`, `src/julycode/tui/app.py`, `tests/test_tui_smoke.py`  
 **依赖：** T5  
 **步骤：**
 1. 在 `StatusBar` 增加持久模式字段和 `set_mode()`。
 2. 在状态栏文本中显示 `[DEFAULT]` 或 `[PLAN]`。
-3. 在 `MewCodeApp` 中保存 `current_mode` 和 `last_usage`。
+3. 在 `JulyCodeApp` 中保存 `current_mode` 和 `last_usage`。
 4. 实现 `/session`、`/memory`、`/permission`、`/status` 所需的 snapshot 方法。
 5. 在 usage 事件处理时更新 `last_usage`。
 6. 补充 TUI 状态栏模式标记和状态快照 smoke 测试。
@@ -143,10 +143,10 @@
 
 ## T10: 接入 TUI 命令分流
 
-**文件：** `src/mewcode/tui/app.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`, `tests/test_tui_smoke.py`  
 **依赖：** T6, T9  
 **步骤：**
-1. 在 `MewCodeApp` 初始化命令注册中心和 `CommandDispatcher`。
+1. 在 `JulyCodeApp` 初始化命令注册中心和 `CommandDispatcher`。
 2. 将回车入口改为先调用分发器；普通输入才启动 Agent Loop。
 3. 实现 `show_assistant()`、`show_error()`、`clear_messages()`、`compact_context()` 和 `send_prompt()`。
 4. 重构现有 `_run_generation()`，让普通输入和 `/review` 都能复用同一 Agent Loop 执行路径。
@@ -157,7 +157,7 @@
 
 ## T11: 实现 TUI 命令补全菜单
 
-**文件：** `src/mewcode/tui/widgets.py`, `src/mewcode/tui/app.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/widgets.py`, `src/julycode/tui/app.py`, `tests/test_tui_smoke.py`  
 **依赖：** T10  
 **步骤：**
 1. 新增 `CommandCompletionMenu`，用于展示多匹配候选。
@@ -171,11 +171,11 @@
 
 ## T12: 接入 CLI 启动冲突错误
 
-**文件：** `src/mewcode/cli.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/cli.py`, `tests/test_commands.py`  
 **依赖：** T10  
 **步骤：**
 1. 在 CLI 启动阶段调用 `create_builtin_command_registry()`。
-2. 将 registry 注入 `MewCodeApp`。
+2. 将 registry 注入 `JulyCodeApp`。
 3. 捕获 `CommandRegistryError`，打印中文配置错误并返回 1。
 4. 增加 CLI 或 registry 工厂冲突错误测试，确认错误信息包含冲突入口。
 
@@ -206,7 +206,7 @@
 
 ## T15: 项目全量测试
 
-**文件：** `src/mewcode/`, `tests/`  
+**文件：** `src/julycode/`, `tests/`  
 **依赖：** T14  
 **步骤：**
 1. 运行项目全量测试。

@@ -4,9 +4,9 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.mewcode/context/
-.mewcode/sessions/
-.mewcode/memory/
+.julycode/context/
+.julycode/sessions/
+.julycode/memory/
 .venv/
 dist/
 build/

@@ -1,4 +1,4 @@
-# MewCode 子 Agent 委派 Checklist
+# JulyCode 子 Agent 委派 Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
@@ -51,7 +51,7 @@
 - [ ] `/status` 显示子 Agent 摘要，`/agents` 显示可用角色和后台任务详情，`/background` 支持手动切后台（验证：运行 `python -m pytest tests/test_commands.py tests/test_tui_smoke.py -k "status or agents or background" -q`，期望通过）
 - [ ] `sub_agents` 配置可设置启用状态、前台超时、后台任务上限、全局禁用工具、后台白名单、模型别名和插件角色根目录（验证：运行 `python -m pytest tests/test_config.py -k sub_agents -q`，期望通过）
 - [ ] 独立 Skill 复用子 Agent 隔离运行基础设施，保留“独立 Skill 执行摘要”的用户可见语义，shared Skill 行为不变（验证：运行 `python -m pytest tests/test_skills.py tests/test_tui_smoke.py -k skill -q`，期望通过）
-- [ ] README 记录角色定义格式、加载优先级、委派方式、后台行为、配置示例和本阶段不做的范围（验证：运行 `rg -n "delegate_agent|sub_agents|\\.mewcode/agents|Worktree|跨会话" README.md`，期望能看到对应说明）
+- [ ] README 记录角色定义格式、加载优先级、委派方式、后台行为、配置示例和本阶段不做的范围（验证：运行 `rg -n "delegate_agent|sub_agents|\\.julycode/agents|Worktree|跨会话" README.md`，期望能看到对应说明）
 
 ## 编译与测试
 - [ ] 项目 Python 文件可编译（验证：运行 `python -m compileall src tests`，期望退出码为 0）
@@ -61,8 +61,8 @@
 - [ ] 项目未配置 lint 工具，本阶段不新增 lint 门禁（验证：运行 `python -c "import tomllib; cfg=tomllib.load(open('pyproject.toml','rb')); tool=cfg.get('tool', {}); print(any(name in tool for name in ('ruff','mypy','flake8','black')))"`，期望输出 `False`）
 
 ## 端到端场景
-- [ ] 场景 1：在 tmux 中启动 MewCode，输入“请委派代码搜索子 Agent 查找 README 里 Skill 相关说明并总结”后，主 Agent 调用 `delegate_agent` 的定义式路径，子 Agent 使用读类工具完成，主对话只显示委派工具结果摘要（验证：使用 mock provider 或 `tests/e2e_mock_openai_server.py` 启动 `mewcode`，运行 `tmux capture-pane -p`，期望看到 `delegate_agent`、子任务摘要和无子 Agent 中间历史污染）
-- [ ] 场景 2：在 tmux 中启动 MewCode，先进行一轮普通对话形成父历史，再输入“Fork 一个后台子 Agent 检查当前权限系统测试覆盖并完成后通知我”，系统立即返回后台任务标识，稍后自动显示完成通知（验证：使用 mock provider 或 `tests/e2e_mock_openai_server.py`，运行 `tmux capture-pane -p`，期望看到后台任务 ID、强制后台说明和完成通知）
-- [ ] 场景 3：在 tmux 中启动 MewCode，触发一个前台定义式子 Agent 后执行 `/background`，主输入恢复，子任务继续在后台完成并通知主对话（验证：运行 `tmux send-keys -t <session> "/background" Enter` 后再 `tmux capture-pane -p`，期望看到已切入后台和完成通知）
-- [ ] 场景 4：在 tmux 中启动 MewCode，输入“让子 Agent 再委派一个子 Agent”之类的请求，子 Agent 尝试嵌套委派时被拒绝并返回结构化失败，主应用不中断（验证：使用 mock provider 构造嵌套调用，运行 `tmux capture-pane -p`，期望看到防嵌套拒绝和后续可继续输入）
+- [ ] 场景 1：在 tmux 中启动 JulyCode，输入“请委派代码搜索子 Agent 查找 README 里 Skill 相关说明并总结”后，主 Agent 调用 `delegate_agent` 的定义式路径，子 Agent 使用读类工具完成，主对话只显示委派工具结果摘要（验证：使用 mock provider 或 `tests/e2e_mock_openai_server.py` 启动 `julycode`，运行 `tmux capture-pane -p`，期望看到 `delegate_agent`、子任务摘要和无子 Agent 中间历史污染）
+- [ ] 场景 2：在 tmux 中启动 JulyCode，先进行一轮普通对话形成父历史，再输入“Fork 一个后台子 Agent 检查当前权限系统测试覆盖并完成后通知我”，系统立即返回后台任务标识，稍后自动显示完成通知（验证：使用 mock provider 或 `tests/e2e_mock_openai_server.py`，运行 `tmux capture-pane -p`，期望看到后台任务 ID、强制后台说明和完成通知）
+- [ ] 场景 3：在 tmux 中启动 JulyCode，触发一个前台定义式子 Agent 后执行 `/background`，主输入恢复，子任务继续在后台完成并通知主对话（验证：运行 `tmux send-keys -t <session> "/background" Enter` 后再 `tmux capture-pane -p`，期望看到已切入后台和完成通知）
+- [ ] 场景 4：在 tmux 中启动 JulyCode，输入“让子 Agent 再委派一个子 Agent”之类的请求，子 Agent 尝试嵌套委派时被拒绝并返回结构化失败，主应用不中断（验证：使用 mock provider 构造嵌套调用，运行 `tmux capture-pane -p`，期望看到防嵌套拒绝和后续可继续输入）
 - [ ] 场景 5：完成上述端到端场景后，对照本 checklist 逐项验收并记录证据（验证：保存命令输出、tmux 截屏文本或测试输出，期望所有非跳过项都有证据）

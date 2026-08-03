@@ -1,4 +1,4 @@
-# MewCode Structured System Prompt Plan
+# JulyCode Structured System Prompt Plan
 
 ## 架构概览
 本阶段新增一个提示构造层，位于 `AgentLoopRunner` 和 Provider 之间。Agent Loop 不再只把会话消息和工具列表交给 Provider，而是在每次模型请求前构造 `PromptBundle`：稳定的全局系统提示作为固定前缀，动态环境和模式状态作为运行时补充块，会话历史仍沿用现有消息序列。
@@ -121,10 +121,10 @@ class AgentCommand:
 
 ## 模块设计
 
-### `mewcode.prompting`
+### `julycode.prompting`
 **职责：** 生成稳定全局提示、动态运行时补充、注入频率和标签格式。  
 **对外接口：** `PromptBuilder.build_bundle(context)`。  
-**依赖：** `mewcode.commands.AgentMode`、`mewcode.session.PendingPlan`、`mewcode.tools.base.ToolSpec`。
+**依赖：** `julycode.commands.AgentMode`、`julycode.session.PendingPlan`、`julycode.tools.base.ToolSpec`。
 
 固定提示模块用确定顺序返回：
 1. 身份
@@ -137,44 +137,44 @@ class AgentCommand:
 
 运行时补充使用统一标签：
 ```text
-<mewcode_runtime_context>
-环境信息：cwd=/home/cui/mewcode
+<julycode_runtime_context>
+环境信息：cwd=/home/cui/julycode
 模式状态：plan full 1/8
 本轮约束：只使用读取、查找和搜索类工具，不写文件、不改文件、不执行命令。
-</mewcode_runtime_context>
+</julycode_runtime_context>
 ```
 
 内部按 `环境信息`、`模式状态`、`待执行计划`、`本轮约束` 排列。`full` 包含完整模式说明和关键规则，`refresh` 只重复关键规则，`brief` 只说明当前模式、轮次和必要状态。
 
-### `mewcode.session`
+### `julycode.session`
 **职责：** 在构建请求时接收并携带 `PromptBundle`。  
 **对外接口：** `build_request(tools=(), prompt=None) -> ChatRequest`。  
 **依赖：** Provider 基础类型。
 
 会话历史仍只存储用户、助手和工具消息，不把稳定提示或运行时补充写入 `ChatSession.messages`，避免污染对话历史和后续显示。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 在每次请求模型前收集运行时上下文，调用 `PromptBuilder`，再把 `PromptBundle` 放入 `ChatRequest`。  
 **对外接口：** `AgentLoopRunner.run(command)` 保持不变。  
 **依赖：** `PromptBuilder`、`RuntimePromptContext`、`ToolPolicy`、`ToolExecutor.context`。
 
 Agent Loop 使用当前 `iteration` 计算注入级别。`plan` 模式使用只读工具策略构建上下文；`do` 模式从 `session.pending_plan` 注入待执行计划。完成 `plan` 时仍保存模型生成的计划，完成 `do` 时仍清除计划。
 
-### `mewcode.commands`
+### `julycode.commands`
 **职责：** 解析用户命令，但不再生成系统控制段落。  
 **对外接口：** `parse_agent_command(raw_text, session)`。  
 **依赖：** `ChatSession`。
 
 `/plan <需求>` 返回 `mode="plan"`，`model_text` 为 `<需求>`。`/do` 返回 `mode="do"`，`model_text` 为“执行当前待执行计划。”；完整计划由运行时补充注入。
 
-### `mewcode.tools.builtin`
+### `julycode.tools.builtin`
 **职责：** 强化内置工具描述，让每个工具声明适用场景、约束和失败后的处理预期。  
 **对外接口：** 现有 `ToolSpec` 不变。  
 **依赖：** 无新增依赖。
 
 示例规则：`edit_file` 描述强调编辑前应读取或搜索目标文件，`run_command` 描述强调命令有副作用且应用于构建、测试、检查或用户明确需要的本地命令，读类工具描述强调优先使用专用搜索和读取能力。
 
-### `mewcode.providers.openai`
+### `julycode.providers.openai`
 **职责：** 把 `PromptBundle` 映射为 Chat Completions 请求，并解析 OpenAI 缓存用量。  
 **对外接口：** `stream_chat(request)` 保持不变。  
 **依赖：** `PromptBundle`、`PromptCacheUsage`。
@@ -186,7 +186,7 @@ Agent Loop 使用当前 `iteration` 计算注入级别。`plan` 模式使用只�
 
 OpenAI Prompt Caching 是自动前缀缓存；设计重点是让稳定提示、稳定工具列表和重复上下文位于请求前缀。用量解析读取 `usage.prompt_tokens_details.cached_tokens`，`cached_tokens > 0` 标记为 `hit`，等于 0 标记为 `miss`，字段缺失标记为 `unknown`。
 
-### `mewcode.providers.anthropic`
+### `julycode.providers.anthropic`
 **职责：** 把 `PromptBundle` 映射为 Messages 请求，并解析 Anthropic 缓存用量。  
 **对外接口：** `stream_chat(request)` 保持不变。  
 **依赖：** `PromptBundle`、`PromptCacheUsage`。
@@ -198,7 +198,7 @@ OpenAI Prompt Caching 是自动前缀缓存；设计重点是让稳定提示、�
 
 用量解析读取 `cache_read_input_tokens`、`cache_creation_input_tokens` 和 `input_tokens`。`cache_read_input_tokens > 0` 标记为 `hit`；无读取但有创建标记为 `write`；都为 0 且字段存在标记为 `miss`；字段缺失标记为 `unknown`。当缓存字段存在时，`TokenUsage.input_tokens` 使用缓存读取、缓存创建和未缓存输入的合计，`cache` 字段保留明细。
 
-### `mewcode.tui`
+### `julycode.tui`
 **职责：** 展示统一缓存观测结果。  
 **对外接口：** `StatusBar.set_usage(usage)` 不变。  
 **依赖：** 扩展后的 `TokenUsage`。
@@ -226,14 +226,14 @@ OpenAI Prompt Caching 是自动前缀缓存；设计重点是让稳定提示、�
 
 ## 文件组织
 ```text
-mewcode/
+julycode/
 ├── specs/structured-system-prompt/
 │   ├── spec.md                         — 已批准需求
 │   ├── plan.md                         — 本技术设计
 │   ├── task.md                         — 后续任务拆解
 │   ├── checklist.md                    — 后续验收清单
 │   └── manual-scenarios.md             — 人工对比场景
-├── src/mewcode/
+├── src/julycode/
 │   ├── prompting/
 │   │   ├── __init__.py                 — 提示构造公共导出
 │   │   ├── base.py                     — PromptBlock、PromptBundle、RuntimePromptContext
@@ -264,7 +264,7 @@ mewcode/
 |--------|------|------|
 | 提示结构承载位置 | 新增 `PromptBundle`，不把系统提示写入 `ChatSession.messages` | 会话历史保持用户、助手、工具消息语义，避免系统补充污染历史和界面展示。 |
 | 固定模块顺序 | 身份 → 系统约束 → 任务模式 → 动作执行 → 工具使用 → 语气风格 → 文本输出 | 与需求指定优先级一致，稳定内容可确定生成。 |
-| 动态补充形式 | 使用带 `<mewcode_runtime_context>` 标签的系统级补充块 | 与普通用户输入区分，便于模型识别运行时控制信息，也便于测试断言。 |
+| 动态补充形式 | 使用带 `<julycode_runtime_context>` 标签的系统级补充块 | 与普通用户输入区分，便于模型识别运行时控制信息，也便于测试断言。 |
 | 注入频率 | 第 1 轮 full，每 3 轮 refresh，其余 brief | 满足“首轮完整、间隔轮次重复、其余精简”，同时避免每轮重复长指令。 |
 | OpenAI 映射 | 使用前置 `system` 消息放在消息数组最前面 | 兼容 OpenAI Chat Completions 和更多 OpenAI 兼容接口；前缀稳定有利于自动 Prompt Caching。 |
 | OpenAI 缓存观测 | 解析 `usage.prompt_tokens_details.cached_tokens` | 官方文档把该字段作为缓存命中 Token 数；OpenAI 不提供同等 cache write 明细，因此写入状态不推断。 |
@@ -283,7 +283,7 @@ mewcode/
 ## 需求覆盖
 | 需求 | 架构 owner |
 |------|------------|
-| F1, F2 | `mewcode.prompting.modules` 和 `PromptBuilder.build_stable_prompt()` |
+| F1, F2 | `julycode.prompting.modules` 和 `PromptBuilder.build_stable_prompt()` |
 | F3, F5, F6, F7 | `RuntimePromptContext`、`PromptBuilder.build_runtime_prompt()` |
 | F4, F12, F13, F15 | `providers.openai`、`providers.anthropic`、`PromptCacheUsage` |
 | F8 | `commands.py`、`agent.py`、运行时模式补充 |

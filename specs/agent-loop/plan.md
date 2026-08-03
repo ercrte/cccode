@@ -1,4 +1,4 @@
-# MewCode Agent Loop Plan
+# JulyCode Agent Loop Plan
 
 ## 架构概览
 本阶段在现有“单轮工具回灌”基础上升级为 Agent Loop，整体分为五层：命令解析层、Agent 编排层、流式收集层、工具调度层、界面展示层。Provider 层继续隐藏 OpenAI / Anthropic 协议差异，只向 Agent 编排层输出统一流事件。
@@ -382,7 +382,7 @@ class ChatSession:
 
 ### TUI 应用模块
 **职责：** 展示 Agent Loop 事件、处理取消和 Plan Mode 命令。  
-**对外接口：** `MewCodeApp` 内部事件处理逻辑。  
+**对外接口：** `JulyCodeApp` 内部事件处理逻辑。  
 **依赖：** `AgentLoopRunner`、`parse_agent_command`、现有 widgets。
 
 界面行为：
@@ -486,8 +486,8 @@ Provider 或流式收集错误
 
 ## 文件组织
 ```text
-mewcode/
-├── src/mewcode/
+julycode/
+├── src/julycode/
 │   ├── agent.py                         — AgentLoopRunner、TurnEvent、AgentProgress、StreamCollector
 │   ├── commands.py                      — /plan、/do、普通输入的命令解析
 │   ├── config.py                        — AgentConfig 与 agent.max_iterations 配置解析

@@ -1,4 +1,4 @@
-# MewCode 长期团队协作内核 Checklist
+# JulyCode 长期团队协作内核 Checklist
 
 > 每一项必须通过运行代码或观察真实行为验证；不能以阅读实现代替。验收时记录实际命令输出、临时目录状态和 tmux capture 文本。
 
@@ -59,11 +59,11 @@
 ## 架构、故障隔离与兼容性
 
 - [ ] `teams` 配置默认值和显式值可加载，非正超时及 retry/timeout 非法组合在启动前失败。（验证：运行 `python -m pytest tests/test_config.py -q -k 'teams_config'`，期望全部通过）
-- [ ] 团队模型、路径、锁、存储、任务、审批、邮箱和事件模块可独立导入，不依赖 TUI widget。（验证：运行 `python -c "from mewcode.teams import TeamConfig, TeamManager; from mewcode.teams.locking import FileLock; from mewcode.teams.tasks import TaskService; print(TeamConfig())"`，期望成功输出）
+- [ ] 团队模型、路径、锁、存储、任务、审批、邮箱和事件模块可独立导入，不依赖 TUI widget。（验证：运行 `python -c "from julycode.teams import TeamConfig, TeamManager; from julycode.teams.locking import FileLock; from julycode.teams.tasks import TaskService; print(TeamConfig())"`，期望成功输出）
 - [ ] 共享 JSON 更新使用锁和原子替换；注入 replace、fsync 或解析失败后旧快照保持完整，其他团队不受影响。（验证：运行 `python -m pytest tests/test_team_store.py -q -k 'atomic_json or file_lock'`，期望全部通过）
 - [ ] 协程成员所有文件、命令、Hook、上下文和记忆操作使用各自绝对 cwd，不调用全局 chdir。（验证：运行 `python -m pytest tests/test_team_runtime.py tests/test_worktrees.py -q -k 'member_runner_factory or parallel_members or no_chdir'`，期望全部通过）
 - [ ] TeamManager、成员、邮箱、outbox、恢复或通知单点失败不导致主 TUI 退出，后续普通输入和其他成员仍可继续。（验证：运行 `python -m pytest tests/test_tui_smoke.py tests/test_teams_integration.py -q -k 'team_notification or team_shutdown or failure'`，期望全部通过）
-- [ ] 团队名称、成员名称和配置不能越过 `~/.mewcode/teams/<team>`；团队/项目数据互相隔离。（验证：运行 `python -m pytest tests/test_team_store.py tests/test_team_mailbox.py -q -k 'team_paths or safe_name or repository_binding or cross_team'`，期望全部通过）
+- [ ] 团队名称、成员名称和配置不能越过 `~/.julycode/teams/<team>`；团队/项目数据互相隔离。（验证：运行 `python -m pytest tests/test_team_store.py tests/test_team_mailbox.py -q -k 'team_paths or safe_name or repository_binding or cross_team'`，期望全部通过）
 - [ ] 用户可见团队错误、状态、审批和恢复消息为中文并经过敏感信息脱敏。（验证：运行 `python -m pytest tests/test_team_tools.py tests/test_tui_smoke.py -q -k 'chinese_error or redacted or team_notification'`，期望全部通过）
 - [ ] 团队业务规则在 OpenAI 与 Anthropic provider 下产生相同任务、消息、审批和恢复状态。（验证：运行 `python -m pytest tests/test_teams_integration.py -q -k 'provider_parity'`，期望两个 provider 参数化用例通过）
 - [ ] AC27 普通聊天、Plan Mode、权限、Hook、上下文、会话恢复、Skill、MCP、一次性子 Agent、后台通知和 ephemeral Worktree 无回归。（验证：运行 `python -m pytest tests/test_agent.py tests/test_permissions.py tests/test_hooks.py tests/test_context_manager.py tests/test_session_recovery.py tests/test_skills.py tests/test_mcp_manager.py tests/test_subagents.py tests/test_worktrees.py tests/test_tui_smoke.py -q`，期望全部通过）
@@ -71,7 +71,7 @@
 
 ## 编译与测试
 
-- [ ] 源码与 E2E mock 可编译。（验证：运行 `python -m compileall -q src/mewcode tests/e2e_mock_openai_server.py`，期望退出码为 0）
+- [ ] 源码与 E2E mock 可编译。（验证：运行 `python -m compileall -q src/julycode tests/e2e_mock_openai_server.py`，期望退出码为 0）
 - [ ] 团队领域专项测试全部通过。（验证：运行 `python -m pytest tests/test_team_store.py tests/test_team_tasks.py tests/test_team_approvals.py tests/test_team_mailbox.py -q`，期望全部通过）
 - [ ] 团队运行时、工具和集成测试全部通过。（验证：运行 `python -m pytest tests/test_team_runtime.py tests/test_team_tools.py tests/test_teams_integration.py -q`，期望全部通过）
 - [ ] 相关聚焦回归测试全部通过。（验证：运行 `python -m pytest tests/test_agent.py tests/test_tool_scheduler.py tests/test_worktrees.py tests/test_subagents.py tests/test_prompting.py tests/test_config.py tests/test_tui_smoke.py -q`，期望全部通过）
@@ -80,15 +80,15 @@
 
 ## tmux 端到端场景
 
-- [ ] AC28 场景 1——完整团队闭环：在临时 Git 仓库的 tmux 中启动 mock provider 和 MewCode，输入“创建长期团队，拆成两个并行代码任务和一个依赖任务；派两个成员，其中 reviewer 每次任务需审批，让成员直接协作并汇总结果”。Lead 先写任务图再 spawn；两个协程成员并行，至少一条消息不经 Lead，reviewer 经计划驳回、修改、批准后写入；全部成员 idle，Lead 列出 commit/branch 并明确未合并。（验证：使用 `tmux new-session`/`split-window` 启动 `tests/e2e_mock_openai_server.py` 和 `mewcode`，用 `tmux send-keys` 输入请求，`tmux capture-pane -p -S -500` 保存证据；检查 `~/.mewcode/teams/<team>/`、`git worktree list`、tasks/approvals/mailboxes 文件和主目录内容）
-- [ ] 场景 2——跨重启恢复：完成场景 1 后退出 MewCode，不删除用户团队目录或 Worktree；在新 tmux 会话从同一仓库重启，要求打开原团队并给原成员发送“继续说明你之前改了什么”。成员使用原 session/Worktree/branch 恢复，回复引用先前工作，Lead 收到 resumed，邮箱中该消息只出现一次。（验证：对比重启前后 member/session 路径和 branch，捕获第二个 tmux pane 输出，并统计对应 message ID 与会话 metadata 均为一次）
+- [ ] AC28 场景 1——完整团队闭环：在临时 Git 仓库的 tmux 中启动 mock provider 和 JulyCode，输入“创建长期团队，拆成两个并行代码任务和一个依赖任务；派两个成员，其中 reviewer 每次任务需审批，让成员直接协作并汇总结果”。Lead 先写任务图再 spawn；两个协程成员并行，至少一条消息不经 Lead，reviewer 经计划驳回、修改、批准后写入；全部成员 idle，Lead 列出 commit/branch 并明确未合并。（验证：使用 `tmux new-session`/`split-window` 启动 `tests/e2e_mock_openai_server.py` 和 `julycode`，用 `tmux send-keys` 输入请求，`tmux capture-pane -p -S -500` 保存证据；检查 `~/.julycode/teams/<team>/`、`git worktree list`、tasks/approvals/mailboxes 文件和主目录内容）
+- [ ] 场景 2——跨重启恢复：完成场景 1 后退出 JulyCode，不删除用户团队目录或 Worktree；在新 tmux 会话从同一仓库重启，要求打开原团队并给原成员发送“继续说明你之前改了什么”。成员使用原 session/Worktree/branch 恢复，回复引用先前工作，Lead 收到 resumed，邮箱中该消息只出现一次。（验证：对比重启前后 member/session 路径和 branch，捕获第二个 tmux pane 输出，并统计对应 message ID 与会话 metadata 均为一次）
 - [ ] 场景 3——终止与失败隔离：在 tmux 中启动团队任务，让一个成员等待审批、另一个成员运行；要求 Lead 终止等待成员并向运行成员发送后续消息。被终止成员任务释放且文件保留，另一成员继续完成，主 TUI 可继续普通对话。（验证：捕获终止协议、花名册状态和后续回复；检查被终止成员 Worktree/session 仍存在且无对应运行租约）
 - [ ] 场景 4——非团队兼容：在同一构建中用新会话执行普通文件读取、Plan Mode 和一次性 `delegate_agent`；模型请求日志中普通主 Agent 仅有 lifecycle 团队入口，一次性子 Agent 无团队工具，原流程均完成。（验证：tmux 中依次发送普通读取请求、`/plan` 请求和子 Agent 委派请求，捕获输出并检查 mock request log 的 tools 字段）
 
 ## 验收记录（2026-06-22）
 
-- `python -m compileall -q src/mewcode tests/e2e_mock_openai_server.py`：通过。
+- `python -m compileall -q src/julycode tests/e2e_mock_openai_server.py`：通过。
 - `python -m pytest -q`：644 passed，无未等待协程、销毁任务或资源告警。
-- `python -m pytest tests/test_team_e2e.py -q -s`：1 passed。真实 `MewCodeApp` 完成三个带依赖任务、两个长期成员、代码提交、计划审批、成员直连、Lead 汇总及跨应用重启恢复；验证了固定 session、Worktree、resumed 和恢复后回复。
+- `python -m pytest tests/test_team_e2e.py -q -s`：1 passed。真实 `JulyCodeApp` 完成三个带依赖任务、两个长期成员、代码提交、计划审批、成员直连、Lead 汇总及跨应用重启恢复；验证了固定 session、Worktree、resumed 和恢复后回复。
 - E2E 期间发现 Git SHA 被通用敏感信息规则脱敏，模型无法回传 commit；已改为任务服务从 clean Worktree HEAD 自动记录，并继续校验提交严格晚于领取起点。
-- tmux 场景未勾选：当前执行沙箱禁止创建 Unix socket，显式 `/tmp/mewcode-e2e-1420.sock` 仍返回 `Operation not permitted`；TCP mock socket同样被拒绝。进程内 TUI 验收覆盖业务链路，但不冒充 tmux capture 证据。
+- tmux 场景未勾选：当前执行沙箱禁止创建 Unix socket，显式 `/tmp/julycode-e2e-1420.sock` 仍返回 `Operation not permitted`；TCP mock socket同样被拒绝。进程内 TUI 验收覆盖业务链路，但不冒充 tmux capture 证据。

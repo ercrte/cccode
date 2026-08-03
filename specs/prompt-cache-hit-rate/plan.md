@@ -3,13 +3,13 @@
 ## 架构概览
 本次优化保持现有 Agent Loop、会话历史和工具执行流程不变，只调整提示块拆分、Provider 请求序列化和缓存配置。核心思路是把模型仍需看到、但跨连续请求通常不频繁变化的内容放进“可缓存运行时前缀”，让它位于真正动态的运行时补充之前；Provider 再根据协议把可缓存前缀映射成更容易命中的请求结构。
 
-`mewcode.prompting` 负责产出更细粒度的 `PromptBlock`。全局稳定提示仍放在 `PromptBundle.stable_blocks`；允许工具摘要和项目指令等内容放在 `runtime_blocks` 中但标记 `cacheable=True`；当前工作目录、模式轮次、当前用户目标、激活 Skill、Hook 注入、上下文摘要、恢复提示和团队动态状态仍放在 `cacheable=False` 的运行时块里。
+`julycode.prompting` 负责产出更细粒度的 `PromptBlock`。全局稳定提示仍放在 `PromptBundle.stable_blocks`；允许工具摘要和项目指令等内容放在 `runtime_blocks` 中但标记 `cacheable=True`；当前工作目录、模式轮次、当前用户目标、激活 Skill、Hook 注入、上下文摘要、恢复提示和团队动态状态仍放在 `cacheable=False` 的运行时块里。
 
-`mewcode.providers.openai` 负责把稳定提示和可缓存运行时块合并成请求前面的 system 消息，把动态运行时块放在后续 system 消息里，并在启用时发送稳定 hash 形式的 `prompt_cache_key`。如兼容 OpenAI 的网关拒绝缓存参数，Provider 只对缓存参数不兼容场景重试一次不带缓存参数的请求。
+`julycode.providers.openai` 负责把稳定提示和可缓存运行时块合并成请求前面的 system 消息，把动态运行时块放在后续 system 消息里，并在启用时发送稳定 hash 形式的 `prompt_cache_key`。如兼容 OpenAI 的网关拒绝缓存参数，Provider 只对缓存参数不兼容场景重试一次不带缓存参数的请求。
 
-`mewcode.providers.anthropic` 负责把稳定提示和可缓存运行时块按顺序放在 `system` 文本块前部，并把 `cache_control` 放在最后一个可缓存前缀块上；动态运行时块继续位于其后且不设置 `cache_control`。这样显式断点不会落在每轮变化内容之后。
+`julycode.providers.anthropic` 负责把稳定提示和可缓存运行时块按顺序放在 `system` 文本块前部，并把 `cache_control` 放在最后一个可缓存前缀块上；动态运行时块继续位于其后且不设置 `cache_control`。这样显式断点不会落在每轮变化内容之后。
 
-`mewcode.config` 增加缓存优化配置。默认开启安全的 OpenAI cache key 和 Anthropic cache_control；OpenAI retention 默认不发送，避免不支持该参数的模型或兼容接口被默认影响。用户可显式关闭优化或配置 retention。
+`julycode.config` 增加缓存优化配置。默认开启安全的 OpenAI cache key 和 Anthropic cache_control；OpenAI retention 默认不发送，避免不支持该参数的模型或兼容接口被默认影响。用户可显式关闭优化或配置 retention。
 
 ## 核心数据结构
 
@@ -43,7 +43,7 @@ PromptCacheRetention = Literal["in_memory", "24h"]
 @dataclass(frozen=True)
 class PromptCacheConfig:
     enabled: bool = True
-    key_namespace: str = "mewcode"
+    key_namespace: str = "julycode"
     openai_cache_key: bool = True
     openai_retention: PromptCacheRetention | None = None
     anthropic_cache_control: bool = True
@@ -72,7 +72,7 @@ def _dynamic_runtime_blocks(self, request: ChatRequest) -> tuple[PromptBlock, ..
 
 ## 模块设计
 
-### `mewcode.prompting.builder`
+### `julycode.prompting.builder`
 **职责：** 拆分运行时提示，把可缓存前缀和动态后缀分成独立 `PromptBlock`。  
 **对外接口：** 保持 `build_stable_prompt()`、`build_runtime_prompt(context)`、`build_bundle(context)` 不变。  
 **依赖：** `RuntimePromptContext`、`KnowledgeContext`、`ToolSpec`。
@@ -83,7 +83,7 @@ def _dynamic_runtime_blocks(self, request: ChatRequest) -> tuple[PromptBlock, ..
 
 项目指令从现有 `_knowledge_context_lines()` 中拆出；用户/项目记忆索引和恢复提示保留在动态块中，因为它们可能随会话恢复、后台记忆更新或警告变化。
 
-### `mewcode.providers.openai`
+### `julycode.providers.openai`
 **职责：** 生成更稳定的前缀消息，发送可选缓存参数，解析 usage 缓存字段。  
 **对外接口：** `stream_chat(request)` 不变。  
 **依赖：** `AppConfig.prompt_cache`、`ChatRequest`、`PromptBlock`、`ToolSpec`。
@@ -100,7 +100,7 @@ def _dynamic_runtime_blocks(self, request: ChatRequest) -> tuple[PromptBlock, ..
 
 usage 解析保持现有 `cached_tokens` 逻辑不变。
 
-### `mewcode.providers.anthropic`
+### `julycode.providers.anthropic`
 **职责：** 设置不落在动态内容之后的显式缓存断点，保持 usage 解析。  
 **对外接口：** `stream_chat(request)` 不变。  
 **依赖：** `AppConfig.prompt_cache`、`ChatRequest`、`PromptBlock`。
@@ -112,7 +112,7 @@ usage 解析保持现有 `cached_tokens` 逻辑不变。
 
 当缓存优化开启且存在缓存前缀时，最后一个缓存前缀块添加 `cache_control: {"type": "ephemeral"}`。动态运行时块永远不添加 `cache_control`。工具定义和消息协议保持现有序列化方式。
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 解析缓存优化配置并提供默认值。  
 **对外接口：** `AppConfig` 增加 `prompt_cache: PromptCacheConfig`。  
 **依赖：** YAML 配置读取和现有 `_parse_config()`。
@@ -121,7 +121,7 @@ usage 解析保持现有 `cached_tokens` 逻辑不变。
 ```yaml
 prompt_cache:
   enabled: true
-  key_namespace: mewcode
+  key_namespace: julycode
   openai_cache_key: true
   openai_retention: 24h
   anthropic_cache_control: true
@@ -138,7 +138,7 @@ prompt_cache:
 **对外接口：** 文档章节“结构化系统提示与缓存观测”。  
 **依赖：** 无。
 
-文档强调 MewCode 会提高命中概率，但实际命中仍取决于供应商、模型、请求长度、请求间隔、缓存 TTL 和完全一致的前缀。
+文档强调 JulyCode 会提高命中概率，但实际命中仍取决于供应商、模型、请求长度、请求间隔、缓存 TTL 和完全一致的前缀。
 
 ## 模块交互
 ```text
@@ -166,11 +166,11 @@ OpenAIProvider.stream_chat()
 
 ## 文件组织
 ```text
-mewcode/
-├── src/mewcode/config.py              — PromptCacheConfig、配置解析和默认值
-├── src/mewcode/prompting/builder.py   — 运行时提示拆分为可缓存前缀和动态后缀
-├── src/mewcode/providers/openai.py    — OpenAI 缓存参数、cache key、兼容降级
-├── src/mewcode/providers/anthropic.py — Anthropic cache_control 断点位置
+julycode/
+├── src/julycode/config.py              — PromptCacheConfig、配置解析和默认值
+├── src/julycode/prompting/builder.py   — 运行时提示拆分为可缓存前缀和动态后缀
+├── src/julycode/providers/openai.py    — OpenAI 缓存参数、cache key、兼容降级
+├── src/julycode/providers/anthropic.py — Anthropic cache_control 断点位置
 ├── README.md                          — 缓存优化配置和限制说明
 ├── tests/test_config.py               — prompt_cache 配置默认值和解析
 ├── tests/test_prompting.py            — 可缓存运行时块拆分和动态内容后置

@@ -15,13 +15,13 @@
 | 新建 | `eval/cases/context_compaction.json` | 上下文或长任务用例 |
 | 新建 | `eval/cases/skill_or_subagent.json` | Skill 或子 Agent 用例 |
 | 新建 | `eval/results/.gitignore` | 忽略本地评测产物 |
-| 新建 | `eval/mew_eval/__init__.py` | 评测包导出 |
-| 新建 | `eval/mew_eval/models.py` | 评测数据结构 |
-| 新建 | `eval/mew_eval/loader.py` | JSON 加载与校验 |
-| 新建 | `eval/mew_eval/provider.py` | 离线脚本化 Provider |
-| 新建 | `eval/mew_eval/runner.py` | Agent 评测运行器 |
-| 新建 | `eval/mew_eval/scoring.py` | 自动评分逻辑 |
-| 新建 | `eval/mew_eval/report.py` | JSON/Markdown 报告生成 |
+| 新建 | `eval/july_eval/__init__.py` | 评测包导出 |
+| 新建 | `eval/july_eval/models.py` | 评测数据结构 |
+| 新建 | `eval/july_eval/loader.py` | JSON 加载与校验 |
+| 新建 | `eval/july_eval/provider.py` | 离线脚本化 Provider |
+| 新建 | `eval/july_eval/runner.py` | Agent 评测运行器 |
+| 新建 | `eval/july_eval/scoring.py` | 自动评分逻辑 |
+| 新建 | `eval/july_eval/report.py` | JSON/Markdown 报告生成 |
 | 新建 | `tests/test_eval_framework.py` | 评测框架单元和集成测试 |
 
 ## T1: 增加评测模型测试
@@ -33,14 +33,14 @@
 2. 构造最小评测用例和评分结果，断言 dataclass 字段和默认值符合 plan。
 3. 断言 `EvalExpectations.expected_stop_reason` 默认是 `completed`，空工具期望为 tuple。
 
-**验证：** 运行 `python -m pytest tests/test_eval_framework.py::test_eval_models_have_expected_defaults -q`，期望先失败，失败点为缺少 `eval.mew_eval.models`。
+**验证：** 运行 `python -m pytest tests/test_eval_framework.py::test_eval_models_have_expected_defaults -q`，期望先失败，失败点为缺少 `eval.july_eval.models`。
 
 ## T2: 实现评测数据结构
 
-**文件：** `eval/mew_eval/__init__.py`、`eval/mew_eval/models.py`  
+**文件：** `eval/july_eval/__init__.py`、`eval/july_eval/models.py`  
 **依赖：** T1  
 **步骤：**
-1. 创建 `eval/mew_eval/` 包和 `__init__.py`。
+1. 创建 `eval/july_eval/` 包和 `__init__.py`。
 2. 在 `models.py` 定义 plan 中所有 dataclass，并补充 `EvalFile`、`EvalFileExpectation`、`EvalEventSummary`、`EvalToolCallSummary`、`EvalToolResultSummary`、`EvalUsageSummary`、`EvalSummary`、`EvalRunOptions`。
 3. 使用 tuple 默认值和不可变 dataclass，避免运行时共享可变状态。
 4. 在 `__init__.py` 导出主要类型。
@@ -60,7 +60,7 @@
 
 ## T4: 实现 JSON 加载和校验
 
-**文件：** `eval/mew_eval/loader.py`  
+**文件：** `eval/july_eval/loader.py`  
 **依赖：** T3  
 **步骤：**
 1. 实现 `load_metrics(path)`，支持文件路径，返回 `tuple[EvalMetric, ...]`。
@@ -96,7 +96,7 @@
 
 ## T7: 实现离线脚本化 Provider
 
-**文件：** `eval/mew_eval/provider.py`  
+**文件：** `eval/july_eval/provider.py`  
 **依赖：** T6  
 **步骤：**
 1. 实现 `ScriptedEvalProvider`，符合 `LLMProvider.stream_chat()` 协议。
@@ -120,7 +120,7 @@
 
 ## T9: 实现自动评分器
 
-**文件：** `eval/mew_eval/scoring.py`  
+**文件：** `eval/july_eval/scoring.py`  
 **依赖：** T8  
 **步骤：**
 1. 实现 `score_case(case, metrics, trace, workspace=None)`。
@@ -144,7 +144,7 @@
 
 ## T11: 实现 Agent 评测运行器
 
-**文件：** `eval/mew_eval/runner.py`  
+**文件：** `eval/july_eval/runner.py`  
 **依赖：** T10  
 **步骤：**
 1. 实现临时 workspace 准备，写入 `setup_files`。
@@ -168,7 +168,7 @@
 
 ## T13: 实现 JSON 和 Markdown 报告
 
-**文件：** `eval/mew_eval/report.py`  
+**文件：** `eval/july_eval/report.py`  
 **依赖：** T12  
 **步骤：**
 1. 实现 dataclass 到 JSON 安全字典转换，截断长 evidence。

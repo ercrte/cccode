@@ -11,7 +11,7 @@ if str(EVAL_ROOT) not in sys.path:
 
 from memory_quality.models import ExtractionMetrics, MemoryQualityReport
 from memory_quality.report import acceptance_failures, write_json_report, write_markdown_report
-from mew_eval.models import EvalProviderInfo
+from july_eval.models import EvalProviderInfo
 
 
 def passing_metrics() -> ExtractionMetrics:

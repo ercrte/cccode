@@ -4,19 +4,19 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.errors import ConfigError
-from mewcode.permissions import PermissionConfig, PermissionRule, PermissionSubject
-from mewcode.permissions.blacklist import DangerousCommandGuard
-from mewcode.permissions.controller import create_permission_controller
-from mewcode.permissions.engine import PermissionEngine
-from mewcode.permissions.rules import (
+from julycode.errors import ConfigError
+from julycode.permissions import PermissionConfig, PermissionRule, PermissionSubject
+from julycode.permissions.blacklist import DangerousCommandGuard
+from julycode.permissions.controller import create_permission_controller
+from julycode.permissions.engine import PermissionEngine
+from julycode.permissions.rules import (
     PermissionRuleParser,
     PermissionRuleSet,
     PermissionRuleStore,
     SessionPermissionRules,
 )
-from mewcode.permissions.sandbox import ProjectSandbox
-from mewcode.tools.base import ToolCall, ToolSpec
+from julycode.permissions.sandbox import ProjectSandbox
+from julycode.tools.base import ToolCall, ToolSpec
 
 
 def write_yaml(path: Path, text: str) -> None:
@@ -58,11 +58,11 @@ def make_engine(
     project.mkdir(exist_ok=True)
     monkeypatch.setattr(Path, "home", lambda: home)
     if user_rules is not None:
-        write_yaml(home / ".mewcode" / "permissions.yaml", user_rules)
+        write_yaml(home / ".julycode" / "permissions.yaml", user_rules)
     if project_rules is not None:
-        write_yaml(project / ".mewcode.permissions.yaml", project_rules)
+        write_yaml(project / ".julycode.permissions.yaml", project_rules)
     if local_rules is not None:
-        write_yaml(project / ".mewcode.permissions.local.yaml", local_rules)
+        write_yaml(project / ".julycode.permissions.local.yaml", local_rules)
     session = SessionPermissionRules()
     for rule in session_rules or []:
         session.add(rule)
@@ -165,10 +165,72 @@ def test_project_sandbox_builds_subject_for_core_tools(tmp_path: Path) -> None:
     )
 
 
+def test_project_sandbox_read_file_range_subject_for_keeps_path_only(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("one\ntwo\n", encoding="utf-8")
+    sandbox = ProjectSandbox(tmp_path)
+    call = ToolCall(
+        "c1",
+        "read_file",
+        {"path": "src/app.py", "offset": 2, "limit": 1},
+    )
+
+    assert sandbox.check_tool_call(call) is None
+    assert sandbox.subject_for(call).targets == ("src/app.py",)
+    assert sandbox.subject_for(call).summary == "src/app.py"
+
+
+def test_project_sandbox_allows_explicit_search_code_file_and_directory(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("", encoding="utf-8")
+    sandbox = ProjectSandbox(tmp_path)
+
+    assert sandbox.check_tool_call(
+        ToolCall("c1", "search_code", {"pattern": "x", "path": "src"})
+    ) is None
+    assert sandbox.check_tool_call(
+        ToolCall("c2", "search_code", {"pattern": "x", "path": "src/app.py"})
+    ) is None
+
+
 def test_project_sandbox_rejects_find_files_escape(tmp_path: Path) -> None:
     sandbox = ProjectSandbox(tmp_path)
 
     decision = sandbox.check_tool_call(ToolCall("c1", "find_files", {"pattern": "../*.py"}))
+
+    assert decision is not None
+    assert decision.error_type == "permission_sandbox_violation"
+
+
+def test_project_sandbox_find_files_check_does_not_use_unbounded_path_glob(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sandbox = ProjectSandbox(tmp_path)
+
+    def fail_glob(self: Path, pattern: str):
+        _ = self, pattern
+        raise AssertionError("权限预检查不应扫描整个项目")
+
+    monkeypatch.setattr(Path, "glob", fail_glob)
+
+    assert sandbox.check_tool_call(
+        ToolCall("c1", "find_files", {"pattern": "**/*.py"})
+    ) is None
+
+
+def test_project_sandbox_rejects_find_files_symlink_escape(tmp_path: Path) -> None:
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.py"
+    outside.write_text("", encoding="utf-8")
+    try:
+        (tmp_path / "linked.py").symlink_to(outside)
+    except OSError:
+        pytest.skip("当前平台不允许创建符号链接")
+    sandbox = ProjectSandbox(tmp_path)
+
+    decision = sandbox.check_tool_call(
+        ToolCall("c1", "find_files", {"pattern": "**/*.py"})
+    )
 
     assert decision is not None
     assert decision.error_type == "permission_sandbox_violation"
@@ -306,9 +368,9 @@ def test_permission_rule_store_orders_sources(tmp_path: Path, monkeypatch: pytes
     project = tmp_path / "project"
     project.mkdir()
     monkeypatch.setattr(Path, "home", lambda: home)
-    write_yaml(home / ".mewcode" / "permissions.yaml", 'rules:\n  "Bash(git *)": allow\n')
-    write_yaml(project / ".mewcode.permissions.yaml", 'rules:\n  "Bash(git *)": deny\n')
-    write_yaml(project / ".mewcode.permissions.local.yaml", 'rules:\n  "Bash(git status)": allow\n')
+    write_yaml(home / ".julycode" / "permissions.yaml", 'rules:\n  "Bash(git *)": allow\n')
+    write_yaml(project / ".julycode.permissions.yaml", 'rules:\n  "Bash(git *)": deny\n')
+    write_yaml(project / ".julycode.permissions.local.yaml", 'rules:\n  "Bash(git status)": allow\n')
     session = SessionPermissionRules()
     session.add(PermissionRule("session", "run_command", "git status", "deny", "exact", "Bash(git status)"))
 
@@ -321,7 +383,7 @@ def test_permission_rule_store_rejects_invalid_yaml(tmp_path: Path, monkeypatch:
     project = tmp_path / "project"
     project.mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
-    write_yaml(project / ".mewcode.permissions.yaml", "[]\n")
+    write_yaml(project / ".julycode.permissions.yaml", "[]\n")
 
     with pytest.raises(ConfigError, match="顶层"):
         PermissionRuleStore.load(project)
@@ -335,7 +397,7 @@ def test_permission_rule_store_writes_local_rule(tmp_path: Path, monkeypatch: py
 
     store.add_local_rule(PermissionRule("local", "run_command", "git status", "allow", "exact", "Bash(git status)"))
 
-    assert "Bash(git status): allow" in (project / ".mewcode.permissions.local.yaml").read_text(encoding="utf-8")
+    assert "Bash(git status): allow" in (project / ".julycode.permissions.local.yaml").read_text(encoding="utf-8")
 
 
 def test_permission_engine_dangerous_command_overrides_allow_rule(
@@ -464,7 +526,7 @@ async def test_permission_controller_resolves_allow_once(tmp_path: Path, monkeyp
     decision = await controller.resolve_prompt(prompt)
 
     assert decision.kind == "allow"
-    assert not (project / ".mewcode.permissions.local.yaml").exists()
+    assert not (project / ".julycode.permissions.local.yaml").exists()
 
 
 @pytest.mark.asyncio
@@ -491,7 +553,7 @@ async def test_permission_controller_persists_local_rule(tmp_path: Path, monkeyp
     decision = await controller.resolve_prompt(prompt)
 
     assert decision.kind == "allow"
-    assert "Bash(python -V): allow" in (project / ".mewcode.permissions.local.yaml").read_text(encoding="utf-8")
+    assert "Bash(python -V): allow" in (project / ".julycode.permissions.local.yaml").read_text(encoding="utf-8")
 
 
 def test_permission_controller_denies_when_prompt_has_no_prompter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

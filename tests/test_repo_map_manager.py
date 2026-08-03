@@ -10,9 +10,9 @@ import time
 
 import pytest
 
-from mewcode.repo_map import FileFingerprint, RepositoryIdentity, WorkspaceState
-from mewcode.repo_map.discovery import scan_repository
-from mewcode.repo_map.manager import RepoMapManager
+from julycode.repo_map import FileFingerprint, RepositoryIdentity, WorkspaceState
+from julycode.repo_map.discovery import scan_repository
+from julycode.repo_map.manager import RepoMapManager
 
 
 def test_repo_map_models_are_immutable_and_comparable(tmp_path: Path) -> None:

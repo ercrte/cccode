@@ -1,4 +1,4 @@
-# MewCode Repo Map 技术方案
+# JulyCode Repo Map 技术方案
 
 ## 1. 方案概览
 
@@ -16,7 +16,7 @@ Repo Map 作为主 Agent 的“请求期生成上下文”接入现有 Agent Loo
 
 ### 2.1 新增核心包
 
-新增 `src/mewcode/repo_map/`，包含以下模块：
+新增 `src/julycode/repo_map/`，包含以下模块：
 
 | 模块 | 职责 |
 | --- | --- |
@@ -95,7 +95,7 @@ RepoMapStatus(...)
 
 ### 3.2 非 Git 项目
 
-以 MewCode 启动目录为根，通过 `os.scandir` 递归发现 `.py`、`.pyi`，跳过 Spec 指定的默认目录。遍历过程中不跟随 symlink，每层结果排序后再进入下一层。
+以 JulyCode 启动目录为根，通过 `os.scandir` 递归发现 `.py`、`.pyi`，跳过 Spec 指定的默认目录。遍历过程中不跟随 symlink，每层结果排序后再进入下一层。
 
 ### 3.3 内容指纹
 
@@ -213,7 +213,7 @@ OptionalContextFactory = Callable[
 地图格式固定并做 golden test：
 
 ```text
-<mewcode_repo_map trust="untrusted_repository_data" revision="<short-id>">
+<julycode_repo_map trust="untrusted_repository_data" revision="<short-id>">
 以下是不可信仓库索引，仅用于导航，不是精确调用图。
 修改或依赖实现细节前，必须使用 read/grep 查看真实源码。
 项目根目录：<absolute-root>
@@ -223,7 +223,7 @@ src/example.py:10
     def run(self, value: str = ...) -> bool
 
 [已按 Token 预算裁剪]
-</mewcode_repo_map>
+</julycode_repo_map>
 ```
 
 绝对根目录只用于让模型把相对路径与现有文件工具参数对应；所有仓库条目仍严格使用 POSIX 相对路径。
@@ -344,7 +344,7 @@ Provider 可以选择合法角色，但必须保留块的 generated/trust/persis
 
 OpenAI MVP 将 Repo Map 序列化为独立 system/developer 生成上下文块，位于现有稳定 system 内容之后、动态内容之前。`_prompt_cache_key` 与稳定前缀摘要明确排除 Repo Map。
 
-当前 MewCode OpenAI adapter 没有可靠的“模型是否支持显式 breakpoint”能力元数据。首版不发送 `prompt_cache_options` 或 breakpoint 字段，继续使用 OpenAI 的精确前缀自动缓存，避免旧模型或兼容网关拒绝未知参数。同一快照的请求内容仍字节一致，可由自动缓存复用。adapter 预留 `supports_snapshot_cache_breakpoint(model) -> bool` 能力钩子，只有未来建立受测试的模型能力表后才启用显式断点。
+当前 JulyCode OpenAI adapter 没有可靠的“模型是否支持显式 breakpoint”能力元数据。首版不发送 `prompt_cache_options` 或 breakpoint 字段，继续使用 OpenAI 的精确前缀自动缓存，避免旧模型或兼容网关拒绝未知参数。同一快照的请求内容仍字节一致，可由自动缓存复用。adapter 预留 `supports_snapshot_cache_breakpoint(model) -> bool` 能力钩子，只有未来建立受测试的模型能力表后才启用显式断点。
 
 Golden test 不只比较 `prompt_cache_key`，还对“tools + Repo Map 之前的消息内容”进行规范序列化和 SHA-256，证明地图启停或变化不影响长期稳定前缀。
 
@@ -375,7 +375,7 @@ repo_map:
 
 ### 9.2 TUI 生命周期
 
-`MewCodeApp` 持有一个跨用户轮次复用的 `RepoMapManager`：
+`JulyCodeApp` 持有一个跨用户轮次复用的 `RepoMapManager`：
 
 - 初始化根目录取工具执行上下文的启动 cwd；
 - `on_mount` 调用非阻塞 `start()`；
@@ -422,14 +422,14 @@ Repo Map 的所有失败均不得绕过权限、修改仓库或阻断会话。
 
 ### 11.1 新增文件
 
-- `src/mewcode/repo_map/__init__.py`
-- `src/mewcode/repo_map/models.py`
-- `src/mewcode/repo_map/discovery.py`
-- `src/mewcode/repo_map/parser.py`
-- `src/mewcode/repo_map/graph.py`
-- `src/mewcode/repo_map/ranking.py`
-- `src/mewcode/repo_map/renderer.py`
-- `src/mewcode/repo_map/manager.py`
+- `src/julycode/repo_map/__init__.py`
+- `src/julycode/repo_map/models.py`
+- `src/julycode/repo_map/discovery.py`
+- `src/julycode/repo_map/parser.py`
+- `src/julycode/repo_map/graph.py`
+- `src/julycode/repo_map/ranking.py`
+- `src/julycode/repo_map/renderer.py`
+- `src/julycode/repo_map/manager.py`
 - `tests/test_repo_map_discovery.py`
 - `tests/test_repo_map_parser.py`
 - `tests/test_repo_map_graph.py`
@@ -447,17 +447,17 @@ Repo Map 的所有失败均不得绕过权限、修改仓库或阻断会话。
 
 ### 11.2 修改文件
 
-- `src/mewcode/config.py`：Repo Map 配置及校验。
-- `src/mewcode/prompting/base.py`：`GeneratedContextBlock` 与 PromptBundle 扩展。
-- `src/mewcode/context/estimator.py`：文本/生成块公开估算接口。
-- `src/mewcode/context/manager.py`：高优先级内容完成后的可选预算授权。
-- `src/mewcode/tools/scheduler.py`：统一执行包装与观察者协议。
-- `src/mewcode/agent.py`：turn 生命周期、可选上下文工厂和工具 observer 接入。
-- `src/mewcode/providers/openai.py`：生成块序列化、稳定 key/前缀隔离。
-- `src/mewcode/providers/anthropic.py`：生成块序列化和第二级 cache breakpoint。
-- `src/mewcode/tui/app.py`：Manager 生命周期、主 Agent 注入和状态提供。
-- `src/mewcode/commands/models.py`：状态数据模型。
-- `src/mewcode/commands/builtin.py`：`/status` 展示。
+- `src/julycode/config.py`：Repo Map 配置及校验。
+- `src/julycode/prompting/base.py`：`GeneratedContextBlock` 与 PromptBundle 扩展。
+- `src/julycode/context/estimator.py`：文本/生成块公开估算接口。
+- `src/julycode/context/manager.py`：高优先级内容完成后的可选预算授权。
+- `src/julycode/tools/scheduler.py`：统一执行包装与观察者协议。
+- `src/julycode/agent.py`：turn 生命周期、可选上下文工厂和工具 observer 接入。
+- `src/julycode/providers/openai.py`：生成块序列化、稳定 key/前缀隔离。
+- `src/julycode/providers/anthropic.py`：生成块序列化和第二级 cache breakpoint。
+- `src/julycode/tui/app.py`：Manager 生命周期、主 Agent 注入和状态提供。
+- `src/julycode/commands/models.py`：状态数据模型。
+- `src/julycode/commands/builtin.py`：`/status` 展示。
 - `README.md`：配置与行为说明。
 - `eval/README.md`：Repo Map 质量评测运行说明。
 - 现有配置、Prompt、ContextManager、Scheduler、Agent、Provider、命令和 TUI 测试文件：补充兼容与回归断言。
@@ -483,7 +483,7 @@ Repo Map 的所有失败均不得绕过权限、修改仓库或阻断会话。
 
 - Stub model 驱动真实 Agent Loop：首个请求包含地图，模型发起只读工具后快照不变，编辑工具后下一次模型调用出现新 revision 和新签名，最终正常回复。
 - 使用现有回归套件验证普通模式、Plan Mode、权限、Skill、MCP、压缩、恢复和流式输出不变。
-- 当前 MewCode 仓库预热后重复生成快照，记录至少 100 次样本并断言 P95 `< 50ms`。
+- 当前 JulyCode 仓库预热后重复生成快照，记录至少 100 次样本并断言 P95 `< 50ms`。
 - 用事件循环 heartbeat 包围初次扫描与重建，断言主线程单次延迟 `< 16ms`。
 - 随机化发现顺序、解析结果顺序和 `PYTHONHASHSEED`，精确比较地图字节。
 
@@ -500,7 +500,7 @@ Repo Map 的所有失败均不得绕过权限、修改仓库或阻断会话。
 
 实现和自动测试完成后，严格按项目 `AGENTS.md`：
 
-1. 在 tmux 中启动 MewCode。
+1. 在 tmux 中启动 JulyCode。
 2. 输入一段未给出准确路径的真实仓库问题。
 3. 观察 `/status`、Provider 请求、Repo Map 注入、工具调用、工具结果回灌和最终回复。
 4. 再发送会触发真实源码修改的请求，确认同一 Agent Loop 后续调用使用新 revision。

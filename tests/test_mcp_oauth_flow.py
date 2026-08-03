@@ -7,13 +7,13 @@ from urllib.parse import parse_qs, urlsplit
 import httpx
 import pytest
 
-from mewcode.config import McpOAuthConfig, McpServerConfig
-from mewcode.mcp.errors import McpOAuthCallbackError
-from mewcode.mcp.oauth.callback import LoopbackOAuthCallback
-from mewcode.mcp.oauth.client import McpOAuthSession, OAuthProtocolClient, generate_pkce
-from mewcode.mcp.oauth.discovery import OAuthMetadataDiscovery, parse_www_authenticate
-from mewcode.mcp.oauth.models import AuthorizationServerMetadata, OAuthCallbackResult, OAuthClientRegistration
-from mewcode.mcp.oauth.store import MemoryCredentialStore
+from julycode.config import McpOAuthConfig, McpServerConfig
+from julycode.mcp.errors import McpOAuthCallbackError
+from julycode.mcp.oauth.callback import LoopbackOAuthCallback
+from julycode.mcp.oauth.client import McpOAuthSession, OAuthProtocolClient, generate_pkce
+from julycode.mcp.oauth.discovery import OAuthMetadataDiscovery, parse_www_authenticate
+from julycode.mcp.oauth.models import AuthorizationServerMetadata, OAuthCallbackResult, OAuthClientRegistration
+from julycode.mcp.oauth.store import MemoryCredentialStore
 
 
 def oauth_server(*, client_secret: str | None = None) -> McpServerConfig:
@@ -291,7 +291,7 @@ async def test_full_oauth_authorize_refresh_and_logout_with_static_fallback() ->
 async def test_session_restores_expiring_token_and_waits_for_challenge_before_refresh() -> None:
     store = MemoryCredentialStore()
     server = oauth_server()
-    from mewcode.mcp.oauth.models import OAuthCredentialBundle, OAuthTokenSet
+    from julycode.mcp.oauth.models import OAuthCredentialBundle, OAuthTokenSet
 
     credentials = OAuthCredentialBundle(
         resource=server.url or "",
@@ -311,7 +311,7 @@ async def test_session_restores_expiring_token_and_waits_for_challenge_before_re
 
 @pytest.mark.asyncio
 async def test_concurrent_refresh_is_singleflight_and_rotates_refresh_token() -> None:
-    from mewcode.mcp.oauth.models import OAuthCredentialBundle, OAuthTokenSet
+    from julycode.mcp.oauth.models import OAuthCredentialBundle, OAuthTokenSet
 
     class SlowProtocolClient:
         def __init__(self) -> None:

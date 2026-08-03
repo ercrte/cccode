@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.context.models import ContextSummary
-from mewcode.memory.models import SessionMemoryConfig
-from mewcode.memory.session_store import SessionJsonlStore, message_from_json, message_to_json
-from mewcode.providers.base import ChatMessage
-from mewcode.session_id import SessionId
-from mewcode.tools.base import ToolCall
+from julycode.context.models import ContextSummary
+from julycode.memory.models import SessionMemoryConfig
+from julycode.memory.session_store import SessionJsonlStore, message_from_json, message_to_json
+from julycode.providers.base import ChatMessage
+from julycode.session_id import SessionId
+from julycode.tools.base import ToolCall
 
 
 def test_chat_message_round_trip_json() -> None:
@@ -55,7 +55,7 @@ def test_store_uses_project_sessions_dir(tmp_path: Path) -> None:
 
     session.append_user_message("hello")
 
-    assert (tmp_path / ".mewcode" / "sessions" / "20260612-080910-abcd.jsonl").exists()
+    assert (tmp_path / ".julycode" / "sessions" / "20260612-080910-abcd.jsonl").exists()
 
 
 def test_store_appends_checkpoint(tmp_path: Path) -> None:
@@ -121,7 +121,7 @@ def test_list_sessions_does_not_require_meta_file(tmp_path: Path) -> None:
     store = SessionJsonlStore(tmp_path)
     session = store.create_session(SessionId("20260612-080910-abcd"))
     session.append_user_message("hello")
-    (tmp_path / ".mewcode" / "sessions" / "meta.json").write_text("{}", encoding="utf-8")
+    (tmp_path / ".julycode" / "sessions" / "meta.json").write_text("{}", encoding="utf-8")
 
     [info] = store.list_sessions(now=datetime.now(timezone.utc))
 
@@ -175,7 +175,7 @@ def test_cleanup_expired_sessions_keeps_memory_files(tmp_path: Path) -> None:
     now = datetime.now(timezone.utc)
     _write_message_record(tmp_path, "20260501-080910-abcd", "old", now - timedelta(days=40))
     _write_message_record(tmp_path, "20260612-080910-abcd", "new", now)
-    memory_file = tmp_path / ".mewcode" / "memory" / "project_knowledge" / "note.md"
+    memory_file = tmp_path / ".julycode" / "memory" / "project_knowledge" / "note.md"
     memory_file.parent.mkdir(parents=True)
     memory_file.write_text("note", encoding="utf-8")
 
@@ -188,7 +188,7 @@ def test_cleanup_expired_sessions_keeps_memory_files(tmp_path: Path) -> None:
 
 
 def _session_file(tmp_path: Path, session_id: str) -> Path:
-    return tmp_path / ".mewcode" / "sessions" / f"{session_id}.jsonl"
+    return tmp_path / ".julycode" / "sessions" / f"{session_id}.jsonl"
 
 
 def _write_message_record(tmp_path: Path, session_id: str, content: str, created_at: datetime) -> None:

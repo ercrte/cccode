@@ -1,10 +1,10 @@
-# MewCode 长期团队协作内核 Plan
+# JulyCode 长期团队协作内核 Plan
 
 ## 架构概览
 
-本阶段新增 `mewcode.teams` 子系统，不替换现有 `mewcode.subagents`。普通一次性子 Agent 继续使用原有 `delegate_agent`、短期运行状态和可选 Worktree；团队成员由独立的 `TeamManager` 管理，拥有长期花名册、固定 Worktree、持久会话、共享任务和邮箱。
+本阶段新增 `julycode.teams` 子系统，不替换现有 `julycode.subagents`。普通一次性子 Agent 继续使用原有 `delegate_agent`、短期运行状态和可选 Worktree；团队成员由独立的 `TeamManager` 管理，拥有长期花名册、固定 Worktree、持久会话、共享任务和邮箱。
 
-团队数据分成四类：团队及成员元数据、共享任务、审批记录、参与者邮箱。每类共享文件都通过跨进程锁和同目录原子替换写入；会引发通知的状态变更在同一快照中写入持久 outbox，再幂等投递邮箱，避免跨文件崩溃造成状态已变但通知永久丢失。成员会话使用可容忍坏尾记录的 JSONL。团队目录固定放在用户级 MewCode 数据目录下，项目内只保留现有 Worktree 数据。
+团队数据分成四类：团队及成员元数据、共享任务、审批记录、参与者邮箱。每类共享文件都通过跨进程锁和同目录原子替换写入；会引发通知的状态变更在同一快照中写入持久 outbox，再幂等投递邮箱，避免跨文件崩溃造成状态已变但通知永久丢失。成员会话使用可容忍坏尾记录的 JSONL。团队目录固定放在用户级 JulyCode 数据目录下，项目内只保留现有 Worktree 数据。
 
 工具系统增加不可伪造的运行身份和可组合工具门禁。普通主 Agent 只看到团队生命周期工具；激活团队后，同一个主 Agent 以 Lead 身份获得成员管理、任务、消息和等待工具；团队成员只获得任务与消息工具；普通子 Agent 看不到团队工具。审批门禁会动态拒绝未获批成员的全部项目副作用工具，包括 shell。
 
@@ -26,7 +26,7 @@ class TeamConfig:
     wait_timeout_seconds: float = 30.0
 ```
 
-团队根目录固定为 `~/.mewcode/teams`，不允许项目配置把它改到任意路径。配置只控制开关、锁等待和 Lead 等待行为。
+团队根目录固定为 `~/.julycode/teams`，不允许项目配置把它改到任意路径。配置只控制开关、锁等待和 Lead 等待行为。
 
 ### RuntimePrincipal
 
@@ -356,7 +356,7 @@ class TeamRuntimeSupervisor:
 
 `create_member` 的顺序是：校验角色和后端 → 获取长期 Worktree → 初始化邮箱和会话 → 原子写入花名册。任一步失败都回滚尚未发布的元数据；已创建但无法安全删除的 Worktree 保留并报告路径。
 
-`wake` 获取成员运行租约后创建 `asyncio.Task`。运行租约使用 PID、随机 token 和心跳，防止两个 MewCode 进程同时恢复同一成员。任务结束回调再次检查未读邮箱，避免消息到达与进入 idle 之间发生丢失唤醒。
+`wake` 获取成员运行租约后创建 `asyncio.Task`。运行租约使用 PID、随机 token 和心跳，防止两个 JulyCode 进程同时恢复同一成员。任务结束回调再次检查未读邮箱，避免消息到达与进入 idle 之间发生丢失唤醒。
 
 ### TeamManager
 
@@ -380,7 +380,7 @@ class TeamManager:
 
 ## 模块设计
 
-### `mewcode.teams.paths`
+### `julycode.teams.paths`
 
 **职责：** 计算用户团队根目录、团队目录、邮箱、会话和锁路径；校验团队名和成员名；确保解析结果位于所属团队目录。
 
@@ -388,7 +388,7 @@ class TeamManager:
 
 **依赖：** 标准库 `pathlib`；不依赖运行时或 TUI。
 
-### `mewcode.teams.locking`
+### `julycode.teams.locking`
 
 **职责：** 跨进程文件锁、旧锁接管、运行租约心跳和原子 JSON 替换。
 
@@ -396,7 +396,7 @@ class TeamManager:
 
 **依赖：** `TeamConfig`、标准库文件 API。
 
-### `mewcode.teams.store`
+### `julycode.teams.store`
 
 **职责：** 团队元数据和花名册持久化、schema/revision 校验、仓库绑定、启动恢复。
 
@@ -404,7 +404,7 @@ class TeamManager:
 
 **依赖：** `models`、`paths`、`locking`、Worktree 仓库布局。
 
-### `mewcode.teams.tasks`
+### `julycode.teams.tasks`
 
 **职责：** 共享任务 CRUD、状态机、依赖图检查、并发 claim、阻塞状态重算和代码任务完成校验。
 
@@ -412,7 +412,7 @@ class TeamManager:
 
 **依赖：** `models`、`locking`、`GitClient`；不依赖 Agent Loop。
 
-### `mewcode.teams.approvals`
+### `julycode.teams.approvals`
 
 **职责：** 审批版本、待审批唯一性、批准/驳回匹配和项目副作用授权判断。
 
@@ -420,7 +420,7 @@ class TeamManager:
 
 **依赖：** `models`、`locking`、`TaskService`。
 
-### `mewcode.teams.mailbox`
+### `julycode.teams.mailbox`
 
 **职责：** 名称注册表解析、邮箱读写、协议校验、广播、已读确认和投递结果。
 
@@ -428,7 +428,7 @@ class TeamManager:
 
 **依赖：** `models`、`store`、`locking`、`ApprovalService`。
 
-### `mewcode.teams.events`
+### `julycode.teams.events`
 
 **职责：** 扫描团队、任务和审批 outbox，幂等投递协议消息并记录逐收件人结果。
 
@@ -436,7 +436,7 @@ class TeamManager:
 
 **依赖：** `models`、`store`、`TaskService`、`ApprovalService`、`MailboxService`。
 
-### `mewcode.teams.sessions`
+### `julycode.teams.sessions`
 
 **职责：** 成员 JSONL 会话记录、checkpoint、坏尾恢复、安全工具边界截断和消息 ID 去重。
 
@@ -444,7 +444,7 @@ class TeamManager:
 
 **依赖：** `ChatSession`、通用消息序列化；不依赖 TeamManager。
 
-### `mewcode.teams.policy`
+### `julycode.teams.policy`
 
 **职责：** 团队工具 audience 过滤、成员角色工具过滤、防嵌套和审批前副作用门禁。
 
@@ -454,7 +454,7 @@ class TeamManager:
 
 成员有效工具集合为“角色允许的基础工具 + `team_task` + `team_message`”，再减去角色黑名单中的基础工具、全局禁止工具、成员管理工具、嵌套委派工具和审批门禁拒绝项；角色白名单不需要重复声明两个协作工具。
 
-### `mewcode.teams.runtime`
+### `julycode.teams.runtime`
 
 **职责：** 成员 Runner 构造、运行租约、协程生命周期、邮箱边界注入、idle/resume/terminate 状态和通知。
 
@@ -462,7 +462,7 @@ class TeamManager:
 
 **依赖：** Agent Loop、现有角色目录、权限、上下文、Hook、Worktree 和团队领域服务。
 
-### `mewcode.teams.manager`
+### `julycode.teams.manager`
 
 **职责：** 团队生命周期、当前 Lead 激活态、成员管理、服务编排、事件通知和关闭恢复。
 
@@ -470,7 +470,7 @@ class TeamManager:
 
 **依赖：** 所有 teams 领域模块、WorktreeManager、角色加载器；不依赖具体 TUI widget。
 
-### `mewcode.teams.tools`
+### `julycode.teams.tools`
 
 **职责：** 把领域接口暴露成稳定模型工具，并从 `ToolContext.principal` 获取身份。
 
@@ -580,7 +580,7 @@ Lead → team_message(plan_approved 或 plan_rejected)
 ```text
 成员 Agent Loop 无工具调用结束
   → 会话 checkpoint → 成员状态 idle → member_idle 投递 Lead → 协程释放
-MewCode 退出
+JulyCode 退出
   → 取消活跃成员 → 标记 interrupted/failed → release persistent Worktree
 再次启动并打开团队
   → TeamStore 校验项目 → reconcile_interrupted → 恢复邮箱/任务/成员元数据
@@ -602,8 +602,8 @@ Lead 候选最终回复
 ## 文件组织
 
 ```text
-mewcode/
-├── src/mewcode/
+julycode/
+├── src/julycode/
 │   ├── teams/
 │   │   ├── __init__.py       — 团队公共导出
 │   │   ├── models.py         — 团队、成员、任务、消息、审批与快照模型
@@ -652,7 +652,7 @@ mewcode/
 运行期用户数据：
 
 ```text
-~/.mewcode/teams/<team-name>/
+~/.julycode/teams/<team-name>/
 ├── team.json
 ├── team.lock
 ├── tasks.json

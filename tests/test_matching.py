@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from mewcode.errors import ConfigError
-from mewcode.matching import get_field_value, match_expression, parse_match_expression
+from julycode.errors import ConfigError
+from julycode.matching import get_field_value, match_expression, parse_match_expression
 
 
 def test_parse_match_expression_detects_exact_glob_regex_and_negation() -> None:

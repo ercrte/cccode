@@ -1,26 +1,26 @@
-# MewCode 上下文管理 Tasks
+# JulyCode 上下文管理 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/context/__init__.py` | 导出上下文管理公开类型 |
-| 新建 | `src/mewcode/context/models.py` | 定义配置、状态、摘要、报告和错误模型 |
-| 新建 | `src/mewcode/context/estimator.py` | 近似 Token 估算和 usage 锚点逻辑 |
-| 新建 | `src/mewcode/context/store.py` | 将完整工具结果保存到项目内可读取路径 |
-| 新建 | `src/mewcode/context/compactor.py` | 执行轻量工具结果压缩 |
-| 新建 | `src/mewcode/context/segmenter.py` | 按安全边界切分会话历史并选择近期原文 |
-| 新建 | `src/mewcode/context/summarizer.py` | 发起无工具摘要请求并解析正式摘要 |
-| 新建 | `src/mewcode/context/manager.py` | 编排轻量预防、重量兜底、熔断和报告 |
-| 修改 | `src/mewcode/config.py` | 解析 `context:` 配置并挂到 `AppConfig` |
-| 修改 | `src/mewcode/session.py` | 保存 `ContextState`，支持替换消息和设置摘要 |
-| 修改 | `src/mewcode/prompting/base.py` | 让运行时提示上下文携带摘要状态 |
-| 修改 | `src/mewcode/prompting/builder.py` | 注入上下文摘要和边界提示 |
-| 修改 | `src/mewcode/commands.py` | 解析 `/compact` 手动压缩命令 |
-| 修改 | `src/mewcode/agent.py` | 请求前调用上下文管理器，记录 usage 锚点并处理压缩事件 |
-| 修改 | `src/mewcode/tui/app.py` | 处理 `/compact`，显示压缩报告，复用上下文管理器 |
-| 修改 | `src/mewcode/cli.py` | 创建并传入共享 `ContextManager` |
-| 修改 | `.gitignore` | 忽略 `.mewcode/context/` 外置结果目录 |
+| 新建 | `src/julycode/context/__init__.py` | 导出上下文管理公开类型 |
+| 新建 | `src/julycode/context/models.py` | 定义配置、状态、摘要、报告和错误模型 |
+| 新建 | `src/julycode/context/estimator.py` | 近似 Token 估算和 usage 锚点逻辑 |
+| 新建 | `src/julycode/context/store.py` | 将完整工具结果保存到项目内可读取路径 |
+| 新建 | `src/julycode/context/compactor.py` | 执行轻量工具结果压缩 |
+| 新建 | `src/julycode/context/segmenter.py` | 按安全边界切分会话历史并选择近期原文 |
+| 新建 | `src/julycode/context/summarizer.py` | 发起无工具摘要请求并解析正式摘要 |
+| 新建 | `src/julycode/context/manager.py` | 编排轻量预防、重量兜底、熔断和报告 |
+| 修改 | `src/julycode/config.py` | 解析 `context:` 配置并挂到 `AppConfig` |
+| 修改 | `src/julycode/session.py` | 保存 `ContextState`，支持替换消息和设置摘要 |
+| 修改 | `src/julycode/prompting/base.py` | 让运行时提示上下文携带摘要状态 |
+| 修改 | `src/julycode/prompting/builder.py` | 注入上下文摘要和边界提示 |
+| 修改 | `src/julycode/commands.py` | 解析 `/compact` 手动压缩命令 |
+| 修改 | `src/julycode/agent.py` | 请求前调用上下文管理器，记录 usage 锚点并处理压缩事件 |
+| 修改 | `src/julycode/tui/app.py` | 处理 `/compact`，显示压缩报告，复用上下文管理器 |
+| 修改 | `src/julycode/cli.py` | 创建并传入共享 `ContextManager` |
+| 修改 | `.gitignore` | 忽略 `.julycode/context/` 外置结果目录 |
 | 修改 | `README.md` | 说明上下文管理、配置、`/compact` 和外置路径 |
 | 新建 | `tests/test_context_estimator.py` | 覆盖模型默认值、估算和 usage 锚点 |
 | 新建 | `tests/test_context_compactor.py` | 覆盖外置保存、单条和轮次工具结果压缩 |
@@ -36,10 +36,10 @@
 
 ## T1: 建立上下文模型
 
-**文件：** `src/mewcode/context/__init__.py`、`src/mewcode/context/models.py`、`tests/test_context_estimator.py`  
+**文件：** `src/julycode/context/__init__.py`、`src/julycode/context/models.py`、`tests/test_context_estimator.py`  
 **依赖：** 无  
 **步骤：**
-1. 创建 `mewcode.context` 包。
+1. 创建 `julycode.context` 包。
 2. 在 `models.py` 定义 `ContextConfig`、`ContextSummary`、`ContextExternalRef`、`TokenAnchor`、`RequestFootprint`、`ContextCompactionReport`、`ToolCompactionResult`、`PreparedChatRequest`、`ContextState` 和 `ContextLimitError`。
 3. 在 `__init__.py` 导出后续模块需要使用的公开类型。
 4. 在 `tests/test_context_estimator.py` 添加模型默认值和 `ContextLimitError.report` 行为测试。
@@ -48,7 +48,7 @@
 
 ## T2: 解析上下文配置
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** T1  
 **步骤：**
 1. 将 `ContextConfig` 挂到 `AppConfig.context`，默认值来自 `ContextConfig()`。
@@ -60,7 +60,7 @@
 
 ## T3: 会话保存上下文状态
 
-**文件：** `src/mewcode/session.py`、`tests/test_session.py`  
+**文件：** `src/julycode/session.py`、`tests/test_session.py`  
 **依赖：** T1  
 **步骤：**
 1. 给 `ChatSession` 增加默认 `ContextState`，每个运行期生成稳定 `session_id`。
@@ -73,7 +73,7 @@
 
 ## T4: 实现 Token 估算器
 
-**文件：** `src/mewcode/context/estimator.py`、`tests/test_context_estimator.py`  
+**文件：** `src/julycode/context/estimator.py`、`tests/test_context_estimator.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `TokenEstimator.estimate_message()`，对 `ChatMessage` 的角色、正文、thinking、工具调用、工具结果标记和 provider payload 做稳定字符估算。
@@ -85,25 +85,25 @@
 
 ## T5: 保存外置工具结果
 
-**文件：** `src/mewcode/context/store.py`、`.gitignore`、`tests/test_context_compactor.py`  
+**文件：** `src/julycode/context/store.py`、`.gitignore`、`tests/test_context_compactor.py`  
 **依赖：** T1、T4  
 **步骤：**
-1. 实现 `ContextStore.write_tool_result()`，在项目目录下创建 `.mewcode/context/<session_id>/tool-results/`。
+1. 实现 `ContextStore.write_tool_result()`，在项目目录下创建 `.julycode/context/<session_id>/tool-results/`。
 2. 将原始工具消息、调用标识、错误标记、字符数、估算 token 和创建时间写入 UTF-8 JSON 文件。
 3. 返回 `ContextExternalRef`，其中 `path` 是项目相对路径。
-4. 在 `.gitignore` 添加 `.mewcode/context/`。
+4. 在 `.gitignore` 添加 `.julycode/context/`。
 5. 添加测试验证文件可读取、路径在项目内、JSON 包含原始工具内容且目录被忽略。
 
 **验证：** 运行 `python -m pytest tests/test_context_compactor.py::test_context_store_writes_tool_result_under_project tests/test_context_compactor.py::test_context_store_returns_readable_relative_path -q`，期望全部通过。
 
 ## T6: 压缩单个大工具结果
 
-**文件：** `src/mewcode/context/compactor.py`、`tests/test_context_compactor.py`  
+**文件：** `src/julycode/context/compactor.py`、`tests/test_context_compactor.py`  
 **依赖：** T4、T5  
 **步骤：**
 1. 实现 `ToolResultCompactor.compact(session)` 的单结果阈值判断。
 2. 当单个 `role="tool"` 消息超过阈值时，调用 `ContextStore` 保存完整内容。
-3. 将工具消息正文替换为包含 `mewcode_externalized=true`、工具名、调用标识、成功或失败状态、原始规模、预览和路径的 JSON。
+3. 将工具消息正文替换为包含 `julycode_externalized=true`、工具名、调用标识、成功或失败状态、原始规模、预览和路径的 JSON。
 4. 确保普通用户消息、assistant 消息和未超阈值工具结果不被改写。
 5. 添加单结果压缩、用户原文保留、已外置结果不重复压缩测试。
 
@@ -111,7 +111,7 @@
 
 ## T7: 压缩同轮工具结果合计超限
 
-**文件：** `src/mewcode/context/compactor.py`、`tests/test_context_compactor.py`  
+**文件：** `src/julycode/context/compactor.py`、`tests/test_context_compactor.py`  
 **依赖：** T6  
 **步骤：**
 1. 在 `ToolResultCompactor` 中识别同一轮 assistant 工具调用后连续出现的 tool 结果集合。
@@ -124,7 +124,7 @@
 
 ## T8: 实现历史安全切段
 
-**文件：** `src/mewcode/context/segmenter.py`、`tests/test_context_manager.py`  
+**文件：** `src/julycode/context/segmenter.py`、`tests/test_context_manager.py`  
 **依赖：** T4  
 **步骤：**
 1. 实现 `ConversationSegmenter.split()`，将普通用户/助手消息作为独立段。
@@ -136,7 +136,7 @@
 
 ## T9: 实现摘要请求和正式摘要解析
 
-**文件：** `src/mewcode/context/summarizer.py`、`tests/test_context_summarizer.py`  
+**文件：** `src/julycode/context/summarizer.py`、`tests/test_context_summarizer.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `HistorySummarizer.summarize()`，构造无工具 `ChatRequest(tools=())`。
@@ -149,7 +149,7 @@
 
 ## T10: 处理摘要失败
 
-**文件：** `src/mewcode/context/summarizer.py`、`tests/test_context_summarizer.py`  
+**文件：** `src/julycode/context/summarizer.py`、`tests/test_context_summarizer.py`  
 **依赖：** T9  
 **步骤：**
 1. 定义摘要失败异常，携带可读失败原因。
@@ -161,7 +161,7 @@
 
 ## T11: 准备请求时执行轻量预防
 
-**文件：** `src/mewcode/context/manager.py`、`tests/test_context_manager.py`  
+**文件：** `src/julycode/context/manager.py`、`tests/test_context_manager.py`  
 **依赖：** T2、T3、T7  
 **步骤：**
 1. 实现 `ContextManager.prepare_request()` 的基础路径。
@@ -175,7 +175,7 @@
 
 ## T12: 实现自动重量兜底
 
-**文件：** `src/mewcode/context/manager.py`、`tests/test_context_manager.py`  
+**文件：** `src/julycode/context/manager.py`、`tests/test_context_manager.py`  
 **依赖：** T8、T9、T11  
 **步骤：**
 1. 在 `prepare_request()` 中计算可用输入预算：`window_tokens - max_output_tokens - auto_reserve_tokens`。
@@ -189,7 +189,7 @@
 
 ## T13: 实现手动 `/compact` 压缩路径
 
-**文件：** `src/mewcode/context/manager.py`、`tests/test_context_manager.py`  
+**文件：** `src/julycode/context/manager.py`、`tests/test_context_manager.py`  
 **依赖：** T12  
 **步骤：**
 1. 实现 `ContextManager.manual_compact(session, provider)`。
@@ -202,7 +202,7 @@
 
 ## T14: 实现摘要失败熔断
 
-**文件：** `src/mewcode/context/manager.py`、`tests/test_context_manager.py`  
+**文件：** `src/julycode/context/manager.py`、`tests/test_context_manager.py`  
 **依赖：** T10、T12  
 **步骤：**
 1. 在摘要失败时递增 `session.context_state.consecutive_summary_failures`。
@@ -215,11 +215,11 @@
 
 ## T15: 注入摘要和边界提示
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/builder.py`、`tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/builder.py`、`tests/test_prompting.py`  
 **依赖：** T1、T3  
 **步骤：**
 1. 给 `RuntimePromptContext` 增加 `context_summary` 字段。
-2. 在 `PromptBuilder.build_runtime_prompt()` 中，当存在摘要时追加 `<mewcode_context_summary>` 块。
+2. 在 `PromptBuilder.build_runtime_prompt()` 中，当存在摘要时追加 `<julycode_context_summary>` 块。
 3. 块内包含正式摘要、边界提示和外置路径列表。
 4. 确保摘要块位于运行时系统补充中，不进入普通用户消息。
 5. 添加摘要注入、边界提示、无摘要不产生空块测试。
@@ -228,7 +228,7 @@
 
 ## T16: 解析 `/compact` 命令
 
-**文件：** `src/mewcode/commands.py`、`tests/test_commands.py`  
+**文件：** `src/julycode/commands.py`、`tests/test_commands.py`  
 **依赖：** T1  
 **步骤：**
 1. 定义 `CompactCommand`。
@@ -241,7 +241,7 @@
 
 ## T17: 接入 Agent Loop 自动上下文管理
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T11、T12、T14、T15  
 **步骤：**
 1. 给 `AgentLoopRunner` 增加可选 `context_manager` 参数，未传入时使用基于当前 cwd 和默认配置的管理器。
@@ -255,10 +255,10 @@
 
 ## T18: 接入 TUI 手动压缩
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`  
 **依赖：** T13、T16、T17  
 **步骤：**
-1. 给 `MewCodeApp` 增加可选 `context_manager` 参数，并传给 `AgentLoopRunner`。
+1. 给 `JulyCodeApp` 增加可选 `context_manager` 参数，并传给 `AgentLoopRunner`。
 2. 在 `_run_generation()` 中识别 `CompactCommand`，直接调用 `manual_compact()`。
 3. 将压缩报告作为 assistant 消息展示，恢复输入区，不调用 Provider 普通对话。
 4. 在 `_apply_turn_event()` 中展示自动 `context_compacted` 事件的简短状态。
@@ -268,14 +268,14 @@
 
 ## T19: 接入 CLI、文档和忽略规则
 
-**文件：** `src/mewcode/cli.py`、`README.md`、`.gitignore`、`tests/test_config.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/cli.py`、`README.md`、`.gitignore`、`tests/test_config.py`、`tests/test_tui_smoke.py`  
 **依赖：** T2、T18  
 **步骤：**
 1. 在 CLI 启动时用 `config.context`、当前 cwd 和 `config.max_tokens` 创建共享 `ContextManager`。
-2. 将共享 `ContextManager` 传给 `MewCodeApp`。
-3. README 增加 `context:` 配置示例、两层压缩说明、`/compact` 说明和 `.mewcode/context/` 外置路径说明。
-4. 确认 `.gitignore` 忽略 `.mewcode/context/`。
-5. 在测试中读取 README，断言文档包含 `context:`、`/compact` 和 `.mewcode/context/`。
+2. 将共享 `ContextManager` 传给 `JulyCodeApp`。
+3. README 增加 `context:` 配置示例、两层压缩说明、`/compact` 说明和 `.julycode/context/` 外置路径说明。
+4. 确认 `.gitignore` 忽略 `.julycode/context/`。
+5. 在测试中读取 README，断言文档包含 `context:`、`/compact` 和 `.julycode/context/`。
 
 **验证：** 运行 `python -m pytest tests/test_config.py::test_loads_context_config tests/test_config.py::test_readme_documents_context_management tests/test_tui_smoke.py::test_cli_entrypoint_is_importable -q`，期望全部通过。
 
@@ -305,7 +305,7 @@
 
 ## T22: 全量测试和静态导入检查
 
-**文件：** `src/mewcode/context/*.py`、`src/mewcode/*.py`、`tests/*.py`  
+**文件：** `src/julycode/context/*.py`、`src/julycode/*.py`、`tests/*.py`  
 **依赖：** T21  
 **步骤：**
 1. 运行完整 pytest 套件。

@@ -9,29 +9,29 @@ from typing import Any
 
 import pytest
 
-from mewcode.agent import AgentLoopRunner, CompletionDecision, StreamCollector, TurnEvent
-from mewcode.commands import AgentCommand
-from mewcode.config import AgentConfig
-from mewcode.context.manager import ContextManager
-from mewcode.context.estimator import TokenEstimator
-from mewcode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, PreparedChatRequest, RequestFootprint
-from mewcode.errors import ProviderError
-from mewcode.hooks import parse_hook_config
-from mewcode.hooks.manager import create_hook_manager
-from mewcode.memory.models import KnowledgeContext, MemoryIndex, MemoryUpdateJob
-from mewcode.mcp.scope import McpTurnState
-from mewcode.mcp.search import McpPromptContext, McpToolMatch, McpToolSearchResult
-from mewcode.mcp.tools import McpToolDefinition, RemoteMcpTool, SearchMcpToolsTool
-from mewcode.permissions import PermissionConfig
-from mewcode.permissions.controller import create_permission_controller
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent, TokenUsage
-from mewcode.repo_map import RepoMapSnapshot
-from mewcode.session import ChatSession, PendingPlan
-from mewcode.skills import LoadSkillTool, SkillManager
-from mewcode.skills.models import SkillRoots
-from mewcode.tools.base import ToolCall, ToolContext, ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry, create_default_registry
+from julycode.agent import AgentLoopRunner, CompletionDecision, StreamCollector, TurnEvent
+from julycode.commands import AgentCommand
+from julycode.config import AgentConfig
+from julycode.context.manager import ContextManager
+from julycode.context.estimator import TokenEstimator
+from julycode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, PreparedChatRequest, RequestFootprint
+from julycode.errors import ProviderError
+from julycode.hooks import parse_hook_config
+from julycode.hooks.manager import create_hook_manager
+from julycode.memory.models import KnowledgeContext, MemoryIndex, MemoryUpdateJob
+from julycode.mcp.scope import McpTurnState
+from julycode.mcp.search import McpPromptContext, McpToolMatch, McpToolSearchResult
+from julycode.mcp.tools import McpToolDefinition, RemoteMcpTool, SearchMcpToolsTool
+from julycode.permissions import PermissionConfig
+from julycode.permissions.controller import create_permission_controller
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent, TokenUsage
+from julycode.repo_map import RepoMapSnapshot
+from julycode.session import ChatSession, PendingPlan
+from julycode.skills import LoadSkillTool, SkillManager
+from julycode.skills.models import SkillRoots
+from julycode.tools.base import ToolCall, ToolContext, ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry, create_default_registry
 
 
 class FakeProvider:
@@ -129,7 +129,7 @@ class FakeRepoMapManager:
         return RepoMapSnapshot(
             snapshot_id="snapshot-1",
             revision="revision-1",
-            text="<mewcode_repo_map>def target(...)</mewcode_repo_map>",
+            text="<julycode_repo_map>def target(...)</julycode_repo_map>",
             estimated_tokens=10,
             included_files=("target.py",),
             truncated=False,
@@ -275,7 +275,7 @@ def make_skill_manager(tmp_path: Path, registry: ToolRegistry) -> SkillManager:
         SkillRoots(
             project=tmp_path / "project-skills",
             user=tmp_path / "user-skills",
-            builtin=resources.files("mewcode.skills.builtin"),
+            builtin=resources.files("julycode.skills.builtin"),
         ),
         registry,
     )
@@ -653,7 +653,7 @@ async def test_runner_injects_memory_context_before_model_request(tmp_path: Path
     # 记忆索引现在是独立的 name="memory_index" 块
     first_memory = next(b.text for b in provider.requests[0].prompt.runtime_blocks if b.name == "memory_index")
     second_memory = next(b.text for b in provider.requests[1].prompt.runtime_blocks if b.name == "memory_index")
-    assert "<mewcode_memory_index>" in first_memory
+    assert "<julycode_memory_index>" in first_memory
     assert "第一版索引" in first_memory
     assert "第二版索引" in second_memory
 
@@ -707,7 +707,7 @@ async def test_runner_works_without_memory_manager(tmp_path: Path) -> None:
 
     assert provider.requests[0].prompt is not None
     runtime_text = provider.requests[0].prompt.runtime_blocks[-1].text
-    assert "<mewcode_memory_index>" not in runtime_text
+    assert "<julycode_memory_index>" not in runtime_text
     assert runner.session.messages[-1].content == "完成"
 
 
@@ -733,7 +733,7 @@ async def test_runner_injects_ephemeral_repo_map_and_closes_turn(tmp_path: Path)
     assert prompt.generated_context_blocks[0].persistence == "request_ephemeral"
     assert repo_map.started == ["寻找 target"]
     assert len(repo_map.ended) == 1
-    assert all("mewcode_repo_map" not in message.content for message in runner.session.messages)
+    assert all("julycode_repo_map" not in message.content for message in runner.session.messages)
 
 
 @pytest.mark.asyncio
@@ -870,7 +870,7 @@ async def test_normal_mode_does_not_inject_pending_plan(tmp_path: Path) -> None:
 @pytest.mark.asyncio
 async def test_runner_feeds_permission_denial_back_to_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
-    (tmp_path / ".mewcode.permissions.local.yaml").write_text('rules:\n  "write(*)": deny\n', encoding="utf-8")
+    (tmp_path / ".julycode.permissions.local.yaml").write_text('rules:\n  "write(*)": deny\n', encoding="utf-8")
     log: list[str] = []
     registry = make_registry(FakeTool("write", safety="side_effect", log=log))
     provider = FakeProvider(
@@ -1100,8 +1100,8 @@ async def test_runner_externalizes_large_tool_result_and_continues(tmp_path: Pat
     assert len(provider.requests) == 2
     tool_message = provider.requests[1].messages[-1]
     assert tool_message.role == "tool"
-    assert "mewcode_externalized" in tool_message.content
-    assert ".mewcode/context" in tool_message.content
+    assert "julycode_externalized" in tool_message.content
+    assert ".julycode/context" in tool_message.content
     assert "完成" == runner.session.messages[-1].content
 
 
@@ -1133,7 +1133,7 @@ async def test_runner_injects_hook_prompt_into_next_request(tmp_path: Path) -> N
 
     assert provider.requests[0].prompt is not None
     runtime_text = provider.requests[0].prompt.runtime_blocks[-1].text
-    assert "<mewcode_hook_instructions>" in runtime_text
+    assert "<julycode_hook_instructions>" in runtime_text
     assert "Hook 注入内容" in runtime_text
 
 

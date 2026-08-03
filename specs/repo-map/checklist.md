@@ -1,4 +1,4 @@
-# MewCode Repo Map Checklist
+# JulyCode Repo Map Checklist
 
 > 每一项都必须通过运行命令或观察真实行为验证。验收时将 `[ ]` 更新为 `[x]`，并在最终验收报告中记录实际命令、结果和必要的 tmux 输出证据。
 
@@ -6,7 +6,7 @@
 
 - [x] C01 默认配置在存在 `.py` 或 `.pyi` 的项目中启用 Repo Map，`repo_map.enabled: false` 后请求中不再出现地图，默认预算为 2,000 Token。（验证：运行 `python -m pytest tests/test_config.py tests/test_repo_map_integration.py -q`，期望默认、关闭和预算测试通过；覆盖 AC1）
 - [x] C02 从 Git 仓库子目录启动时以当前 Worktree 根为范围，候选集合包含 tracked 和未忽略 untracked Python 文件，并排除 Git ignore 命中的文件。（验证：运行 `python -m pytest tests/test_repo_map_discovery.py -q`，期望 Git root、tracked、untracked 和 ignored 场景通过；覆盖 AC2）
-- [x] C03 非 Git 项目以启动目录为范围，并排除 `.git`、`.mewcode`、`__pycache__`、`.venv`、`venv`、`build`、`dist`、`.tox`、`.pytest_cache`、`.mypy_cache` 和 `node_modules`。（验证：运行 `python -m pytest tests/test_repo_map_discovery.py -q`，期望非 Git 默认排除场景通过；覆盖 AC2）
+- [x] C03 非 Git 项目以启动目录为范围，并排除 `.git`、`.julycode`、`__pycache__`、`.venv`、`venv`、`build`、`dist`、`.tox`、`.pytest_cache`、`.mypy_cache` 和 `node_modules`。（验证：运行 `python -m pytest tests/test_repo_map_discovery.py -q`，期望非 Git 默认排除场景通过；覆盖 AC2）
 - [x] C04 文件和目录 symlink、规范化后越出根目录的路径均不进入候选集合，所有地图条目路径使用根目录相对 POSIX 格式。（验证：运行 `python -m pytest tests/test_repo_map_discovery.py tests/test_repo_map_renderer.py -q`，期望 symlink、越界和路径格式测试通过；覆盖 AC2）
 
 ## Python 结构、安全与关系
@@ -59,7 +59,7 @@
 
 ## 性能与后台生命周期
 
-- [x] C35 当前 MewCode 仓库预热后至少 100 次缓存命中快照组装的 P95 小于 50ms。（验证：运行 `python -m pytest tests/test_repo_map_manager.py -q`，期望性能样本数和 P95 断言通过；覆盖 AC15）
+- [x] C35 当前 JulyCode 仓库预热后至少 100 次缓存命中快照组装的 P95 小于 50ms。（验证：运行 `python -m pytest tests/test_repo_map_manager.py -q`，期望性能样本数和 P95 断言通过；覆盖 AC15）
 - [x] C36 文件发现、哈希、解析和图更新在后台执行，Repo Map 引入的 TUI 主线程单次同步阻塞小于 16ms。（验证：运行 `python -m pytest tests/test_repo_map_manager.py tests/test_tui_smoke.py -q`，期望 asyncio heartbeat 最大延迟断言通过；覆盖 AC15）
 - [x] C37 初次索引可取消；切换项目、分支或 Worktree 后，旧 generation 结果不会覆盖新项目状态。（验证：运行 `python -m pytest tests/test_repo_map_manager.py tests/test_tui_smoke.py -q`，期望取消和 stale generation 丢弃测试通过；覆盖 AC15）
 
@@ -84,10 +84,10 @@
 
 ## tmux 真实端到端场景
 
-- [x] C48 在当前 MewCode 仓库启动真实 TUI，发送“不含准确路径”的请求“请找出负责在模型调用前压缩超长工具结果的入口，说明主要调用链，并在下结论前读取相关实现”，MewCode 正常注入地图、调用合法工具并生成有依据的回复。（验证：运行 `tmux new-session -d -s mewcode-repomap 'mewcode'`，用 `tmux send-keys` 发送请求并用 `tmux capture-pane -pt mewcode-repomap` 记录输出；不要求模型固定选择某个工具；覆盖 AC19）
-- [x] C49 在可清理的测试工作区中让真实模型完成一次 Python 签名修改，观察同一 Agent Loop 修改后的后续请求使用新 revision，地图不再包含旧签名。（验证：用 `tmux send-keys -t mewcode-repomap '<真实修改请求>' Enter` 发送请求，修改前后分别发送 `/status`，再运行 `tmux capture-pane -pt mewcode-repomap`；期望 revision 改变、旧签名消失、工具调用和最终回复正常；覆盖 AC8、AC19）
+- [x] C48 在当前 JulyCode 仓库启动真实 TUI，发送“不含准确路径”的请求“请找出负责在模型调用前压缩超长工具结果的入口，说明主要调用链，并在下结论前读取相关实现”，JulyCode 正常注入地图、调用合法工具并生成有依据的回复。（验证：运行 `tmux new-session -d -s julycode-repomap 'julycode'`，用 `tmux send-keys` 发送请求并用 `tmux capture-pane -pt julycode-repomap` 记录输出；不要求模型固定选择某个工具；覆盖 AC19）
+- [x] C49 在可清理的测试工作区中让真实模型完成一次 Python 签名修改，观察同一 Agent Loop 修改后的后续请求使用新 revision，地图不再包含旧签名。（验证：用 `tmux send-keys -t julycode-repomap '<真实修改请求>' Enter` 发送请求，修改前后分别发送 `/status`，再运行 `tmux capture-pane -pt julycode-repomap`；期望 revision 改变、旧签名消失、工具调用和最终回复正常；覆盖 AC8、AC19）
 - [x] C50 真实请求中 Repo Map 状态、Provider Prompt Cache usage、工具结果回灌和最终回复均可观察且无异常；关闭 Repo Map 后 `/status` 明确显示 disabled，普通请求仍成功。（验证：捕获开启与关闭配置下的 tmux 输出和 Provider usage 日志，期望长期缓存行为正常、关闭状态无旧字段残留；覆盖 AC1、AC19、AC20）
-- [x] C51 tmux 验收完成后测试工作区与会话均被清理，不把 E2E 临时改动留在用户工作树。（验证：运行 `tmux kill-session -t mewcode-repomap`，再运行 `git status --short` 并与验收前基线比较，期望只保留本功能计划内变更）
+- [x] C51 tmux 验收完成后测试工作区与会话均被清理，不把 E2E 临时改动留在用户工作树。（验证：运行 `tmux kill-session -t julycode-repomap`，再运行 `git status --short` 并与验收前基线比较，期望只保留本功能计划内变更）
 
 ## 验收标准追踪
 

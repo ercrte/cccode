@@ -1,7 +1,7 @@
 # Agent Evaluation Framework Plan
 
 ## 架构概览
-评测体系放在项目根目录 `eval/`，作为独立工作区和轻量 Python 包，不嵌入 `src/mewcode` 的核心模块。`eval/` 负责定义评测维度、用例、离线运行入口、评分逻辑、报告模板和结果目录；MewCode 核心 Agent Loop、工具、权限、上下文和 Provider 抽象保持不变。
+评测体系放在项目根目录 `eval/`，作为独立工作区和轻量 Python 包，不嵌入 `src/julycode` 的核心模块。`eval/` 负责定义评测维度、用例、离线运行入口、评分逻辑、报告模板和结果目录；JulyCode 核心 Agent Loop、工具、权限、上下文和 Provider 抽象保持不变。
 
 评测运行器使用现有 `AgentLoopRunner` 作为真实行为入口。每个用例在临时工作目录中准备输入文件、配置权限模式和初始会话，运行器创建默认工具注册表、工具执行器、上下文管理器和模拟 Provider，然后执行用户请求并收集 `TurnEvent`。这样评测观察的是 Agent 的真实工具调度、权限、上下文和停止行为，而不是直接调用私有函数。
 
@@ -133,7 +133,7 @@ README 明确说明自动评分不能替代人工评审，真实模型评测具�
 ### `eval/metrics/default_metrics.json`
 **职责：** 保存默认维度、权重、评分范围和证据要求。  
 **对外接口：** 用户可编辑 JSON 调整维度和权重。  
-**依赖：** `eval/mew_eval/loader.py`。
+**依赖：** `eval/july_eval/loader.py`。
 
 默认权重建议：
 - 任务完成度：1.5
@@ -150,7 +150,7 @@ README 明确说明自动评分不能替代人工评审，真实模型评测具�
 ### `eval/cases/*.json`
 **职责：** 保存初始评测用例。  
 **对外接口：** 用户通过新增 JSON 文件扩展用例。  
-**依赖：** `eval/mew_eval/loader.py`。
+**依赖：** `eval/july_eval/loader.py`。
 
 初始用例至少包含：
 - `basic_qa`：普通问答，要求中文、直接回答。
@@ -161,33 +161,33 @@ README 明确说明自动评分不能替代人工评审，真实模型评测具�
 - `context_compaction`：大工具结果或长上下文触发上下文管理事件。
 - `skill_or_subagent`：触发 `/review` Skill 或 `delegate_agent`。
 
-### `eval/mew_eval/models.py`
+### `eval/july_eval/models.py`
 **职责：** 定义评测维度、用例、期望、运行轨迹、评分和汇总结果 dataclass。  
 **对外接口：** 所有评测模块共享的数据结构。  
 **依赖：** 标准库 dataclass、typing。
 
-### `eval/mew_eval/loader.py`
+### `eval/july_eval/loader.py`
 **职责：** 从 JSON 文件加载并校验维度和用例。  
 **对外接口：** `load_metrics(path) -> tuple[EvalMetric, ...]`、`load_cases(path) -> tuple[EvalCase, ...]`。  
 **依赖：** `models.py`、标准库 `json`、`pathlib`。
 
 校验包括 ID 唯一、权重大于 0、评分范围有效、用例 ID 唯一、prompt 非空、期望工具名为字符串。
 
-### `eval/mew_eval/provider.py`
+### `eval/july_eval/provider.py`
 **职责：** 提供离线脚本化 Provider，按用例 prompt、历史消息和工具结果生成 `StreamEvent`。  
 **对外接口：** `ScriptedEvalProvider`，实现 `LLMProvider.stream_chat()`。  
-**依赖：** `mewcode.providers.base`、`mewcode.tools.base`。
+**依赖：** `julycode.providers.base`、`julycode.tools.base`。
 
 Provider 行为保持确定性，覆盖初始用例所需工具调用：读文件、搜索、写文件、运行命令、危险命令、加载 Skill、委派子 Agent 和最终回复。
 
-### `eval/mew_eval/runner.py`
+### `eval/july_eval/runner.py`
 **职责：** 为每个用例准备临时工作目录、创建真实 Agent 运行环境、执行用例并收集轨迹。  
 **对外接口：** `run_case(case, metrics, options) -> EvalCaseResult`、`run_suite(cases, metrics, options) -> EvalSuiteResult`。  
 **依赖：** `AgentLoopRunner`、`ChatSession`、`ToolExecutor`、`create_default_registry`、`ContextManager`、权限控制器、可选 Skill/SubAgent 管理器。
 
 每个用例都在临时目录中运行。默认复制或生成最小文件集，不直接写项目真实文件。写入类用例只检查临时目录内容。
 
-### `eval/mew_eval/scoring.py`
+### `eval/july_eval/scoring.py`
 **职责：** 根据运行轨迹和用例期望计算每个维度得分。  
 **对外接口：** `score_case(case, metrics, trace) -> tuple[MetricScore, ...]`。  
 **依赖：** `models.py`。
@@ -204,7 +204,7 @@ Provider 行为保持确定性，覆盖初始用例所需工具调用：读文�
 - 效率与成本：迭代数、工具调用数、耗时和 usage 在阈值内。
 - 稳定性：离线模式下同一用例可重复得到相同关键结果；初始通过单次确定性 Provider 保证，报告提示真实模型需要多次运行。
 
-### `eval/mew_eval/report.py`
+### `eval/july_eval/report.py`
 **职责：** 生成 JSON 和 Markdown 报告。  
 **对外接口：** `write_json_report(result, path)`、`write_markdown_report(result, path)`。  
 **依赖：** `models.py`、标准库 `json`。
@@ -214,14 +214,14 @@ Provider 行为保持确定性，覆盖初始用例所需工具调用：读文�
 ### `eval/run_eval.py`
 **职责：** 命令行入口。  
 **对外接口：** `python eval/run_eval.py --suite offline --output eval/results/latest`。  
-**依赖：** `mew_eval.loader`、`runner`、`report`。
+**依赖：** `july_eval.loader`、`runner`、`report`。
 
 参数包括用例目录、维度文件、输出目录、只运行指定用例、阈值、保留临时目录和 JSON-only 模式。退出码：全部自动通过为 0，存在失败、错误或需人工复核且未允许时为 1。
 
 ### `tests/test_eval_framework.py`
 **职责：** 覆盖 loader、scoring、runner 和报告输出。  
 **对外接口：** pytest。  
-**依赖：** `eval/mew_eval`。
+**依赖：** `eval/july_eval`。
 
 测试验证初始用例可加载、离线 suite 可运行、报告包含预期字段、失败用例导致非零状态、写入用例不污染项目目录。
 
@@ -255,7 +255,7 @@ Provider 行为保持确定性，覆盖初始用例所需工具调用：读文�
 
 ## 文件组织
 ```text
-mewcode/
+julycode/
 ├── eval/
 │   ├── README.md                         — 评测体系说明和使用方法
 │   ├── run_eval.py                       — 本地评测命令入口
@@ -271,7 +271,7 @@ mewcode/
 │   │   └── skill_or_subagent.json        — Skill 或子 Agent
 │   ├── results/
 │   │   └── .gitignore                    — 忽略本地评测结果
-│   └── mew_eval/
+│   └── july_eval/
 │       ├── __init__.py                   — 包导出
 │       ├── models.py                     — 评测数据结构
 │       ├── loader.py                     — JSON 加载和校验

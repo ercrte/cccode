@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.memory.extraction import MemoryCandidateValidator, MemoryExtractionError, parse_memory_candidates
-from mewcode.memory.models import KnowledgeContext, MemoryCandidate, MemoryUpdateJob, SessionMemoryConfig
-from mewcode.memory.notes import MemoryNoteStore
-from mewcode.providers.base import ChatMessage
-from mewcode.session_id import SessionId
+from julycode.memory.extraction import MemoryCandidateValidator, MemoryExtractionError, parse_memory_candidates
+from julycode.memory.models import KnowledgeContext, MemoryCandidate, MemoryUpdateJob, SessionMemoryConfig
+from julycode.memory.notes import MemoryNoteStore
+from julycode.providers.base import ChatMessage
+from julycode.session_id import SessionId
 from tests.test_memory_notes import note
 
 
@@ -44,7 +44,7 @@ def candidate(**overrides: object) -> MemoryCandidate:
 
 def validator(tmp_path: Path, *, threshold: float = 0.95) -> tuple[MemoryCandidateValidator, MemoryNoteStore]:
     config = SessionMemoryConfig(
-        user_dir=str(tmp_path / "home" / ".mewcode"),
+        user_dir=str(tmp_path / "home" / ".julycode"),
         critical_preference_min_confidence=threshold,
     )
     store = MemoryNoteStore(tmp_path, config)

@@ -47,21 +47,21 @@
 - [x] 1,000 工具规模检索满足 100 毫秒上限，结果数量和顺序稳定。（验证：运行 `python -m pytest tests/test_mcp_search.py -k "performance or deterministic" -q`）
 - [x] GitHub 样本空闲请求工具定义占用降低至少 90%，激活状态只增加检索入口和最多 5 个候选的 Schema。（验证：运行 `python _estimate_tokens.py` 并运行 `python -m pytest tests/test_context_estimator.py -k "mcp" -q`）
 - [x] 检索结果、状态、异常和测试日志不包含 Header、环境变量、OAuth token、client secret 或 PKCE verifier。（验证：运行 `python -m pytest tests/test_mcp_manager.py tests/test_mcp_oauth_flow.py tests/test_tui_smoke.py -k "secret or redacted or oauth" -q`，并确认输出无测试密钥原文）
-- [x] 新增模块和 mock E2E 服务可编译导入。（验证：运行 `python -m compileall -q src tests && python -c "from mewcode.mcp.search import McpToolCatalog; from mewcode.mcp.scope import McpTurnState"`）
+- [x] 新增模块和 mock E2E 服务可编译导入。（验证：运行 `python -m compileall -q src tests && python -c "from julycode.mcp.search import McpToolCatalog; from julycode.mcp.scope import McpTurnState"`）
 - [x] 项目没有配置 lint 工具时，至少保证全量测试和 diff 格式检查通过。（验证：运行 `python -m pytest -q && git diff --check`）
 - [x] 工作区不存在无关改动、调试输出、临时配置、请求日志或凭据文件。（验证：运行 `git status --short` 并逐项对照 `task.md` 文件清单）
 
 ## 端到端场景
 
-- [x] 场景 1：fixture 普通请求——在 `mcp-lazy-e2e` tmux session 启动 mock OpenAI、stdio/HTTP MCP fixture 和 MewCode，发送普通代码问题；首个请求只有非 MCP 工具和 `search_mcp_tools`，没有 `local_demo__*` 或 `remote_demo__*`。（验证：检查 mock 请求日志并运行 `tmux capture-pane -p -S -200 -t mcp-lazy-e2e`）
+- [x] 场景 1：fixture 普通请求——在 `mcp-lazy-e2e` tmux session 启动 mock OpenAI、stdio/HTTP MCP fixture 和 JulyCode，发送普通代码问题；首个请求只有非 MCP 工具和 `search_mcp_tools`，没有 `local_demo__*` 或 `remote_demo__*`。（验证：检查 mock 请求日志并运行 `tmux capture-pane -p -S -200 -t mcp-lazy-e2e`）
 - [x] 场景 2：fixture 延迟调用——发送“调用 remote_demo 的 echo 工具返回 lazy-mcp”；界面依次显示 `search_mcp_tools`、下一迭代有限候选、`remote_demo__echo` 和成功回复。（验证：`tmux capture-pane -p -S -300 -t mcp-lazy-e2e` 与 mock 请求日志同时证明调用顺序和候选数 `<= 5`）
 - [x] 场景 3：fixture 跨轮清理——完成场景 2 后发送普通问题；新请求不再包含 `remote_demo__echo`，`/status` 显示当前轮次暴露为 0。（验证：检查最后一次请求工具列表和 `tmux capture-pane -p -S -300 -t mcp-lazy-e2e`）
-- [x] 场景 4：真实 GitHub MCP 空闲请求——在 `mcp-lazy-github` tmux session 启动 MewCode，发送与 GitHub 无关的代码问题；请求中无任何 `github__*` 完整定义。（验证：检查 Provider 请求日志/调试观测和 `tmux capture-pane -p -S -200 -t mcp-lazy-github`）
-- [x] 场景 5：真实 GitHub MCP 只读调用——发送“查询当前认证的 GitHub 用户信息”；MewCode 先检索，下一迭代只加载最多 5 个相关工具，随后调用命中的只读 GitHub 能力并生成有效回复。（验证：`tmux capture-pane -p -S -400 -t mcp-lazy-github` 包含检索、GitHub 工具调用、成功结果和最终回复）
+- [x] 场景 4：真实 GitHub MCP 空闲请求——在 `mcp-lazy-github` tmux session 启动 JulyCode，发送与 GitHub 无关的代码问题；请求中无任何 `github__*` 完整定义。（验证：检查 Provider 请求日志/调试观测和 `tmux capture-pane -p -S -200 -t mcp-lazy-github`）
+- [x] 场景 5：真实 GitHub MCP 只读调用——发送“查询当前认证的 GitHub 用户信息”；JulyCode 先检索，下一迭代只加载最多 5 个相关工具，随后调用命中的只读 GitHub 能力并生成有效回复。（验证：`tmux capture-pane -p -S -400 -t mcp-lazy-github` 包含检索、GitHub 工具调用、成功结果和最终回复）
 - [x] 场景 6：真实 GitHub 跨轮清理——场景 5 结束后再发送普通代码问题；新请求恢复为零个 `github__*` 候选。（验证：检查最后一次 Provider 请求工具列表，并在 `/status` 中观察当前轮次暴露为 0）
 - [x] 场景 7：OAuth 动态更新——使用本地 `oauth_demo` fixture，未授权时检索得到 `server_unavailable`；授权后无需重启即可检索；logout 后再次不可检索且其他工具继续可用。（验证：在 fixture tmux 执行 `/mcp auth oauth_demo`、工具检索和 `/mcp logout oauth_demo`，捕获输出并对照 `/status`；不修改用户真实 GitHub 凭据）
-- [x] 场景 8：无 MCP 配置——移除测试配置中的 `mcp_servers` 后启动 MewCode，发送读取 README 请求；不出现 `search_mcp_tools`，内置 `read_file` 正常调用并回复。（验证：检查 mock 请求日志和 tmux 输出）
-- [x] 场景 9：验收环境清理——关闭 tmux session、fixture、mock Provider 和 MewCode，不保留临时配置、请求日志或凭据。（验证：运行 `tmux ls`、`ps -ef | rg "mcp_(stdio|http)_server|e2e_mock_openai_server|mewcode"` 和 `git status --short`）
+- [x] 场景 8：无 MCP 配置——移除测试配置中的 `mcp_servers` 后启动 JulyCode，发送读取 README 请求；不出现 `search_mcp_tools`，内置 `read_file` 正常调用并回复。（验证：检查 mock 请求日志和 tmux 输出）
+- [x] 场景 9：验收环境清理——关闭 tmux session、fixture、mock Provider 和 JulyCode，不保留临时配置、请求日志或凭据。（验证：运行 `tmux ls`、`ps -ef | rg "mcp_(stdio|http)_server|e2e_mock_openai_server|julycode"` 和 `git status --short`）
 
 ## 验收记录（2026-07-04）
 

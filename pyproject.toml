@@ -3,7 +3,7 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mewcode"
+name = "julycode"
 version = "0.1.0"
 description = "A terminal AI coding assistant conversation MVP."
 readme = "README.md"
@@ -22,14 +22,14 @@ dev = [
 ]
 
 [project.scripts]
-mewcode = "mewcode.cli:main"
+julycode = "julycode.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"mewcode.skills.builtin" = ["*.md"]
-"mewcode.subagents.builtin" = ["*.md"]
+"julycode.skills.builtin" = ["*.md"]
+"julycode.subagents.builtin" = ["*.md"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

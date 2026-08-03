@@ -3,14 +3,15 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
 
 import pytest
 
-from mewcode.tools import ToolCall, ToolContext, ToolExecutionError, ToolResult, ToolSpec
-from mewcode.tools.builtin import (
+from julycode.tools import ToolCall, ToolContext, ToolExecutionError, ToolResult, ToolSpec
+from julycode.tools.builtin import (
     EditFileTool,
     FindFilesTool,
     ReadFileTool,
@@ -18,9 +19,9 @@ from mewcode.tools.builtin import (
     SearchCodeTool,
     WriteFileTool,
 )
-from mewcode.subagents.cache import FileReadCache
-from mewcode.tools.registry import ToolRegistry, create_default_registry
-from mewcode.tools.validation import validate_arguments
+from julycode.subagents.cache import FileReadCache
+from julycode.tools.registry import ToolRegistry, create_default_registry
+from julycode.tools.validation import validate_arguments
 
 
 def context(tmp_path: Path) -> ToolContext:
@@ -112,6 +113,107 @@ async def test_read_file_returns_content(tmp_path: Path) -> None:
     assert data["path"] == "demo.txt"
     assert data["content"] == "hello"
     assert data["truncated"] is False
+
+
+@pytest.mark.asyncio
+async def test_read_file_partial_preserves_newline_and_metadata(tmp_path: Path) -> None:
+    (tmp_path / "demo.txt").write_text("one\n二\nthree\nfour", encoding="utf-8")
+
+    data = await ReadFileTool().execute(
+        {"path": "demo.txt", "offset": 2, "limit": 2},
+        context(tmp_path),
+    )
+
+    assert data == {
+        "path": "demo.txt",
+        "content": "二\nthree\n",
+        "truncated": False,
+        "start_line": 2,
+        "end_line": 3,
+        "total_lines": 4,
+        "has_more": True,
+    }
+
+
+@pytest.mark.asyncio
+async def test_read_file_partial_supports_offset_or_limit_independently(tmp_path: Path) -> None:
+    (tmp_path / "demo.txt").write_text("one\ntwo\nthree\nfour\n", encoding="utf-8")
+    tool = ReadFileTool()
+
+    from_offset = await tool.execute({"path": "demo.txt", "offset": 3}, context(tmp_path))
+    with_limit = await tool.execute({"path": "demo.txt", "limit": 2}, context(tmp_path))
+
+    assert from_offset["content"] == "three\nfour\n"
+    assert from_offset["start_line"] == 3
+    assert from_offset["end_line"] == 4
+    assert from_offset["has_more"] is False
+    assert with_limit["content"] == "one\ntwo\n"
+    assert with_limit["start_line"] == 1
+    assert with_limit["end_line"] == 2
+    assert with_limit["has_more"] is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"offset": 0},
+        {"offset": -1},
+        {"offset": 4},
+        {"offset": 1.5},
+        {"limit": 0},
+        {"limit": -1},
+        {"limit": True},
+    ],
+)
+async def test_read_file_rejects_invalid_partial_ranges(
+    tmp_path: Path,
+    arguments: dict[str, object],
+) -> None:
+    (tmp_path / "demo.txt").write_text("one\ntwo\nthree\n", encoding="utf-8")
+
+    with pytest.raises(ToolExecutionError) as exc_info:
+        await ReadFileTool().execute({"path": "demo.txt", **arguments}, context(tmp_path))
+
+    assert exc_info.value.error_type == "invalid_arguments"
+
+
+@pytest.mark.asyncio
+async def test_read_file_partial_empty_file_has_stable_metadata(tmp_path: Path) -> None:
+    (tmp_path / "empty.txt").write_text("", encoding="utf-8")
+
+    data = await ReadFileTool().execute(
+        {"path": "empty.txt", "offset": 20, "limit": 5},
+        context(tmp_path),
+    )
+
+    assert data == {
+        "path": "empty.txt",
+        "content": "",
+        "truncated": False,
+        "start_line": 1,
+        "end_line": 0,
+        "total_lines": 0,
+        "has_more": False,
+    }
+
+
+@pytest.mark.asyncio
+async def test_read_file_partial_character_truncated_updates_metadata(tmp_path: Path) -> None:
+    (tmp_path / "demo.txt").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
+    tool_context = ToolContext(cwd=tmp_path, max_output_chars=8)
+
+    data = await ReadFileTool().execute(
+        {"path": "demo.txt", "offset": 1, "limit": 3},
+        tool_context,
+    )
+
+    assert data["content"] == "alpha\nbe"
+    assert data["truncated"] is True
+    assert data["start_line"] == 1
+    assert data["end_line"] == 2
+    assert data["total_lines"] == 3
+    assert data["has_more"] is True
 
 
 @pytest.mark.asyncio
@@ -313,6 +415,38 @@ async def test_find_files_respects_max_results(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_find_files_uses_git_ignore_and_includes_untracked_files(tmp_path: Path) -> None:
+    subprocess.run(("git", "-C", str(tmp_path), "init"), check=True, capture_output=True)
+    (tmp_path / ".gitignore").write_text("ignored.py\n", encoding="utf-8")
+    (tmp_path / "tracked.py").write_text("", encoding="utf-8")
+    (tmp_path / "untracked.py").write_text("", encoding="utf-8")
+    (tmp_path / "ignored.py").write_text("", encoding="utf-8")
+    subprocess.run(
+        ("git", "-C", str(tmp_path), "add", ".gitignore", "tracked.py"),
+        check=True,
+        capture_output=True,
+    )
+
+    data = await FindFilesTool().execute({"pattern": "**/*.py"}, context(tmp_path))
+
+    assert data["matches"] == ["tracked.py", "untracked.py"]
+
+
+@pytest.mark.asyncio
+async def test_find_files_excludes_runtime_and_build_directories(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("", encoding="utf-8")
+    for name in (".julycode", "node_modules", "build", "__pycache__"):
+        directory = tmp_path / name
+        directory.mkdir()
+        (directory / "hidden.py").write_text("", encoding="utf-8")
+
+    data = await FindFilesTool().execute({"pattern": "**/*.py"}, context(tmp_path))
+
+    assert data["matches"] == ["src/app.py"]
+
+
+@pytest.mark.asyncio
 async def test_search_code_returns_matches(tmp_path: Path) -> None:
     (tmp_path / "a.py").write_text("class ChatSession:\n    pass\n", encoding="utf-8")
 
@@ -333,7 +467,21 @@ async def test_search_code_returns_empty_matches(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_search_code_respects_path_and_max_results(tmp_path: Path) -> None:
+async def test_search_code_no_candidates_returns_empty(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / ".julycode").mkdir()
+    (tmp_path / ".julycode/hidden.py").write_text("needle\n", encoding="utf-8")
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: None)
+
+    data = await SearchCodeTool().execute({"pattern": "needle"}, context(tmp_path))
+
+    assert data == {"matches": [], "count": 0}
+
+
+@pytest.mark.asyncio
+async def test_search_code_directory_scope_respects_path_and_max_results(tmp_path: Path) -> None:
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     (tmp_path / "a/one.py").write_text("needle\nneedle\n", encoding="utf-8")
@@ -349,16 +497,276 @@ async def test_search_code_respects_path_and_max_results(tmp_path: Path) -> None
 
 
 @pytest.mark.asyncio
+async def test_search_code_single_file_returns_path_line_column_and_colon_text(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "single.py"
+    target.write_text("prefix needle:value\n", encoding="utf-8")
+    observed_commands: list[list[str]] = []
+
+    def fake_run(command, **kwargs):
+        _ = kwargs
+        observed_commands.append(command)
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout=f"{target}:1:8:prefix needle:value\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: "/fake/rg")
+    monkeypatch.setattr("julycode.tools.builtin.subprocess.run", fake_run)
+
+    data = await SearchCodeTool().execute(
+        {"pattern": "needle", "path": "single.py"},
+        context(tmp_path),
+    )
+
+    assert "--with-filename" in observed_commands[0]
+    assert data["matches"] == [
+        {
+            "path": "single.py",
+            "line": 1,
+            "column": 8,
+            "text": "prefix needle:value",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_search_code_single_file_without_match_returns_empty(tmp_path: Path) -> None:
+    (tmp_path / "single.py").write_text("hello\n", encoding="utf-8")
+
+    data = await SearchCodeTool().execute(
+        {"pattern": "missing", "path": "single.py"},
+        context(tmp_path),
+    )
+
+    assert data == {"matches": [], "count": 0}
+
+
+@pytest.mark.asyncio
+async def test_search_code_filters_explicit_scope_with_glob(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("needle\n", encoding="utf-8")
+    (tmp_path / "src/app.txt").write_text("needle\n", encoding="utf-8")
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: None)
+
+    data = await SearchCodeTool().execute(
+        {"pattern": "needle", "path": "src", "glob": "*.py"},
+        context(tmp_path),
+    )
+
+    assert [match["path"] for match in data["matches"]] == ["src/app.py"]
+
+
+@pytest.mark.asyncio
+async def test_search_code_large_excluded_runtime_without_rg(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("needle\n", encoding="utf-8")
+    (tmp_path / ".julycode").mkdir()
+    runtime_file = tmp_path / ".julycode/huge-session.txt"
+    runtime_file.write_text("needle\n" * 1000, encoding="utf-8")
+    original_read_text = Path.read_text
+    reads: list[Path] = []
+
+    def guarded_read_text(self: Path, *args, **kwargs):
+        reads.append(self.resolve())
+        if self.resolve() == runtime_file.resolve():
+            raise AssertionError("默认代码搜索不应读取 .julycode 运行数据")
+        return original_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: None)
+    monkeypatch.setattr(Path, "read_text", guarded_read_text)
+
+    data = await SearchCodeTool().execute({"pattern": "needle"}, context(tmp_path))
+
+    assert [match["path"] for match in data["matches"]] == ["src/app.py"]
+    assert runtime_file.resolve() not in reads
+
+
+@pytest.mark.asyncio
+async def test_search_code_ignored_scope_explicit_target_is_searchable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    subprocess.run(("git", "-C", str(tmp_path), "init"), check=True, capture_output=True)
+    (tmp_path / ".gitignore").write_text("ignored/\n", encoding="utf-8")
+    (tmp_path / "ignored").mkdir()
+    (tmp_path / "ignored/secret.py").write_text("needle\n", encoding="utf-8")
+    subprocess.run(
+        ("git", "-C", str(tmp_path), "add", ".gitignore"),
+        check=True,
+        capture_output=True,
+    )
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: None)
+
+    default_data = await SearchCodeTool().execute({"pattern": "needle"}, context(tmp_path))
+    explicit_data = await SearchCodeTool().execute(
+        {"pattern": "needle", "path": "ignored"},
+        context(tmp_path),
+    )
+
+    assert default_data["matches"] == []
+    assert [match["path"] for match in explicit_data["matches"]] == ["ignored/secret.py"]
+
+
+@pytest.mark.asyncio
+async def test_search_code_backend_parity_uses_same_ignored_scope(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("needle\n", encoding="utf-8")
+    (tmp_path / ".julycode").mkdir()
+    (tmp_path / ".julycode/hidden.py").write_text("needle\n", encoding="utf-8")
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: None)
+    python_data = await SearchCodeTool().execute({"pattern": "needle"}, context(tmp_path))
+
+    def fake_run(command, **kwargs):
+        _ = kwargs
+        if command[0] == "git":
+            return subprocess.CompletedProcess(command, 1, stdout=b"", stderr=b"")
+        separator = command.index("--")
+        paths = command[separator + 1 :]
+        stdout = "".join(f"{path}:1:1:needle\n" for path in paths)
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: "/fake/rg")
+    monkeypatch.setattr("julycode.tools.builtin.subprocess.run", fake_run)
+    rg_data = await SearchCodeTool().execute({"pattern": "needle"}, context(tmp_path))
+
+    assert rg_data == python_data
+    assert [match["path"] for match in rg_data["matches"]] == ["src/app.py"]
+
+
+@pytest.mark.asyncio
+async def test_search_code_rejects_invalid_regex_before_search(tmp_path: Path) -> None:
+    with pytest.raises(ToolExecutionError) as exc_info:
+        await SearchCodeTool().execute({"pattern": "["}, context(tmp_path))
+
+    assert exc_info.value.error_type == "invalid_arguments"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "failure",
+    [
+        OSError("rg 启动失败"),
+        subprocess.TimeoutExpired(["rg"], 5),
+    ],
+)
+async def test_search_code_rg_failures_fall_back_to_python(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure: BaseException,
+) -> None:
+    target = tmp_path / "single.py"
+    target.write_text("needle\n", encoding="utf-8")
+
+    def failing_run(command, **kwargs):
+        _ = command, kwargs
+        raise failure
+
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: "/fake/rg")
+    monkeypatch.setattr("julycode.tools.builtin.subprocess.run", failing_run)
+
+    data = await SearchCodeTool().execute(
+        {"pattern": "needle", "path": "single.py"},
+        context(tmp_path),
+    )
+
+    assert [match["path"] for match in data["matches"]] == ["single.py"]
+
+
+@pytest.mark.asyncio
+async def test_search_code_rg_error_or_malformed_output_falls_back_to_python(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "single.py"
+    target.write_text("needle\n", encoding="utf-8")
+    results = iter(
+        [
+            subprocess.CompletedProcess(["rg"], 2, stdout="", stderr="unsupported"),
+            subprocess.CompletedProcess(["rg"], 0, stdout="malformed\n", stderr=""),
+        ]
+    )
+
+    def fake_run(command, **kwargs):
+        _ = command, kwargs
+        return next(results)
+
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: "/fake/rg")
+    monkeypatch.setattr("julycode.tools.builtin.subprocess.run", fake_run)
+    tool = SearchCodeTool()
+
+    from_error = await tool.execute(
+        {"pattern": "needle", "path": "single.py"},
+        context(tmp_path),
+    )
+    from_malformed = await tool.execute(
+        {"pattern": "needle", "path": "single.py"},
+        context(tmp_path),
+    )
+
+    assert from_error["matches"] == from_malformed["matches"]
+    assert from_error["matches"][0]["path"] == "single.py"
+
+
+@pytest.mark.asyncio
+async def test_search_code_rg_batches_candidates_and_stops_after_max_results(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "src").mkdir()
+    for name in ("a.py", "b.py", "c.py"):
+        (tmp_path / "src" / name).write_text("needle\n", encoding="utf-8")
+    commands: list[list[str]] = []
+
+    def fake_run(command, **kwargs):
+        _ = kwargs
+        commands.append(command)
+        separator = command.index("--")
+        paths = command[separator + 1 :]
+        stdout = "".join(f"{path}:1:1:needle\n" for path in paths)
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: "/fake/rg")
+    monkeypatch.setattr("julycode.tools.builtin.subprocess.run", fake_run)
+    monkeypatch.setattr(SearchCodeTool, "_rg_batch_size", 2)
+
+    data = await SearchCodeTool().execute(
+        {"pattern": "needle", "path": "src", "max_results": 3},
+        context(tmp_path),
+    )
+
+    assert len(commands) == 2
+    assert [match["path"] for match in data["matches"]] == [
+        "src/a.py",
+        "src/b.py",
+        "src/c.py",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_search_code_python_fallback_does_not_block_event_loop(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def slow_python_search(self, pattern, search_root, glob, max_results, tool_context):
-        _ = self, pattern, search_root, glob, max_results, tool_context
+    def slow_python_search(self, regex, candidates, max_results, tool_context):
+        _ = self, regex, candidates, max_results, tool_context
         time.sleep(0.2)
         return {"matches": [], "count": 0}
 
-    monkeypatch.setattr("mewcode.tools.builtin.shutil.which", lambda name: None)
+    monkeypatch.setattr("julycode.tools.builtin.shutil.which", lambda name: None)
     monkeypatch.setattr(SearchCodeTool, "_search_with_python", slow_python_search)
     ticker = asyncio.create_task(_collect_ticks())
     await asyncio.sleep(0)
@@ -413,11 +821,16 @@ def test_default_registry_marks_tool_safety() -> None:
 
 def test_builtin_tool_descriptions_include_operational_rules() -> None:
     specs = {spec.name: spec for spec in create_default_registry().specs()}
+    read_properties = specs["read_file"].parameters_schema["properties"]
 
     assert "编辑或总结文件前" in specs["read_file"].description
+    assert "offset" in specs["read_file"].description
+    assert read_properties["offset"]["type"] == "integer"
+    assert read_properties["limit"]["type"] == "integer"
     assert "覆盖写入完整文件内容" in specs["write_file"].description
     assert "修改前应先读取或搜索目标文件" in specs["edit_file"].description
     assert "可能有副作用" in specs["run_command"].description
+    assert "不要用它替代" in specs["run_command"].description
     assert "不知道准确文件名时优先使用" in specs["find_files"].description
     assert "待编辑原文时优先使用" in specs["search_code"].description
 

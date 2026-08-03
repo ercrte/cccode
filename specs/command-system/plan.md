@@ -1,4 +1,4 @@
-# MewCode 命令系统 Plan
+# JulyCode 命令系统 Plan
 
 ## 架构概览
 命令系统拆成四层：命令模型、注册中心、命令分发器、界面适配层。命令模型描述元数据、解析结果和处理协议；注册中心负责登记内置命令、大小写不敏感查找、别名冲突检测和补全候选；命令分发器负责把用户输入分成空输入、斜杠命令、未知命令和普通对话；界面适配层由 TUI 实现，向命令处理函数提供展示消息、发送用户消息、切换模式、读取状态和刷新状态栏等能力。
@@ -220,12 +220,12 @@ class CommandDispatcher:
 - `PromptBuilder` 的稳定提示和运行时提示改为描述默认模式与计划模式，不再描述旧执行模式和待执行计划。
 
 ### TUI 命令上下文适配器
-**职责：** 在 `MewCodeApp` 内实现 `CommandContext`，把命令行为映射到现有 Textual 界面、上下文管理、权限控制、记忆管理和 Agent Loop。  
-**对外接口：** `MewCodeApp` 提供内部方法实现 `CommandContext`，或使用轻量 adapter 包装 app。  
-**依赖：** `MewCodeApp`、`StatusBar`、`MessageList`、`MessageView`、`ContextManager`、`PermissionController`、`SessionMemoryManager`、`McpManager`。
+**职责：** 在 `JulyCodeApp` 内实现 `CommandContext`，把命令行为映射到现有 Textual 界面、上下文管理、权限控制、记忆管理和 Agent Loop。  
+**对外接口：** `JulyCodeApp` 提供内部方法实现 `CommandContext`，或使用轻量 adapter 包装 app。  
+**依赖：** `JulyCodeApp`、`StatusBar`、`MessageList`、`MessageView`、`ContextManager`、`PermissionController`、`SessionMemoryManager`、`McpManager`。
 
 关键实现点：
-- `MewCodeApp.__init__` 创建并持有 `command_registry`、`command_dispatcher`、`current_mode` 和 `last_usage`。
+- `JulyCodeApp.__init__` 创建并持有 `command_registry`、`command_dispatcher`、`current_mode` 和 `last_usage`。
 - `on_input_submitted` 先做空输入早返回，再清空输入框并启动统一输入任务。
 - 统一输入任务先调用 `CommandDispatcher.dispatch`；返回 `False` 时用 `current_mode` 构造普通 `AgentCommand`。
 - 本地命令运行期间禁用输入框，执行结束后恢复输入框。
@@ -249,12 +249,12 @@ class CommandCompletionMenu(Vertical):
     def set_options(self, options: Sequence[CommandDefinition]) -> None: ...
     def clear_options(self) -> None: ...
 ```
-**依赖：** TUI widgets 和命令模型。`MewCodeApp.action_complete_command` 读取 `Composer.value`，调用 `CommandRegistry.completion`，单匹配时更新输入框，多匹配时更新菜单；输入提交或普通字符输入后隐藏菜单。
+**依赖：** TUI widgets 和命令模型。`JulyCodeApp.action_complete_command` 读取 `Composer.value`，调用 `CommandRegistry.completion`，单匹配时更新输入框，多匹配时更新菜单；输入提交或普通字符输入后隐藏菜单。
 
 ## 模块交互
 1. CLI 启动时加载配置、Provider、工具注册表、MCP、上下文和记忆管理器。
 2. CLI 调用 `create_builtin_command_registry()` 创建命令注册中心；注册阶段如有冲突，抛出 `CommandRegistryError`，CLI 打印中文错误并返回 1。
-3. CLI 创建 `MewCodeApp` 时注入命令注册中心；`MewCodeApp` 创建 `CommandDispatcher`，初始化 `current_mode="normal"`，状态栏显示 `[DEFAULT]`。
+3. CLI 创建 `JulyCodeApp` 时注入命令注册中心；`JulyCodeApp` 创建 `CommandDispatcher`，初始化 `current_mode="normal"`，状态栏显示 `[DEFAULT]`。
 4. 用户回车提交输入后，TUI 清空输入框并禁用输入。
 5. 分发器解析输入：
    - 空输入：直接结束，不显示消息。
@@ -270,21 +270,21 @@ class CommandCompletionMenu(Vertical):
 
 ## 文件组织
 ```text
-mewcode/
-├── src/mewcode/commands/                 — 命令系统包，替换现有单文件命令解析
+julycode/
+├── src/julycode/commands/                 — 命令系统包，替换现有单文件命令解析
 │   ├── __init__.py                       — 对外重导出兼容入口
 │   ├── models.py                         — 命令元数据、解析结果、上下文协议、状态快照
 │   ├── registry.py                       — 注册中心、冲突检测、解析、补全
 │   ├── builtin.py                        — 十个内置命令定义和 handler
 │   └── dispatcher.py                     — 输入分发器
-├── src/mewcode/agent.py                  — 调整 AgentMode 使用范围，移除旧 do/待计划命令副作用
-├── src/mewcode/prompting/modules.py      — 更新模式说明，去掉旧执行模式描述
-├── src/mewcode/prompting/builder.py      — 运行时模式只处理 normal/plan
-├── src/mewcode/session.py                — 保留会话消息和上下文状态；待执行计划不再被命令系统使用
-├── src/mewcode/tools/scheduler.py        — ToolPolicy 只区分 normal/plan
-├── src/mewcode/tui/app.py                — 接入命令注册中心、分发器、持久模式、状态快照、命令上下文
-├── src/mewcode/tui/widgets.py            — 状态栏模式标记、命令补全菜单
-├── src/mewcode/cli.py                    — 启动阶段创建命令注册中心，冲突时报错退出
+├── src/julycode/agent.py                  — 调整 AgentMode 使用范围，移除旧 do/待计划命令副作用
+├── src/julycode/prompting/modules.py      — 更新模式说明，去掉旧执行模式描述
+├── src/julycode/prompting/builder.py      — 运行时模式只处理 normal/plan
+├── src/julycode/session.py                — 保留会话消息和上下文状态；待执行计划不再被命令系统使用
+├── src/julycode/tools/scheduler.py        — ToolPolicy 只区分 normal/plan
+├── src/julycode/tui/app.py                — 接入命令注册中心、分发器、持久模式、状态快照、命令上下文
+├── src/julycode/tui/widgets.py            — 状态栏模式标记、命令补全菜单
+├── src/julycode/cli.py                    — 启动阶段创建命令注册中心，冲突时报错退出
 ├── tests/test_commands.py                — 命令注册、解析、帮助、分发、内置命令单元测试
 ├── tests/test_agent.py                   — 更新 Agent 模式行为测试，删除旧 do 语义断言
 ├── tests/test_prompting.py               — 更新运行时提示模式文本测试
@@ -296,7 +296,7 @@ mewcode/
 
 | 决策点 | 选择 | 理由 |
 |--------|------|------|
-| 命令系统组织 | 将 `mewcode.commands` 从单文件升级为包，并通过 `__init__.py` 重导出常用类型 | 注册、内置命令、分发和模型职责已经超过一个函数；包结构便于测试和后续扩展，同时保留导入入口 |
+| 命令系统组织 | 将 `julycode.commands` 从单文件升级为包，并通过 `__init__.py` 重导出常用类型 | 注册、内置命令、分发和模型职责已经超过一个函数；包结构便于测试和后续扩展，同时保留导入入口 |
 | 命令名存储 | 内部不带 `/`，展示和输入时带 `/` | 降低别名冲突检测和补全实现复杂度，帮助文本仍符合用户习惯 |
 | 匹配规则 | 对命令名和别名做 `casefold()`，参数只做首尾空白裁剪 | 满足大小写不敏感，同时不破坏用户传给 `/review` 等命令的参数语义 |
 | 启动冲突处理 | 注册时抛 `CommandRegistryError`，CLI 捕获后返回 1 | 等价于启动阶段失败，避免运行时才发现别名冲突 |

@@ -1,33 +1,33 @@
-# MewCode Skill 系统 Tasks
+# JulyCode Skill 系统 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/skills/__init__.py` | 导出 Skill 子系统公共类型、管理器和工具 |
-| 新建 | `src/mewcode/skills/models.py` | 定义 Skill frontmatter、目录、激活状态、报告和提示上下文 |
-| 新建 | `src/mewcode/skills/loader.py` | 解析 Markdown frontmatter、发现三层 Skill、处理优先级覆盖 |
-| 新建 | `src/mewcode/skills/manager.py` | 管理热更新、白名单校验、激活状态、专属工具和动态命令 |
-| 新建 | `src/mewcode/skills/tools.py` | 实现 `load_skill` 系统工具和目录型 Skill 脚本工具 |
-| 新建 | `src/mewcode/skills/commands.py` | 把可用 Skill 注册成斜杠短命令 |
-| 新建 | `src/mewcode/skills/execution.py` | 实现共享模式和独立模式执行调度、摘要回流 |
-| 新建 | `src/mewcode/skills/builtin/__init__.py` | 内置 Skill 包资源标记 |
-| 新建 | `src/mewcode/skills/builtin/commit.md` | 内置 commit Skill |
-| 新建 | `src/mewcode/skills/builtin/review.md` | 内置 review Skill |
-| 新建 | `src/mewcode/skills/builtin/test.md` | 内置 test Skill |
-| 修改 | `src/mewcode/tools/base.py` | `ToolSpec` 增加 `visibility` |
-| 修改 | `src/mewcode/tools/registry.py` | 支持动态 origin 注册、注销和工具名集合 |
-| 修改 | `src/mewcode/tools/scheduler.py` | 支持 Skill 白名单、系统工具例外和权限跳过 |
-| 修改 | `src/mewcode/prompting/base.py` | `RuntimePromptContext` 增加 Skill 上下文 |
-| 修改 | `src/mewcode/prompting/builder.py` | 注入可用 Skill 摘要和已激活完整 SOP |
-| 修改 | `src/mewcode/commands/models.py` | `AgentCommand` 和 `CommandContext` 增加 Skill 相关字段/方法 |
-| 修改 | `src/mewcode/commands/registry.py` | 支持动态命令按 origin 注销或重建 |
-| 修改 | `src/mewcode/commands/builtin.py` | `/clear` 清理激活 Skill，移除静态 `/review` |
-| 修改 | `src/mewcode/commands/__init__.py` | 导出新增 Skill 命令上下文相关类型 |
-| 修改 | `src/mewcode/agent.py` | 接入 SkillManager、模型覆盖、白名单策略和独立执行 |
-| 修改 | `src/mewcode/providers/factory.py` | 支持按 model override 创建 Provider |
-| 修改 | `src/mewcode/cli.py` | 创建 SkillManager、注册 `load_skill`、注入 TUI |
-| 修改 | `src/mewcode/tui/app.py` | 持有 SkillManager，刷新 Skill，展示警告，执行 Skill 命令 |
+| 新建 | `src/julycode/skills/__init__.py` | 导出 Skill 子系统公共类型、管理器和工具 |
+| 新建 | `src/julycode/skills/models.py` | 定义 Skill frontmatter、目录、激活状态、报告和提示上下文 |
+| 新建 | `src/julycode/skills/loader.py` | 解析 Markdown frontmatter、发现三层 Skill、处理优先级覆盖 |
+| 新建 | `src/julycode/skills/manager.py` | 管理热更新、白名单校验、激活状态、专属工具和动态命令 |
+| 新建 | `src/julycode/skills/tools.py` | 实现 `load_skill` 系统工具和目录型 Skill 脚本工具 |
+| 新建 | `src/julycode/skills/commands.py` | 把可用 Skill 注册成斜杠短命令 |
+| 新建 | `src/julycode/skills/execution.py` | 实现共享模式和独立模式执行调度、摘要回流 |
+| 新建 | `src/julycode/skills/builtin/__init__.py` | 内置 Skill 包资源标记 |
+| 新建 | `src/julycode/skills/builtin/commit.md` | 内置 commit Skill |
+| 新建 | `src/julycode/skills/builtin/review.md` | 内置 review Skill |
+| 新建 | `src/julycode/skills/builtin/test.md` | 内置 test Skill |
+| 修改 | `src/julycode/tools/base.py` | `ToolSpec` 增加 `visibility` |
+| 修改 | `src/julycode/tools/registry.py` | 支持动态 origin 注册、注销和工具名集合 |
+| 修改 | `src/julycode/tools/scheduler.py` | 支持 Skill 白名单、系统工具例外和权限跳过 |
+| 修改 | `src/julycode/prompting/base.py` | `RuntimePromptContext` 增加 Skill 上下文 |
+| 修改 | `src/julycode/prompting/builder.py` | 注入可用 Skill 摘要和已激活完整 SOP |
+| 修改 | `src/julycode/commands/models.py` | `AgentCommand` 和 `CommandContext` 增加 Skill 相关字段/方法 |
+| 修改 | `src/julycode/commands/registry.py` | 支持动态命令按 origin 注销或重建 |
+| 修改 | `src/julycode/commands/builtin.py` | `/clear` 清理激活 Skill，移除静态 `/review` |
+| 修改 | `src/julycode/commands/__init__.py` | 导出新增 Skill 命令上下文相关类型 |
+| 修改 | `src/julycode/agent.py` | 接入 SkillManager、模型覆盖、白名单策略和独立执行 |
+| 修改 | `src/julycode/providers/factory.py` | 支持按 model override 创建 Provider |
+| 修改 | `src/julycode/cli.py` | 创建 SkillManager、注册 `load_skill`、注入 TUI |
+| 修改 | `src/julycode/tui/app.py` | 持有 SkillManager，刷新 Skill，展示警告，执行 Skill 命令 |
 | 修改 | `pyproject.toml` | 打包内置 Skill Markdown |
 | 修改 | `README.md` | 说明 Skill 格式、目录、加载、模式、白名单和内置样板 |
 | 新建 | `tests/test_skills_loader.py` | 覆盖 Skill 解析、优先级、警告和目录型工具 |
@@ -43,10 +43,10 @@
 
 ## T1: 建立 Skill 包和数据模型
 
-**文件：** `src/mewcode/skills/__init__.py`, `src/mewcode/skills/models.py`, `tests/test_skills_loader.py`  
+**文件：** `src/julycode/skills/__init__.py`, `src/julycode/skills/models.py`, `tests/test_skills_loader.py`  
 **依赖：** 无  
 **步骤：**
-1. 新建 `src/mewcode/skills/` 包和 `__init__.py`。
+1. 新建 `src/julycode/skills/` 包和 `__init__.py`。
 2. 在 `models.py` 中定义 `SkillSourceScope`、`SkillExecutionMode`、`SkillFrontmatter`、`SkillRoots`、`SkillSummary`、`SkillWarning`、`SkillError`、`SkillFingerprint`、`SkillDefinition`、`SkillToolDefinition`、`SkillCatalog`、`SkillActivation`、`SkillPromptContext`、`SkillRefreshReport`、`SkillExecutionSummary`。
 3. 在 `__init__.py` 中导出这些公共模型。
 4. 新建 `tests/test_skills_loader.py`，添加数据模型可导入和默认值断言。
@@ -55,7 +55,7 @@
 
 ## T2: 实现 Skill frontmatter 解析
 
-**文件：** `src/mewcode/skills/loader.py`, `src/mewcode/skills/__init__.py`, `tests/test_skills_loader.py`  
+**文件：** `src/julycode/skills/loader.py`, `src/julycode/skills/__init__.py`, `tests/test_skills_loader.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 Markdown frontmatter 分割，要求文件以 `---` 开头并存在结束分隔符。
@@ -69,7 +69,7 @@
 
 ## T3: 实现三层发现和优先级覆盖
 
-**文件：** `src/mewcode/skills/loader.py`, `tests/test_skills_loader.py`  
+**文件：** `src/julycode/skills/loader.py`, `tests/test_skills_loader.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `SkillLoader.discover()`，扫描项目级、用户级和内置级 Skill 根目录。
@@ -84,7 +84,7 @@
 
 ## T4: 解析目录型 Skill 专属工具定义
 
-**文件：** `src/mewcode/skills/loader.py`, `tests/test_skills_loader.py`  
+**文件：** `src/julycode/skills/loader.py`, `tests/test_skills_loader.py`  
 **依赖：** T3  
 **步骤：**
 1. 在目录型 Skill 中扫描 `tools/*.yaml`。
@@ -98,7 +98,7 @@
 
 ## T5: 扩展工具基础类型和注册表
 
-**文件：** `src/mewcode/tools/base.py`, `src/mewcode/tools/registry.py`, `tests/test_tools.py`, `tests/test_skills_manager.py`  
+**文件：** `src/julycode/tools/base.py`, `src/julycode/tools/registry.py`, `tests/test_tools.py`, `tests/test_skills_manager.py`  
 **依赖：** T1  
 **步骤：**
 1. 在 `ToolSpec` 中增加 `visibility: ToolVisibility = "normal"`。
@@ -112,7 +112,7 @@
 
 ## T6: 实现 Skill 脚本工具
 
-**文件：** `src/mewcode/skills/tools.py`, `tests/test_skills_tools.py`  
+**文件：** `src/julycode/skills/tools.py`, `tests/test_skills_tools.py`  
 **依赖：** T4, T5  
 **步骤：**
 1. 实现 `SkillScriptTool`，从 `SkillToolDefinition` 构造 `ToolSpec`。
@@ -126,7 +126,7 @@
 
 ## T7: 实现 load_skill 系统工具
 
-**文件：** `src/mewcode/skills/tools.py`, `tests/test_skills_tools.py`  
+**文件：** `src/julycode/skills/tools.py`, `tests/test_skills_tools.py`  
 **依赖：** T6  
 **步骤：**
 1. 实现 `LoadSkillTool`，工具名为 `load_skill`。
@@ -140,7 +140,7 @@
 
 ## T8: 实现 SkillManager 激活和白名单校验
 
-**文件：** `src/mewcode/skills/manager.py`, `tests/test_skills_manager.py`  
+**文件：** `src/julycode/skills/manager.py`, `tests/test_skills_manager.py`  
 **依赖：** T3, T4, T5, T6, T7  
 **步骤：**
 1. 实现 `SkillManager.refresh_if_changed()`，无变化时返回 `changed=False`。
@@ -154,7 +154,7 @@
 
 ## T9: 实现模型覆盖解析
 
-**文件：** `src/mewcode/skills/manager.py`, `src/mewcode/providers/factory.py`, `tests/test_skills_manager.py`, `tests/test_skills_execution.py`  
+**文件：** `src/julycode/skills/manager.py`, `src/julycode/providers/factory.py`, `tests/test_skills_manager.py`, `tests/test_skills_execution.py`  
 **依赖：** T8  
 **步骤：**
 1. 实现 `SkillManager.resolve_model_override(requested)`。
@@ -167,7 +167,7 @@
 
 ## T10: 注册 Skill 斜杠命令
 
-**文件：** `src/mewcode/skills/commands.py`, `src/mewcode/commands/registry.py`, `src/mewcode/commands/__init__.py`, `tests/test_commands.py`, `tests/test_skills_manager.py`  
+**文件：** `src/julycode/skills/commands.py`, `src/julycode/commands/registry.py`, `src/julycode/commands/__init__.py`, `tests/test_commands.py`, `tests/test_skills_manager.py`  
 **依赖：** T8  
 **步骤：**
 1. 实现 `register_skill_commands(registry, manager)`。
@@ -181,7 +181,7 @@
 
 ## T11: 迁移内置 review 命令并调整 clear
 
-**文件：** `src/mewcode/commands/models.py`, `src/mewcode/commands/builtin.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/commands/models.py`, `src/julycode/commands/builtin.py`, `tests/test_commands.py`  
 **依赖：** T10  
 **步骤：**
 1. 在 `CommandContext` 中增加 `invoke_skill()`、`clear_active_skills()`、`skill_snapshot()`。
@@ -194,11 +194,11 @@
 
 ## T12: 在运行时提示中注入 Skill 上下文
 
-**文件：** `src/mewcode/prompting/base.py`, `src/mewcode/prompting/builder.py`, `tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/base.py`, `src/julycode/prompting/builder.py`, `tests/test_prompting.py`  
 **依赖：** T8  
 **步骤：**
 1. 在 `RuntimePromptContext` 中增加 `skill_context` 字段。
-2. 在 `<mewcode_runtime_context>` 内注入可用 Skill 摘要，只包含名字和一句说明。
+2. 在 `<julycode_runtime_context>` 内注入可用 Skill 摘要，只包含名字和一句说明。
 3. 在同一运行时块内注入已激活 Skill 的名字、说明、执行模式、参数、工具白名单、来源和完整 SOP。
 4. 确保 Skill 信息位于项目指令、长期记忆和上下文摘要之前。
 5. 添加只有摘要不含正文、激活后包含完整 SOP、多个激活 Skill 同时出现、警告可见、排序稳定测试。
@@ -207,7 +207,7 @@
 
 ## T13: 更新工具策略和调度器
 
-**文件：** `src/mewcode/tools/scheduler.py`, `tests/test_tool_scheduler.py`  
+**文件：** `src/julycode/tools/scheduler.py`, `tests/test_tool_scheduler.py`  
 **依赖：** T5, T7, T8  
 **步骤：**
 1. 扩展 `ToolPolicy(mode, skill_tools=None)`。
@@ -222,7 +222,7 @@
 
 ## T14: AgentCommand 和 Agent Loop 接入 Skill
 
-**文件：** `src/mewcode/commands/models.py`, `src/mewcode/agent.py`, `tests/test_agent.py`  
+**文件：** `src/julycode/commands/models.py`, `src/julycode/agent.py`, `tests/test_agent.py`  
 **依赖：** T8, T9, T12, T13  
 **步骤：**
 1. 给 `AgentCommand` 增加 `model_override` 和 `skill_name` 可选字段。
@@ -237,20 +237,20 @@
 
 ## T15: 实现共享模式 Skill 执行
 
-**文件：** `src/mewcode/skills/execution.py`, `src/mewcode/tui/app.py`, `tests/test_skills_execution.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/skills/execution.py`, `src/julycode/tui/app.py`, `tests/test_skills_execution.py`, `tests/test_tui_smoke.py`  
 **依赖：** T10, T14  
 **步骤：**
 1. 实现 `SkillExecutor.invoke_from_command()` 的共享模式分支。
 2. 共享模式加载 Skill 后构造 `AgentCommand`，`visible_text` 保留原斜杠命令，`model_text` 表达执行该 Skill 的目标。
-3. 在 `MewCodeApp` 中实现 `invoke_skill()`，调用 SkillExecutor。
+3. 在 `JulyCodeApp` 中实现 `invoke_skill()`，调用 SkillExecutor。
 4. 确认共享模式执行会走主 `send_prompt()`，用户可见触发信息进入主界面。
-5. 添加 `/review src/mewcode` 触发共享 Skill、参数替换、主历史保留用户消息和最终助手消息测试。
+5. 添加 `/review src/julycode` 触发共享 Skill、参数替换、主历史保留用户消息和最终助手消息测试。
 
 **验证：** 运行 `python -m pytest tests/test_skills_execution.py tests/test_tui_smoke.py -q -k "shared or invoke_skill"`，期望通过。
 
 ## T16: 实现独立模式 Skill 执行
 
-**文件：** `src/mewcode/skills/execution.py`, `src/mewcode/agent.py`, `tests/test_skills_execution.py`, `tests/test_agent.py`  
+**文件：** `src/julycode/skills/execution.py`, `src/julycode/agent.py`, `tests/test_skills_execution.py`, `tests/test_agent.py`  
 **依赖：** T14, T15  
 **步骤：**
 1. 实现 `SkillExecutor.run_isolated()`，创建临时 `ChatSession`。
@@ -265,11 +265,11 @@
 
 ## T17: TUI 启动、热更新和错误展示接入
 
-**文件：** `src/mewcode/cli.py`, `src/mewcode/tui/app.py`, `tests/test_tui_smoke.py`, `tests/test_skills_manager.py`  
+**文件：** `src/julycode/cli.py`, `src/julycode/tui/app.py`, `tests/test_tui_smoke.py`, `tests/test_skills_manager.py`  
 **依赖：** T8, T10, T13, T15  
 **步骤：**
 1. CLI 创建 `SkillManager` 并注册 `LoadSkillTool` 到默认工具注册表。
-2. `MewCodeApp` 构造函数接收并保存 `skill_manager`。
+2. `JulyCodeApp` 构造函数接收并保存 `skill_manager`。
 3. TUI mount 初始化 MCP 后调用 `skill_manager.refresh_if_changed(registry, command_registry)`。
 4. 启动刷新出现 warning 时在界面展示中文警告。
 5. 启动刷新出现 fatal error 时展示错误并禁用输入。
@@ -280,7 +280,7 @@
 
 ## T18: 添加内置 commit、review、test Skill
 
-**文件：** `src/mewcode/skills/builtin/__init__.py`, `src/mewcode/skills/builtin/commit.md`, `src/mewcode/skills/builtin/review.md`, `src/mewcode/skills/builtin/test.md`, `pyproject.toml`, `tests/test_skills_loader.py`, `tests/test_commands.py`  
+**文件：** `src/julycode/skills/builtin/__init__.py`, `src/julycode/skills/builtin/commit.md`, `src/julycode/skills/builtin/review.md`, `src/julycode/skills/builtin/test.md`, `pyproject.toml`, `tests/test_skills_loader.py`, `tests/test_commands.py`  
 **依赖：** T3, T10, T11, T13  
 **步骤：**
 1. 新建内置 Skill 包资源目录。
@@ -332,7 +332,7 @@
 
 ## T22: 项目全量自动化测试
 
-**文件：** `src/mewcode/`, `tests/`  
+**文件：** `src/julycode/`, `tests/`  
 **依赖：** T21  
 **步骤：**
 1. 运行项目全量测试。
@@ -343,17 +343,17 @@
 
 ## T23: tmux 端到端验证
 
-**文件：** `src/mewcode/`, `tests/e2e_mock_openai_server.py`, `README.md`  
+**文件：** `src/julycode/`, `tests/e2e_mock_openai_server.py`, `README.md`  
 **依赖：** T22  
 **步骤：**
-1. 在 tmux 中启动 MewCode，使用测试配置或 mock OpenAI server。
+1. 在 tmux 中启动 JulyCode，使用测试配置或 mock OpenAI server。
 2. 输入 `/help`，确认 commit、review、test 三个 Skill 命令可见。
 3. 输入 `/review README.md`，确认触发 Skill，界面显示用户命令，模型请求带完整 SOP。
 4. 输入一个需要按需加载 Skill 的普通请求，确认模型能调用 `load_skill`，后续请求包含完整 SOP。
 5. 输入 `/clear` 后再发普通请求，确认此前激活 Skill 不再出现在运行时上下文。
 6. 对照后续 `checklist.md` 逐项记录通过或失败证据。
 
-**验证：** 运行 `tmux capture-pane -pt mewcode-skill-e2e`，期望能看到 `/help`、`/review README.md`、`load_skill` 调用或对应工具状态、`/clear` 后的可继续对话记录。
+**验证：** 运行 `tmux capture-pane -pt julycode-skill-e2e`，期望能看到 `/help`、`/review README.md`、`load_skill` 调用或对应工具状态、`/clear` 后的可继续对话记录。
 
 ## 执行顺序
 

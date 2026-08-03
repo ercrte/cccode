@@ -1,30 +1,30 @@
-# MewCode 会话恢复与长期记忆 Tasks
+# JulyCode 会话恢复与长期记忆 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/session_id.py` | 生成和校验 `YYYYMMDD-HHMMSS-xxxx` 会话 ID |
-| 新建 | `src/mewcode/memory/__init__.py` | 导出记忆子系统公开类型 |
-| 新建 | `src/mewcode/memory/models.py` | 定义指令、会话恢复、笔记、索引和后台任务模型 |
-| 新建 | `src/mewcode/memory/instructions.py` | 三层项目指令加载和 `@include` 展开 |
-| 新建 | `src/mewcode/memory/session_store.py` | JSONL 会话追加写、扫描、恢复和过期清理 |
-| 新建 | `src/mewcode/memory/recovery.py` | 协议安全截断和启动恢复编排 |
-| 新建 | `src/mewcode/memory/notes.py` | Markdown 笔记 frontmatter 读写和敏感信息过滤 |
-| 新建 | `src/mewcode/memory/index.py` | 用户级和项目级记忆索引生成、读取和裁剪 |
-| 新建 | `src/mewcode/memory/updater.py` | 自然完成后的无工具 LLM 自动笔记更新 |
-| 新建 | `src/mewcode/memory/manager.py` | 统一启动、运行时知识上下文和后台任务管理 |
-| 修改 | `src/mewcode/config.py` | 解析 `memory:` 配置并挂到 `AppConfig` |
-| 修改 | `src/mewcode/context/models.py` | 让 `ContextState.session_id` 使用新会话 ID 格式 |
-| 修改 | `src/mewcode/context/manager.py` | 重量压缩成功后追加 JSONL checkpoint |
-| 修改 | `src/mewcode/session.py` | 支持 recorder、持久化追加和 checkpoint |
-| 修改 | `src/mewcode/prompting/base.py` | 让 `RuntimePromptContext` 携带 `KnowledgeContext` |
-| 修改 | `src/mewcode/prompting/builder.py` | 注入项目指令、记忆索引和恢复提醒 |
-| 修改 | `src/mewcode/prompting/__init__.py` | 导出扩展后的提示类型 |
-| 修改 | `src/mewcode/agent.py` | 请求前读取最新知识上下文，自然完成后调度自动笔记 |
-| 修改 | `src/mewcode/tui/app.py` | 显示恢复告警，传递 memory manager |
-| 修改 | `src/mewcode/cli.py` | 解析 `--new-session`，启动时执行会话恢复 |
-| 修改 | `.gitignore` | 忽略 `.mewcode/sessions/` 和 `.mewcode/memory/` 自动产物 |
+| 新建 | `src/julycode/session_id.py` | 生成和校验 `YYYYMMDD-HHMMSS-xxxx` 会话 ID |
+| 新建 | `src/julycode/memory/__init__.py` | 导出记忆子系统公开类型 |
+| 新建 | `src/julycode/memory/models.py` | 定义指令、会话恢复、笔记、索引和后台任务模型 |
+| 新建 | `src/julycode/memory/instructions.py` | 三层项目指令加载和 `@include` 展开 |
+| 新建 | `src/julycode/memory/session_store.py` | JSONL 会话追加写、扫描、恢复和过期清理 |
+| 新建 | `src/julycode/memory/recovery.py` | 协议安全截断和启动恢复编排 |
+| 新建 | `src/julycode/memory/notes.py` | Markdown 笔记 frontmatter 读写和敏感信息过滤 |
+| 新建 | `src/julycode/memory/index.py` | 用户级和项目级记忆索引生成、读取和裁剪 |
+| 新建 | `src/julycode/memory/updater.py` | 自然完成后的无工具 LLM 自动笔记更新 |
+| 新建 | `src/julycode/memory/manager.py` | 统一启动、运行时知识上下文和后台任务管理 |
+| 修改 | `src/julycode/config.py` | 解析 `memory:` 配置并挂到 `AppConfig` |
+| 修改 | `src/julycode/context/models.py` | 让 `ContextState.session_id` 使用新会话 ID 格式 |
+| 修改 | `src/julycode/context/manager.py` | 重量压缩成功后追加 JSONL checkpoint |
+| 修改 | `src/julycode/session.py` | 支持 recorder、持久化追加和 checkpoint |
+| 修改 | `src/julycode/prompting/base.py` | 让 `RuntimePromptContext` 携带 `KnowledgeContext` |
+| 修改 | `src/julycode/prompting/builder.py` | 注入项目指令、记忆索引和恢复提醒 |
+| 修改 | `src/julycode/prompting/__init__.py` | 导出扩展后的提示类型 |
+| 修改 | `src/julycode/agent.py` | 请求前读取最新知识上下文，自然完成后调度自动笔记 |
+| 修改 | `src/julycode/tui/app.py` | 显示恢复告警，传递 memory manager |
+| 修改 | `src/julycode/cli.py` | 解析 `--new-session`，启动时执行会话恢复 |
+| 修改 | `.gitignore` | 忽略 `.julycode/sessions/` 和 `.julycode/memory/` 自动产物 |
 | 修改 | `README.md` | 说明项目指令、会话恢复、自动记忆和配置 |
 | 新建 | `tests/test_session_id.py` | 覆盖会话 ID 格式和同秒防撞 |
 | 新建 | `tests/test_memory_instructions.py` | 覆盖三层指令、include、环路和越界 |
@@ -43,7 +43,7 @@
 
 ## T1: 建立会话 ID
 
-**文件：** `src/mewcode/session_id.py`、`tests/test_session_id.py`  
+**文件：** `src/julycode/session_id.py`、`tests/test_session_id.py`  
 **依赖：** 无  
 **步骤：**
 1. 新建 `SessionId = NewType("SessionId", str)`。
@@ -55,7 +55,7 @@
 
 ## T2: 定义记忆模型
 
-**文件：** `src/mewcode/memory/__init__.py`、`src/mewcode/memory/models.py`、`tests/test_session_id.py`  
+**文件：** `src/julycode/memory/__init__.py`、`src/julycode/memory/models.py`、`tests/test_session_id.py`  
 **依赖：** T1  
 **步骤：**
 1. 在 `models.py` 定义 `SessionMemoryConfig`，默认值与 `plan.md` 一致。
@@ -67,7 +67,7 @@
 
 ## T3: 解析 memory 配置
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** T2  
 **步骤：**
 1. 给 `AppConfig` 增加 `memory: SessionMemoryConfig = field(default_factory=SessionMemoryConfig)`。
@@ -79,7 +79,7 @@
 
 ## T4: 让运行期 session 使用持久会话 ID
 
-**文件：** `src/mewcode/context/models.py`、`tests/test_session.py`  
+**文件：** `src/julycode/context/models.py`、`tests/test_session.py`  
 **依赖：** T1  
 **步骤：**
 1. 将 `ContextState.session_id` 默认值从随机十六进制改为 `new_session_id()`。
@@ -90,7 +90,7 @@
 
 ## T5: 为 ChatSession 接入 recorder
 
-**文件：** `src/mewcode/session.py`、`tests/test_session.py`  
+**文件：** `src/julycode/session.py`、`tests/test_session.py`  
 **依赖：** T2、T4  
 **步骤：**
 1. 定义 `PersistentSessionRecorder` 协议，包含 `append_message()` 和 `append_checkpoint()`。
@@ -103,7 +103,7 @@
 
 ## T6: 实现 ChatMessage JSON 序列化
 
-**文件：** `src/mewcode/memory/session_store.py`、`tests/test_session_store.py`  
+**文件：** `src/julycode/memory/session_store.py`、`tests/test_session_store.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `message_to_json(message: ChatMessage) -> dict[str, object]`。
@@ -115,21 +115,21 @@
 
 ## T7: 实现 JSONL 会话创建与追加
 
-**文件：** `src/mewcode/memory/session_store.py`、`tests/test_session_store.py`、`.gitignore`  
+**文件：** `src/julycode/memory/session_store.py`、`tests/test_session_store.py`、`.gitignore`  
 **依赖：** T5、T6  
 **步骤：**
-1. 实现 `SessionJsonlStore.__init__()`，解析项目内 `.mewcode/sessions` 根目录并确保位于项目目录内。
+1. 实现 `SessionJsonlStore.__init__()`，解析项目内 `.julycode/sessions` 根目录并确保位于项目目录内。
 2. 实现 `create_session()`，创建 `ChatSession` 并设置 `context_state.session_id`。
 3. 实现 `attach_recorder()`，把 recorder 绑定到已有 session。
 4. 实现 `append_message()`，每条消息追加一行 `kind="message"` JSON。
-5. 在 `.gitignore` 添加 `.mewcode/sessions/`。
+5. 在 `.gitignore` 添加 `.julycode/sessions/`。
 6. 测试用户消息和助手消息被追加为两行 JSONL。
 
 **验证：** 运行 `python -m pytest tests/test_session_store.py::test_store_appends_messages_as_jsonl tests/test_session_store.py::test_store_uses_project_sessions_dir -q`，期望全部通过。
 
 ## T8: 实现 JSONL checkpoint
 
-**文件：** `src/mewcode/memory/session_store.py`、`tests/test_session_store.py`  
+**文件：** `src/julycode/memory/session_store.py`、`tests/test_session_store.py`  
 **依赖：** T7  
 **步骤：**
 1. 实现 `append_checkpoint(session)`，追加 `kind="checkpoint"` 记录。
@@ -141,7 +141,7 @@
 
 ## T9: 实现会话扫描和列表信息
 
-**文件：** `src/mewcode/memory/session_store.py`、`tests/test_session_store.py`  
+**文件：** `src/julycode/memory/session_store.py`、`tests/test_session_store.py`  
 **依赖：** T7、T8  
 **步骤：**
 1. 实现 `list_sessions(now=None)`，扫描 `.jsonl` 文件并计算 `SessionInfo`。
@@ -154,7 +154,7 @@
 
 ## T10: 实现坏行跳过恢复
 
-**文件：** `src/mewcode/memory/session_store.py`、`tests/test_session_store.py`  
+**文件：** `src/julycode/memory/session_store.py`、`tests/test_session_store.py`  
 **依赖：** T9  
 **步骤：**
 1. 实现 `load_session(session_id)`，逐行读取 JSONL。
@@ -167,22 +167,22 @@
 
 ## T11: 实现过期会话清理
 
-**文件：** `src/mewcode/memory/session_store.py`、`tests/test_session_store.py`  
+**文件：** `src/julycode/memory/session_store.py`、`tests/test_session_store.py`  
 **依赖：** T9  
 **步骤：**
 1. 实现 `latest_unexpired(now=None)`，返回最近未过期会话。
 2. 实现 `cleanup_expired(now=None)`，删除超过 `retention_days` 未活动的 JSONL 文件。
-3. 确保只删除 sessions 目录内的过期 JSONL，不影响 `.mewcode/memory` 和指令文件。
+3. 确保只删除 sessions 目录内的过期 JSONL，不影响 `.julycode/memory` 和指令文件。
 4. 添加未过期保留、过期删除、长期笔记不受影响的测试。
 
 **验证：** 运行 `python -m pytest tests/test_session_store.py::test_latest_unexpired_session tests/test_session_store.py::test_cleanup_expired_sessions_keeps_memory_files -q`，期望全部通过。
 
 ## T12: 实现三层指令加载
 
-**文件：** `src/mewcode/memory/instructions.py`、`tests/test_memory_instructions.py`  
+**文件：** `src/julycode/memory/instructions.py`、`tests/test_memory_instructions.py`  
 **依赖：** T2  
 **步骤：**
-1. 实现 `InstructionLoader.load()`，按 `.mewcode/AGENTS.md`、`AGENTS.md`、`~/.mewcode/AGENTS.md` 读取。
+1. 实现 `InstructionLoader.load()`，按 `.julycode/AGENTS.md`、`AGENTS.md`、`~/.julycode/AGENTS.md` 读取。
 2. 给每个成功读取的文件生成 `InstructionBlock`，scope 和 priority 与 plan 一致。
 3. 缺失文件安静跳过。
 4. 添加三层同时存在时顺序正确、缺失文件无告警的测试。
@@ -191,7 +191,7 @@
 
 ## T13: 实现指令 include 展开
 
-**文件：** `src/mewcode/memory/instructions.py`、`tests/test_memory_instructions.py`  
+**文件：** `src/julycode/memory/instructions.py`、`tests/test_memory_instructions.py`  
 **依赖：** T12  
 **步骤：**
 1. 支持独立行 `@include <relative-path>`。
@@ -205,21 +205,21 @@
 
 ## T14: 实现 Markdown 笔记读写
 
-**文件：** `src/mewcode/memory/notes.py`、`tests/test_memory_notes.py`、`.gitignore`  
+**文件：** `src/julycode/memory/notes.py`、`tests/test_memory_notes.py`、`.gitignore`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `MemoryNoteStore` 的用户级和项目级根目录解析。
 2. 实现 `write_note(note)`，写入带 YAML frontmatter 的 Markdown。
 3. 实现 `read_note(scope, note_id)` 和 `list_notes(scope)`。
 4. 文件目录按 `scope/category/` 分层，文件名使用安全化 note_id。
-5. 在 `.gitignore` 添加 `.mewcode/memory/`。
+5. 在 `.gitignore` 添加 `.julycode/memory/`。
 6. 添加四类笔记写入、读取和 list 测试。
 
 **验证：** 运行 `python -m pytest tests/test_memory_notes.py::test_write_and_read_memory_note tests/test_memory_notes.py::test_notes_are_grouped_by_scope_and_category -q`，期望全部通过。
 
 ## T15: 添加自动笔记敏感信息过滤
 
-**文件：** `src/mewcode/memory/notes.py`、`tests/test_memory_notes.py`  
+**文件：** `src/julycode/memory/notes.py`、`tests/test_memory_notes.py`  
 **依赖：** T14  
 **步骤：**
 1. 在写入笔记前过滤常见密钥形态和配置中的明文 secret。
@@ -231,7 +231,7 @@
 
 ## T16: 生成记忆索引
 
-**文件：** `src/mewcode/memory/index.py`、`tests/test_memory_index.py`  
+**文件：** `src/julycode/memory/index.py`、`tests/test_memory_index.py`  
 **依赖：** T14  
 **步骤：**
 1. 实现 `MemoryIndexBuilder.build(scope)`，扫描对应 scope 的所有笔记。
@@ -244,7 +244,7 @@
 
 ## T17: 控制索引体量
 
-**文件：** `src/mewcode/memory/index.py`、`tests/test_memory_index.py`  
+**文件：** `src/julycode/memory/index.py`、`tests/test_memory_index.py`  
 **依赖：** T16  
 **步骤：**
 1. 在索引生成后检查行数和 UTF-8 字节数。
@@ -256,7 +256,7 @@
 
 ## T18: 实现自动笔记更新请求
 
-**文件：** `src/mewcode/memory/updater.py`、`tests/test_memory_updater.py`  
+**文件：** `src/julycode/memory/updater.py`、`tests/test_memory_updater.py`  
 **依赖：** T14、T16  
 **步骤：**
 1. 实现 `MemoryNoteUpdater.update(job, provider)` 的无工具 `ChatRequest(tools=())`。
@@ -268,7 +268,7 @@
 
 ## T19: 应用自动笔记操作
 
-**文件：** `src/mewcode/memory/updater.py`、`tests/test_memory_updater.py`  
+**文件：** `src/julycode/memory/updater.py`、`tests/test_memory_updater.py`  
 **依赖：** T18  
 **步骤：**
 1. 解析模型返回的 JSON 操作列表。
@@ -282,7 +282,7 @@
 
 ## T20: 处理自动笔记失败
 
-**文件：** `src/mewcode/memory/updater.py`、`tests/test_memory_updater.py`  
+**文件：** `src/julycode/memory/updater.py`、`tests/test_memory_updater.py`  
 **依赖：** T18  
 **步骤：**
 1. 当 Provider 报错、返回工具调用、JSON 无法解析或操作字段非法时抛出可读异常。
@@ -293,7 +293,7 @@
 
 ## T21: 实现协议安全截断
 
-**文件：** `src/mewcode/memory/recovery.py`、`tests/test_session_recovery.py`  
+**文件：** `src/julycode/memory/recovery.py`、`tests/test_session_recovery.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `SessionHistoryValidator.truncate_to_protocol_safe(messages)`。
@@ -306,7 +306,7 @@
 
 ## T22: 实现启动恢复基础流程
 
-**文件：** `src/mewcode/memory/recovery.py`、`tests/test_session_recovery.py`  
+**文件：** `src/julycode/memory/recovery.py`、`tests/test_session_recovery.py`  
 **依赖：** T11、T13、T16、T21  
 **步骤：**
 1. 实现 `SessionBootstrapper.bootstrap()` 的基础路径。
@@ -320,7 +320,7 @@
 
 ## T23: 加入恢复时间跨度提醒
 
-**文件：** `src/mewcode/memory/recovery.py`、`tests/test_session_recovery.py`  
+**文件：** `src/julycode/memory/recovery.py`、`tests/test_session_recovery.py`  
 **依赖：** T22  
 **步骤：**
 1. 根据恢复会话 `updated_at` 和当前时间比较 `time_gap_hours`。
@@ -332,7 +332,7 @@
 
 ## T24: 恢复后处理上下文预算
 
-**文件：** `src/mewcode/memory/recovery.py`、`tests/test_session_recovery.py`  
+**文件：** `src/julycode/memory/recovery.py`、`tests/test_session_recovery.py`  
 **依赖：** T22  
 **步骤：**
 1. 恢复后用 `ContextManager.prepare_request(mode="manual")` 尝试一次预算压缩检查。
@@ -344,7 +344,7 @@
 
 ## T25: 实现 SessionMemoryManager
 
-**文件：** `src/mewcode/memory/manager.py`、`tests/test_session_recovery.py`、`tests/test_memory_updater.py`  
+**文件：** `src/julycode/memory/manager.py`、`tests/test_session_recovery.py`、`tests/test_memory_updater.py`  
 **依赖：** T20、T24  
 **步骤：**
 1. 实现 `SessionMemoryManager.bootstrap()`，委托 `SessionBootstrapper` 并保存 `KnowledgeContext`。
@@ -358,11 +358,11 @@
 
 ## T26: 在提示中注入项目指令
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/builder.py`、`src/mewcode/prompting/__init__.py`、`tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/builder.py`、`src/julycode/prompting/__init__.py`、`tests/test_prompting.py`  
 **依赖：** T13  
 **步骤：**
 1. 给 `RuntimePromptContext` 增加 `knowledge_context: KnowledgeContext | None`。
-2. 在 `PromptBuilder.build_runtime_prompt()` 中追加 `<mewcode_project_instructions>` 块。
+2. 在 `PromptBuilder.build_runtime_prompt()` 中追加 `<julycode_project_instructions>` 块。
 3. 块内按项目管理目录级、项目根级、用户级输出，并标注来源路径。
 4. 确保稳定提示模块仍不包含“自定义指令”或“长期记忆”。
 5. 添加三层指令顺序和稳定提示不污染测试。
@@ -371,20 +371,20 @@
 
 ## T27: 在提示中注入记忆索引和恢复提醒
 
-**文件：** `src/mewcode/prompting/builder.py`、`tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/builder.py`、`tests/test_prompting.py`  
 **依赖：** T16、T23、T26  
 **步骤：**
-1. 在运行时提示中追加 `<mewcode_memory_index>` 块。
+1. 在运行时提示中追加 `<julycode_memory_index>` 块。
 2. 分别输出用户级和项目级索引，并标明 scope。
-3. 在存在 `RestoreReport.time_gap_notice` 或 warnings 时追加 `<mewcode_restore_notice>` 块。
-4. 保持现有 `<mewcode_context_summary>` 独立输出，不混入长期记忆块。
+3. 在存在 `RestoreReport.time_gap_notice` 或 warnings 时追加 `<julycode_restore_notice>` 块。
+4. 保持现有 `<julycode_context_summary>` 独立输出，不混入长期记忆块。
 5. 添加索引注入、恢复提醒注入和摘要边界独立测试。
 
 **验证：** 运行 `python -m pytest tests/test_prompting.py::test_runtime_prompt_includes_memory_indexes tests/test_prompting.py::test_runtime_prompt_includes_restore_notice tests/test_prompting.py::test_runtime_prompt_keeps_memory_and_context_summary_separate -q`，期望全部通过。
 
 ## T28: 压缩成功后追加 checkpoint
 
-**文件：** `src/mewcode/context/manager.py`、`tests/test_context_manager.py`  
+**文件：** `src/julycode/context/manager.py`、`tests/test_context_manager.py`  
 **依赖：** T5、T8  
 **步骤：**
 1. 在 `ContextManager._summarize_segments()` 成功替换消息并设置摘要后调用 `session.append_checkpoint()`。
@@ -396,7 +396,7 @@
 
 ## T29: Agent 请求前读取最新知识上下文
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T25、T27  
 **步骤：**
 1. 给 `AgentLoopRunner` 增加可选 `memory_manager` 构造参数。
@@ -409,7 +409,7 @@
 
 ## T30: Agent 自然完成后调度自动笔记
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T25、T29  
 **步骤：**
 1. 在模型最终回复无工具调用并追加 assistant 消息后构造 `MemoryUpdateJob`。
@@ -422,10 +422,10 @@
 
 ## T31: TUI 显示恢复状态
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`  
 **依赖：** T25  
 **步骤：**
-1. 给 `MewCodeApp` 构造参数增加 `memory_manager` 和 `restore_report`。
+1. 给 `JulyCodeApp` 构造参数增加 `memory_manager` 和 `restore_report`。
 2. `on_mount()` 中显示恢复成功、启动空会话原因、指令告警、坏行告警和时间跨度提醒。
 3. 创建 `AgentLoopRunner` 时传入 memory manager。
 4. 保持 MCP 初始化、权限确认和 `/compact` 行为不变。
@@ -435,12 +435,12 @@
 
 ## T32: CLI 接入启动恢复
 
-**文件：** `src/mewcode/cli.py`、`tests/test_mcp_manager.py`、`tests/test_config.py`  
+**文件：** `src/julycode/cli.py`、`tests/test_mcp_manager.py`、`tests/test_config.py`  
 **依赖：** T24、T25、T31  
 **步骤：**
 1. 用 `argparse` 解析 `--new-session`。
 2. 创建 `SessionMemoryManager` 并在启动 TUI 前执行 `bootstrap()`。
-3. 将 bootstrap 返回的 session、memory manager 和 restore report 传给 `MewCodeApp`。
+3. 将 bootstrap 返回的 session、memory manager 和 restore report 传给 `JulyCodeApp`。
 4. `memory.enabled=false` 时创建普通空 `ChatSession`，不落盘、不恢复、不自动记忆。
 5. 保持配置错误脱敏和 MCP manager 初始化路径不变。
 6. 更新 CLI 相关测试以适配新参数和 bootstrap 流程。
@@ -454,7 +454,7 @@
 **步骤：**
 1. 在 README 增加项目指令三层加载、`@include` 约束、会话恢复、`--new-session`、JSONL 存档、自动笔记和索引上限说明。
 2. 移除 README 范围中“跨启动历史恢复、项目指令文件加载或自动记忆不实现”的旧描述。
-3. 确认 `.gitignore` 包含 `.mewcode/sessions/`、`.mewcode/memory/` 和已有 `.mewcode/context/`。
+3. 确认 `.gitignore` 包含 `.julycode/sessions/`、`.julycode/memory/` 和已有 `.julycode/context/`。
 4. 添加或更新文档相关测试，确认 README 包含关键命令和目录。
 
 **验证：** 运行 `python -m pytest tests/test_config.py::test_readme_mentions_session_memory -q`，期望通过。
@@ -466,19 +466,19 @@
 **步骤：**
 1. 运行本阶段新增和修改的测试文件。
 2. 修复因集成引起的导入、类型、异步任务或测试隔离问题。
-3. 确认临时目录内的用户级 `~/.mewcode` 和项目级 `.mewcode` 不互相污染。
+3. 确认临时目录内的用户级 `~/.julycode` 和项目级 `.julycode` 不互相污染。
 4. 确认后台自动笔记任务在测试中可等待完成。
 
 **验证：** 运行 `python -m pytest tests/test_session_id.py tests/test_memory_instructions.py tests/test_session_store.py tests/test_session_recovery.py tests/test_memory_notes.py tests/test_memory_index.py tests/test_memory_updater.py tests/test_prompting.py tests/test_agent.py tests/test_tui_smoke.py -q`，期望全部通过。
 
 ## T35: 跑全量测试
 
-**文件：** `src/mewcode/`、`tests/`  
+**文件：** `src/julycode/`、`tests/`  
 **依赖：** T34  
 **步骤：**
 1. 运行全量 pytest。
 2. 修复普通聊天、工具调用、Plan Mode、`/do`、权限确认、MCP 工具、上下文压缩和流式显示的回归。
-3. 确认没有测试依赖真实用户目录或真实项目 `.mewcode` 状态。
+3. 确认没有测试依赖真实用户目录或真实项目 `.julycode` 状态。
 
 **验证：** 运行 `python -m pytest -q`，期望全部通过。
 

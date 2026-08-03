@@ -1,22 +1,22 @@
-# MewCode 权限系统 Tasks
+# JulyCode 权限系统 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/permissions/__init__.py` | 权限系统公共导出 |
-| 新建 | `src/mewcode/permissions/models.py` | 权限模式、规则、决策、提示和事件模型 |
-| 新建 | `src/mewcode/permissions/blacklist.py` | 高危命令硬拦截 |
-| 新建 | `src/mewcode/permissions/sandbox.py` | 项目路径沙箱与工具调用目标提取 |
-| 新建 | `src/mewcode/permissions/rules.py` | YAML 规则解析、匹配、加载和本地规则写入 |
-| 新建 | `src/mewcode/permissions/engine.py` | 五层权限决策编排 |
-| 新建 | `src/mewcode/permissions/controller.py` | 调度器使用的权限控制入口和人审结果处理 |
-| 修改 | `src/mewcode/config.py` | 增加权限模式配置解析 |
-| 修改 | `src/mewcode/tools/scheduler.py` | 工具执行前接入权限控制并发出权限事件 |
-| 修改 | `src/mewcode/agent.py` | 扩展 TurnEvent 权限事件并传递权限控制器 |
-| 修改 | `src/mewcode/tui/widgets.py` | 新增权限确认视图 |
-| 修改 | `src/mewcode/tui/app.py` | 实现 PermissionPrompter 并处理权限事件 |
-| 修改 | `src/mewcode/cli.py` | 创建权限控制器并注入 TUI |
+| 新建 | `src/julycode/permissions/__init__.py` | 权限系统公共导出 |
+| 新建 | `src/julycode/permissions/models.py` | 权限模式、规则、决策、提示和事件模型 |
+| 新建 | `src/julycode/permissions/blacklist.py` | 高危命令硬拦截 |
+| 新建 | `src/julycode/permissions/sandbox.py` | 项目路径沙箱与工具调用目标提取 |
+| 新建 | `src/julycode/permissions/rules.py` | YAML 规则解析、匹配、加载和本地规则写入 |
+| 新建 | `src/julycode/permissions/engine.py` | 五层权限决策编排 |
+| 新建 | `src/julycode/permissions/controller.py` | 调度器使用的权限控制入口和人审结果处理 |
+| 修改 | `src/julycode/config.py` | 增加权限模式配置解析 |
+| 修改 | `src/julycode/tools/scheduler.py` | 工具执行前接入权限控制并发出权限事件 |
+| 修改 | `src/julycode/agent.py` | 扩展 TurnEvent 权限事件并传递权限控制器 |
+| 修改 | `src/julycode/tui/widgets.py` | 新增权限确认视图 |
+| 修改 | `src/julycode/tui/app.py` | 实现 PermissionPrompter 并处理权限事件 |
+| 修改 | `src/julycode/cli.py` | 创建权限控制器并注入 TUI |
 | 修改 | `tests/test_config.py` | 覆盖权限配置解析 |
 | 新建 | `tests/test_permissions.py` | 覆盖黑名单、沙箱、规则、引擎和控制器 |
 | 修改 | `tests/test_tool_scheduler.py` | 覆盖权限 allow、deny、prompt 和 Plan Mode 优先级 |
@@ -27,10 +27,10 @@
 
 ## T1: 权限基础模型
 
-**文件：** `src/mewcode/permissions/models.py`、`src/mewcode/permissions/__init__.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/models.py`、`src/julycode/permissions/__init__.py`、`tests/test_permissions.py`  
 **依赖：** 无  
 **步骤：**
-1. 新建 `mewcode.permissions` 包。
+1. 新建 `julycode.permissions` 包。
 2. 定义 `PermissionMode`、`PermissionEffect`、`PermissionRuleSource`、`MatchKind`、`PermissionDecisionKind` 和 `UserPermissionChoice`。
 3. 定义 `PermissionConfig`、`PermissionRule`、`RuleMatch`、`PermissionSubject`、`PermissionDecision`、`PermissionPrompt`、`PermissionPromptResult` 和 `PermissionEventPayload`。
 4. 定义 `PermissionPrompter` 协议。
@@ -41,7 +41,7 @@
 
 ## T2: 高危命令黑名单
 
-**文件：** `src/mewcode/permissions/blacklist.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/blacklist.py`、`tests/test_permissions.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `DangerousCommandGuard.check(command)`。
@@ -54,7 +54,7 @@
 
 ## T3: 项目路径沙箱基础
 
-**文件：** `src/mewcode/permissions/sandbox.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/sandbox.py`、`tests/test_permissions.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `ProjectSandbox.__init__()`，保存解析后的项目根目录。
@@ -67,7 +67,7 @@
 
 ## T4: 工具调用沙箱检查和匹配目标
 
-**文件：** `src/mewcode/permissions/sandbox.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/sandbox.py`、`tests/test_permissions.py`  
 **依赖：** T3  
 **步骤：**
 1. 实现 `check_tool_call(call)`，覆盖 `read_file`、`write_file`、`edit_file`、`search_code` 和 `find_files`。
@@ -81,7 +81,7 @@
 
 ## T5: 权限规则解析
 
-**文件：** `src/mewcode/permissions/rules.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/rules.py`、`tests/test_permissions.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `PermissionRuleParser.parse_rule_key(key, source, effect)`。
@@ -94,7 +94,7 @@
 
 ## T6: 规则集匹配优先级
 
-**文件：** `src/mewcode/permissions/rules.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/rules.py`、`tests/test_permissions.py`  
 **依赖：** T5  
 **步骤：**
 1. 实现 `PermissionRuleSet.match(subject)`。
@@ -108,7 +108,7 @@
 
 ## T7: 规则文件加载和本地持久化
 
-**文件：** `src/mewcode/permissions/rules.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/rules.py`、`tests/test_permissions.py`  
 **依赖：** T5、T6  
 **步骤：**
 1. 实现 `SessionPermissionRules`，支持添加会话级规则并导出为 `PermissionRuleSet`。
@@ -116,14 +116,14 @@
 3. 缺失文件按空规则处理。
 4. 顶层非对象、缺少 `rules` 对象、非法 effect 或非法规则 key 时抛出 `ConfigError`。
 5. 实现 `ordered_rule_sets(session_rules)`，顺序为会话、本地、项目、用户。
-6. 实现 `add_local_rule(rule)`，写入或更新 `.mewcode.permissions.local.yaml`。
+6. 实现 `add_local_rule(rule)`，写入或更新 `.julycode.permissions.local.yaml`。
 7. 添加测试覆盖缺失文件、三层加载顺序、格式错误和本地规则写入。
 
 **验证：** 运行 `python -m pytest tests/test_permissions.py::test_permission_rule_store_loads_missing_files_as_empty tests/test_permissions.py::test_permission_rule_store_orders_sources tests/test_permissions.py::test_permission_rule_store_rejects_invalid_yaml tests/test_permissions.py::test_permission_rule_store_writes_local_rule -q`，期望通过。
 
 ## T8: 权限引擎硬拒绝和规则优先级
 
-**文件：** `src/mewcode/permissions/engine.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/engine.py`、`tests/test_permissions.py`  
 **依赖：** T2、T4、T7  
 **步骤：**
 1. 实现 `PermissionEngine.evaluate(call, spec)` 的黑名单检查。
@@ -137,7 +137,7 @@
 
 ## T9: 权限模式决策
 
-**文件：** `src/mewcode/permissions/engine.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/engine.py`、`tests/test_permissions.py`  
 **依赖：** T8  
 **步骤：**
 1. 实现 `strict`、`default` 和 `permissive` 三档模式的 fallback 决策。
@@ -150,7 +150,7 @@
 
 ## T10: 权限控制器和人审结果
 
-**文件：** `src/mewcode/permissions/controller.py`、`src/mewcode/permissions/__init__.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/controller.py`、`src/julycode/permissions/__init__.py`、`tests/test_permissions.py`  
 **依赖：** T7、T9  
 **步骤：**
 1. 实现 `PermissionController.evaluate()`，代理 `PermissionEngine.evaluate()`。
@@ -166,7 +166,7 @@
 
 ## T11: 权限配置解析
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** T1  
 **步骤：**
 1. 在 `AppConfig` 增加 `permissions: PermissionConfig`。
@@ -180,7 +180,7 @@
 
 ## T12: 扩展 Agent 权限事件
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T10  
 **步骤：**
 1. 在 `TurnEventType` 增加 `permission_requested` 和 `permission_resolved`。
@@ -193,7 +193,7 @@
 
 ## T13: 调度器接入权限 allow 和 deny
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
 **依赖：** T10、T12  
 **步骤：**
 1. 在 `ToolCallScheduler.__init__()` 增加可选 `permission_controller`。
@@ -207,7 +207,7 @@
 
 ## T14: 调度器接入权限 prompt 事件
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
 **依赖：** T13  
 **步骤：**
 1. 在 `ToolCallScheduler.run()` 中处理 `PermissionDecision(kind="prompt")`。
@@ -221,7 +221,7 @@
 
 ## T15: Plan Mode 优先级保持不变
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`、`tests/test_agent.py`  
 **依赖：** T14  
 **步骤：**
 1. 确保 `ToolPolicy.validate_call()` 始终先于权限控制器执行。
@@ -234,7 +234,7 @@
 
 ## T16: Agent Loop 权限拒绝回灌
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T14  
 **步骤：**
 1. 将 `permission_controller` 传给每轮创建的 `ToolCallScheduler`。
@@ -247,7 +247,7 @@
 
 ## T17: 权限确认视图
 
-**文件：** `src/mewcode/tui/widgets.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/widgets.py`、`tests/test_tui_smoke.py`  
 **依赖：** T1  
 **步骤：**
 1. 新增 `PermissionPromptView`。
@@ -261,12 +261,12 @@
 
 ## T18: TUI 实现 PermissionPrompter
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`  
 **依赖：** T16、T17  
 **步骤：**
-1. 让 `MewCodeApp` 实现 `PermissionPrompter.request_permission()`。
+1. 让 `JulyCodeApp` 实现 `PermissionPrompter.request_permission()`。
 2. 请求权限时向消息区追加 `PermissionPromptView`，并等待 future 完成。
-3. 在 `MewCodeApp` 增加 `set_permission_controller(controller)`。
+3. 在 `JulyCodeApp` 增加 `set_permission_controller(controller)`。
 4. 运行任务时把权限控制器传给 `AgentLoopRunner`。
 5. 在 `_apply_turn_event()` 中处理 `permission_requested` 和 `permission_resolved`，更新状态栏或等待状态。
 6. 添加测试覆盖用户选择本次允许后工具继续执行、用户拒绝后工具失败且输入恢复。
@@ -275,23 +275,23 @@
 
 ## T19: TUI 会话级和永久允许
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`  
 **依赖：** T18  
 **步骤：**
 1. 确认本会话允许后，相同调用模式在当前运行期不再弹确认。
 2. 确认永久允许后，本地级规则文件被写入。
 3. 添加测试模拟两次相同有副作用工具调用，第一次选择本会话允许，第二次直接执行。
-4. 添加测试模拟永久允许并断言 `.mewcode.permissions.local.yaml` 包含生成的 allow 规则。
+4. 添加测试模拟永久允许并断言 `.julycode.permissions.local.yaml` 包含生成的 allow 规则。
 
 **验证：** 运行 `python -m pytest tests/test_tui_smoke.py::test_tui_allow_session_reuses_permission tests/test_tui_smoke.py::test_tui_allow_permanent_writes_local_rule -q`，期望通过。
 
 ## T20: CLI 注入权限控制器
 
-**文件：** `src/mewcode/cli.py`、`tests/test_config.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/cli.py`、`tests/test_config.py`、`tests/test_tui_smoke.py`  
 **依赖：** T11、T18  
 **步骤：**
 1. 在 CLI 启动时读取 `config.permissions`。
-2. 创建 `MewCodeApp` 后，用 app 作为 prompter 创建 `PermissionController`。
+2. 创建 `JulyCodeApp` 后，用 app 作为 prompter 创建 `PermissionController`。
 3. 调用 `app.set_permission_controller(controller)`。
 4. 保持配置错误脱敏输出不变。
 5. 添加或调整测试确认 CLI 入口仍可导入，权限配置错误走 `ConfigError` 路径。
@@ -322,7 +322,7 @@
 5. 说明高危命令和路径沙箱不可被配置或人审绕过。
 6. 更新范围章节，移除“权限系统未实现”的旧结论，并保留网络限制、资源配额、审计日志不做。
 
-**验证：** 运行 `rg -n "权限系统|permissions.mode|Bash\\(git \\*\\)|\\.mewcode.permissions|网络请求限制|审计日志" README.md`，期望看到权限说明和仍不做的后续范围。
+**验证：** 运行 `rg -n "权限系统|permissions.mode|Bash\\(git \\*\\)|\\.julycode.permissions|网络请求限制|审计日志" README.md`，期望看到权限说明和仍不做的后续范围。
 
 ## T23: 权限系统回归测试
 
@@ -354,12 +354,12 @@
 **步骤：**
 1. 使用 mock OpenAI server 启动可复现的权限场景。
 2. 在临时项目配置中启用 `permissions.mode: default`。
-3. 在 tmux 中启动 `mewcode`。
+3. 在 tmux 中启动 `julycode`。
 4. 输入危险命令场景请求，观察命令被拒绝且 Agent Loop 继续。
 5. 输入写文件场景请求，观察 TUI 弹出权限确认。
 6. 对照 `checklist.md` 记录端到端观察结果。
 
-**验证：** 在 tmux 中运行 MewCode 并完成危险命令拒绝、写入确认和权限拒绝后继续三类场景，期望行为符合 `checklist.md`。
+**验证：** 在 tmux 中运行 JulyCode 并完成危险命令拒绝、写入确认和权限拒绝后继续三类场景，期望行为符合 `checklist.md`。
 
 ## 执行顺序
 

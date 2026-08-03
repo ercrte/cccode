@@ -7,29 +7,29 @@ from pathlib import Path
 import pytest
 from textual.widgets import Button, Static
 
-from mewcode.agent import AgentProgress, TurnEvent
-from mewcode.config import AppConfig, RepoMapConfig
-from mewcode.context.manager import ContextManager
-from mewcode.context.models import ContextConfig
-from mewcode.context.models import ContextCompactionReport, PreparedChatRequest, RequestFootprint
-from mewcode.errors import ProviderError
-from mewcode.hooks import parse_hook_config
-from mewcode.hooks.manager import create_hook_manager
-from mewcode.memory.models import InstructionBundle, KnowledgeContext, RestoreReport
-from mewcode.mcp.manager import McpLoadReport
-from mewcode.permissions import PermissionConfig
-from mewcode.permissions.controller import create_permission_controller
-from mewcode.permissions.models import PermissionPrompt
-from mewcode.providers.base import ChatMessage, ChatRequest, PromptCacheUsage, StreamEvent, TokenUsage
-from mewcode.repo_map.models import RepoMapStatus
-from mewcode.session import ChatSession
-from mewcode.skills import SkillManager, SkillRoots
-from mewcode.tools.base import ToolCall, ToolContext, ToolResult
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry, create_default_registry
-from mewcode.worktrees import CleanupItemResult, CleanupReport
-from mewcode.tui.app import MewCodeApp
-from mewcode.tui.widgets import (
+from julycode.agent import AgentProgress, TurnEvent
+from julycode.config import AppConfig, RepoMapConfig
+from julycode.context.manager import ContextManager
+from julycode.context.models import ContextConfig
+from julycode.context.models import ContextCompactionReport, PreparedChatRequest, RequestFootprint
+from julycode.errors import ProviderError
+from julycode.hooks import parse_hook_config
+from julycode.hooks.manager import create_hook_manager
+from julycode.memory.models import InstructionBundle, KnowledgeContext, RestoreReport, SessionMemoryConfig
+from julycode.mcp.manager import McpLoadReport
+from julycode.permissions import PermissionConfig
+from julycode.permissions.controller import create_permission_controller
+from julycode.permissions.models import PermissionPrompt
+from julycode.providers.base import ChatMessage, ChatRequest, PromptCacheUsage, StreamEvent, TokenUsage
+from julycode.repo_map.models import RepoMapStatus
+from julycode.session import ChatSession
+from julycode.skills import SkillManager, SkillRoots
+from julycode.tools.base import ToolCall, ToolContext, ToolResult
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry, create_default_registry
+from julycode.worktrees import CleanupItemResult, CleanupReport
+from julycode.tui.app import JulyCodeApp
+from julycode.tui.widgets import (
     CommandCompletionMenu,
     Composer,
     MessageList,
@@ -174,6 +174,7 @@ def make_config() -> AppConfig:
         model="test-model",
         base_url="https://example.test/v1",
         api_key="sk-tui-secret-1234567890",
+        memory=SessionMemoryConfig(enabled=False),
         repo_map=RepoMapConfig(enabled=False),
     )
 
@@ -181,7 +182,7 @@ def make_config() -> AppConfig:
 @pytest.mark.asyncio
 async def test_tui_manages_repo_map_lifecycle_and_reports_status() -> None:
     manager = FakeRepoMapManager()
-    app = MewCodeApp(
+    app = JulyCodeApp(
         ChatSession(),
         FakeProvider([]),
         make_config(),
@@ -199,7 +200,7 @@ async def test_tui_manages_repo_map_lifecycle_and_reports_status() -> None:
     assert manager.closed == 1
 
 
-async def submit_and_wait(app: MewCodeApp, pilot, text: str) -> None:
+async def submit_and_wait(app: JulyCodeApp, pilot, text: str) -> None:
     composer = app.query_one(Composer)
     composer.value = text
     await pilot.press("enter")
@@ -210,7 +211,7 @@ async def submit_and_wait(app: MewCodeApp, pilot, text: str) -> None:
     raise AssertionError("generation task did not finish")
 
 
-async def wait_for_generation_task(app: MewCodeApp, expected_done: bool) -> None:
+async def wait_for_generation_task(app: JulyCodeApp, expected_done: bool) -> None:
     for _ in range(100):
         done = app._generation_task is None
         if done is expected_done:
@@ -219,7 +220,7 @@ async def wait_for_generation_task(app: MewCodeApp, expected_done: bool) -> None
     raise AssertionError("generation task state did not change")
 
 
-async def wait_for_permission_prompt(app: MewCodeApp) -> PermissionPromptView:
+async def wait_for_permission_prompt(app: JulyCodeApp) -> PermissionPromptView:
     for _ in range(100):
         views = [view for view in app.query(PermissionPromptView) if view.display]
         if views:
@@ -228,7 +229,7 @@ async def wait_for_permission_prompt(app: MewCodeApp) -> PermissionPromptView:
     raise AssertionError("permission prompt did not appear")
 
 
-async def wait_for_text(app: MewCodeApp, text: str) -> None:
+async def wait_for_text(app: JulyCodeApp, text: str) -> None:
     for _ in range(100):
         rendered = "\n".join(str(view.body.content) for view in app.query(MessageView))
         if text in rendered:
@@ -248,10 +249,10 @@ def make_permission_prompt() -> PermissionPrompt:
     )
 
 
-def make_permission_app(tmp_path: Path, provider: FakeProvider, mode: str = "default") -> MewCodeApp:
+def make_permission_app(tmp_path: Path, provider: FakeProvider, mode: str = "default") -> JulyCodeApp:
     registry = create_default_registry()
     executor = ToolExecutor(registry, ToolContext(cwd=tmp_path))
-    app = MewCodeApp(ChatSession(), provider, make_config(), registry, executor)
+    app = JulyCodeApp(ChatSession(), provider, make_config(), registry, executor)
     controller = create_permission_controller(tmp_path, PermissionConfig(mode=mode), app)  # type: ignore[arg-type]
     app.set_permission_controller(controller)
     return app
@@ -264,7 +265,7 @@ def make_hook_manager(raw: list[dict[str, object]]):
 @pytest.mark.asyncio
 async def test_widgets_can_render_and_toggle_thinking() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         messages = app.query_one(MessageList)
@@ -280,7 +281,7 @@ async def test_widgets_can_render_and_toggle_thinking() -> None:
 @pytest.mark.asyncio
 async def test_tool_status_view_renders_running_and_finished_states() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         messages = app.query_one(MessageList)
@@ -297,7 +298,7 @@ async def test_tool_status_view_renders_running_and_finished_states() -> None:
 @pytest.mark.asyncio
 async def test_permission_prompt_view_renders_choices() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         messages = app.query_one(MessageList)
@@ -315,7 +316,7 @@ async def test_permission_prompt_view_renders_choices() -> None:
 @pytest.mark.asyncio
 async def test_permission_prompt_view_sets_choice() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         messages = app.query_one(MessageList)
@@ -331,7 +332,7 @@ async def test_permission_prompt_view_sets_choice() -> None:
 @pytest.mark.asyncio
 async def test_status_bar_renders_agent_progress_and_usage() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test():
         status = app.query_one(StatusBar)
@@ -350,7 +351,7 @@ async def test_status_bar_renders_agent_progress_and_usage() -> None:
 @pytest.mark.asyncio
 async def test_status_bar_renders_cache_usage() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test():
         status = app.query_one(StatusBar)
@@ -403,7 +404,7 @@ async def test_status_bar_renders_cache_usage() -> None:
 @pytest.mark.asyncio
 async def test_tool_status_view_tracks_tool_call_id() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         messages = app.query_one(MessageList)
@@ -417,7 +418,7 @@ async def test_tool_status_view_tracks_tool_call_id() -> None:
 @pytest.mark.asyncio
 async def test_app_starts_with_fullscreen_regions() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test():
         assert app.query_one("#status", StatusBar)
@@ -432,7 +433,7 @@ async def test_tui_displays_restore_report(tmp_path: Path) -> None:
     report = RestoreReport(
         restored=True,
         session_id="20260612-080910-abcd",  # type: ignore[arg-type]
-        source_path=tmp_path / ".mewcode" / "sessions" / "20260612-080910-abcd.jsonl",
+        source_path=tmp_path / ".julycode" / "sessions" / "20260612-080910-abcd.jsonl",
         skipped_bad_lines=2,
         truncated_messages=1,
         compacted=True,
@@ -440,7 +441,7 @@ async def test_tui_displays_restore_report(tmp_path: Path) -> None:
         warnings=("恢复时跳过坏记录。",),
     )
     memory_manager = FakeMemoryManager(KnowledgeContext(instructions=InstructionBundle(warnings=("指令 include 已被拦截。",))))
-    app = MewCodeApp(
+    app = JulyCodeApp(
         ChatSession(),
         provider,
         make_config(),
@@ -462,7 +463,7 @@ async def test_tui_displays_restore_report(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_tui_passes_memory_manager_to_runner(monkeypatch: pytest.MonkeyPatch) -> None:
-    from mewcode.tui import app as app_module
+    from julycode.tui import app as app_module
 
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
     memory_manager = FakeMemoryManager()
@@ -485,7 +486,7 @@ async def test_tui_passes_memory_manager_to_runner(monkeypatch: pytest.MonkeyPat
             )
 
     monkeypatch.setattr(app_module, "AgentLoopRunner", FakeRunner)
-    app = MewCodeApp(ChatSession(), provider, make_config(), memory_manager=memory_manager)  # type: ignore[arg-type]
+    app = JulyCodeApp(ChatSession(), provider, make_config(), memory_manager=memory_manager)  # type: ignore[arg-type]
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "hello")
@@ -512,7 +513,7 @@ async def test_tui_lifecycle_initializes_and_closes_mcp_manager(tmp_path: Path) 
             events.append("close")
 
     registry = ToolRegistry()
-    app = MewCodeApp(
+    app = JulyCodeApp(
         ChatSession(),
         object(),
         make_config(),
@@ -556,7 +557,7 @@ async def test_tui_mcp_oauth_url_is_local_only_and_logout_updates_tools(tmp_path
 
     session = ChatSession()
     registry = ToolRegistry()
-    app = MewCodeApp(
+    app = JulyCodeApp(
         session,
         object(),
         make_config(),
@@ -587,7 +588,7 @@ async def test_tui_emits_session_hook_events() -> None:
             {"name": "end", "event": "session.end", "action": {"type": "prompt", "text": "session-end"}},
         ]
     )
-    app = MewCodeApp(ChatSession(), provider, make_config(), hook_manager=hook_manager)
+    app = JulyCodeApp(ChatSession(), provider, make_config(), hook_manager=hook_manager)
 
     async with app.run_test():
         await asyncio.sleep(0)
@@ -602,7 +603,7 @@ async def test_tui_displays_high_signal_hook_events() -> None:
     hook_manager = make_hook_manager(
         [{"name": "sub", "event": "session.start", "action": {"type": "sub_agent", "name": "worker"}}]
     )
-    app = MewCodeApp(ChatSession(), provider, make_config(), hook_manager=hook_manager)
+    app = JulyCodeApp(ChatSession(), provider, make_config(), hook_manager=hook_manager)
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -624,7 +625,7 @@ async def test_hook_failure_does_not_break_input() -> None:
             }
         ]
     )
-    app = MewCodeApp(ChatSession(), provider, make_config(), hook_manager=hook_manager)
+    app = JulyCodeApp(ChatSession(), provider, make_config(), hook_manager=hook_manager)
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "hello")
@@ -638,7 +639,7 @@ async def test_hook_failure_does_not_break_input() -> None:
 @pytest.mark.asyncio
 async def test_escape_still_quits() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await pilot.press("escape")
@@ -657,7 +658,7 @@ async def test_submit_streams_text_into_message_view() -> None:
         ]
     )
     session = ChatSession()
-    app = MewCodeApp(session, provider, make_config())
+    app = JulyCodeApp(session, provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "hello")
@@ -674,12 +675,12 @@ async def test_compact_command_shows_report_without_agent_task() -> None:
             mode="manual",
             light_compacted=True,
             heavy_compacted=False,
-            externalized_paths=(".mewcode/context/a.json",),
+            externalized_paths=(".julycode/context/a.json",),
             kept_message_count=2,
             message="已完成手动压缩。",
         )
     )
-    app = MewCodeApp(ChatSession(), provider, make_config(), context_manager=context_manager)  # type: ignore[arg-type]
+    app = JulyCodeApp(ChatSession(), provider, make_config(), context_manager=context_manager)  # type: ignore[arg-type]
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "/compact")
@@ -700,7 +701,7 @@ async def test_tui_displays_context_compacted_event() -> None:
         message="已自动压缩上下文。",
     )
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="完成"))]])
-    app = MewCodeApp(ChatSession(), provider, make_config(), context_manager=FakeContextManager(report))  # type: ignore[arg-type]
+    app = JulyCodeApp(ChatSession(), provider, make_config(), context_manager=FakeContextManager(report))  # type: ignore[arg-type]
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "hello")
@@ -724,7 +725,7 @@ async def test_submit_streams_thinking_into_collapsible_panel() -> None:
         ]
     )
     session = ChatSession()
-    app = MewCodeApp(session, provider, make_config())
+    app = JulyCodeApp(session, provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "question")
@@ -741,7 +742,7 @@ async def test_second_turn_receives_previous_context() -> None:
             [StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="Mew-17"))],
         ]
     )
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "remember Mew-17")
@@ -755,7 +756,7 @@ async def test_second_turn_receives_previous_context() -> None:
 @pytest.mark.asyncio
 async def test_provider_error_is_displayed_and_input_recovers() -> None:
     provider = FakeProvider([[ProviderError("认证失败")]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "hello")
@@ -765,7 +766,7 @@ async def test_provider_error_is_displayed_and_input_recovers() -> None:
 
 @pytest.mark.asyncio
 async def test_worktree_janitor_starts_and_closes_with_tui() -> None:
-    app = MewCodeApp(ChatSession(), FakeProvider([]), make_config())
+    app = JulyCodeApp(ChatSession(), FakeProvider([]), make_config())
 
     async with app.run_test():
         task = app.sub_agent_manager.worktree_janitor._task
@@ -776,7 +777,7 @@ async def test_worktree_janitor_starts_and_closes_with_tui() -> None:
 
 
 def test_worktree_janitor_failure_report_is_non_fatal(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
-    app = MewCodeApp(ChatSession(), FakeProvider([]), make_config())
+    app = JulyCodeApp(ChatSession(), FakeProvider([]), make_config())
     report = CleanupReport(
         items=(CleanupItemResult(tmp_path / "candidate", "failed", "secret=should-not-crash"),)
     )
@@ -784,7 +785,7 @@ def test_worktree_janitor_failure_report_is_non_fatal(capsys: pytest.CaptureFixt
     app._report_worktree_cleanup(report)
 
     captured = capsys.readouterr()
-    assert "MewCode Worktree 清理警告" in captured.err
+    assert "JulyCode Worktree 清理警告" in captured.err
     assert "candidate" in captured.err
 
 
@@ -814,7 +815,7 @@ async def test_submit_shows_multiple_tool_statuses_and_final_answer() -> None:
         ]
     )
     session = ChatSession()
-    app = MewCodeApp(session, provider, make_config())
+    app = JulyCodeApp(session, provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "find readme")
@@ -841,7 +842,7 @@ async def test_delegate_agent_defined_runs_in_isolated_child_context() -> None:
         ]
     )
     session = ChatSession()
-    app = MewCodeApp(session, provider, make_config())
+    app = JulyCodeApp(session, provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "委派 reviewer 审查 README")
@@ -862,7 +863,7 @@ async def test_delegate_agent_defined_runs_in_isolated_child_context() -> None:
 @pytest.mark.asyncio
 async def test_background_command_switches_foreground_sub_agent_to_background() -> None:
     provider = ManualBackgroundProvider()
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         composer = app.query_one(Composer)
@@ -890,7 +891,7 @@ async def test_background_command_switches_foreground_sub_agent_to_background() 
 @pytest.mark.asyncio
 async def test_do_switches_to_default_without_provider_call() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "/plan")
@@ -909,7 +910,7 @@ async def test_do_switches_to_default_without_provider_call() -> None:
 @pytest.mark.asyncio
 async def test_unknown_and_help_commands_do_not_call_provider() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "/wat")
@@ -925,7 +926,7 @@ async def test_unknown_and_help_commands_do_not_call_provider() -> None:
 @pytest.mark.asyncio
 async def test_empty_input_does_not_add_messages_or_call_provider() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "   ")
@@ -938,7 +939,7 @@ async def test_empty_input_does_not_add_messages_or_call_provider() -> None:
 @pytest.mark.asyncio
 async def test_plan_mode_routes_plain_input_to_plan_agent_mode() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="计划"))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "/plan")
@@ -953,7 +954,7 @@ async def test_plan_mode_routes_plain_input_to_plan_agent_mode() -> None:
 @pytest.mark.asyncio
 async def test_default_mode_routes_plain_input_to_normal_agent_mode() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="完成"))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "/plan")
@@ -968,7 +969,7 @@ async def test_default_mode_routes_plain_input_to_normal_agent_mode() -> None:
 @pytest.mark.asyncio
 async def test_status_session_memory_permission_commands_render_local_snapshots() -> None:
     provider = FakeProvider([[StreamEvent(type="usage", usage=TokenUsage(total_tokens=9)), StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="完成"))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "hello")
@@ -988,7 +989,7 @@ async def test_status_session_memory_permission_commands_render_local_snapshots(
 @pytest.mark.asyncio
 async def test_review_command_sends_visible_command_and_model_prompt() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="审查完成"))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "/review README.md")
@@ -1036,7 +1037,7 @@ async def test_isolated_skill_uses_isolated_runtime_and_deactivates(tmp_path: Pa
     session = ChatSession()
     session.append_user_message("历史请求")
     session.append_assistant_message(ChatMessage(role="assistant", content="历史答复"))
-    app = MewCodeApp(
+    app = JulyCodeApp(
         session,
         provider,
         make_config(),
@@ -1065,7 +1066,7 @@ async def test_isolated_skill_uses_isolated_runtime_and_deactivates(tmp_path: Pa
 @pytest.mark.asyncio
 async def test_command_completion_single_match_updates_composer() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         composer = app.query_one(Composer)
@@ -1082,7 +1083,7 @@ async def test_command_completion_single_match_updates_composer() -> None:
 @pytest.mark.asyncio
 async def test_command_completion_multi_match_shows_menu() -> None:
     provider = FakeProvider([[StreamEvent(type="message_done", message=ChatMessage(role="assistant", content=""))]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         composer = app.query_one(Composer)
@@ -1107,7 +1108,7 @@ async def test_tool_failure_recovers_input() -> None:
             [StreamEvent(type="message_done", message=ChatMessage(role="assistant", content="工具失败"))],
         ]
     )
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "bad tool")
@@ -1196,13 +1197,13 @@ async def test_tui_can_continue_after_large_tool_result_compaction(tmp_path: Pat
         tmp_path,
         max_output_tokens=10,
     )
-    app = MewCodeApp(ChatSession(), provider, make_config(), registry, executor, context_manager=context_manager)
+    app = JulyCodeApp(ChatSession(), provider, make_config(), registry, executor, context_manager=context_manager)
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "读取 big.txt")
 
     assert len(provider.requests) == 2
-    assert "mewcode_externalized" in provider.requests[1].messages[-1].content
+    assert "julycode_externalized" in provider.requests[1].messages[-1].content
     assert app.session.messages[-1].content == "已读取大文件"
 
 
@@ -1254,14 +1255,14 @@ async def test_tui_allow_permanent_writes_local_rule(tmp_path: Path, monkeypatch
         prompt.choose("allow_permanent")
         await wait_for_generation_task(app, expected_done=True)
 
-    assert "write_file(permanent.txt): allow" in (tmp_path / ".mewcode.permissions.local.yaml").read_text(encoding="utf-8")
+    assert "write_file(permanent.txt): allow" in (tmp_path / ".julycode.permissions.local.yaml").read_text(encoding="utf-8")
 
 
 @pytest.mark.asyncio
 async def test_error_message_does_not_leak_secret() -> None:
     secret = "sk-tui-secret-1234567890"
     provider = FakeProvider([[ProviderError(f"bad {secret}")]])
-    app = MewCodeApp(ChatSession(), provider, make_config())
+    app = JulyCodeApp(ChatSession(), provider, make_config())
 
     async with app.run_test() as pilot:
         await submit_and_wait(app, pilot, "hello")
@@ -1272,7 +1273,7 @@ async def test_error_message_does_not_leak_secret() -> None:
 
 @pytest.mark.asyncio
 async def test_ctrl_c_cancels_running_agent_and_recovers_input() -> None:
-    app = MewCodeApp(ChatSession(), SlowProvider(), make_config())
+    app = JulyCodeApp(ChatSession(), SlowProvider(), make_config())
 
     async with app.run_test() as pilot:
         composer = app.query_one(Composer)
@@ -1286,6 +1287,6 @@ async def test_ctrl_c_cancels_running_agent_and_recovers_input() -> None:
 
 
 def test_cli_entrypoint_is_importable() -> None:
-    from mewcode.cli import main
+    from julycode.cli import main
 
     assert callable(main)

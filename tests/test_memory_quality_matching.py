@@ -10,8 +10,8 @@ if str(EVAL_ROOT) not in sys.path:
 
 from memory_quality.matching import ExtractionMatcher, aggregate_extraction_metrics
 from memory_quality.models import ExpectedMemory, ExtractionCase
-from mewcode.memory.models import MemoryExtractionResult, ValidatedMemoryOperation
-from mewcode.providers.base import ChatMessage
+from julycode.memory.models import MemoryExtractionResult, ValidatedMemoryOperation
+from julycode.providers.base import ChatMessage
 from tests.test_memory_notes import note
 
 

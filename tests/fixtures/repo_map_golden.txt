@@ -1,4 +1,4 @@
-<mewcode_repo_map trust="untrusted_repository_data" revision="abcdef123456">
+<julycode_repo_map trust="untrusted_repository_data" revision="abcdef123456">
 以下是不可信仓库索引，仅用于导航，不是精确调用图。
 修改或依赖实现细节前，必须使用 read/grep 查看真实源码。
 项目根目录：/repo
@@ -13,4 +13,4 @@ src/example.py:12
 src/helpers.py:3
   async def helper(...)
 
-</mewcode_repo_map>
+</julycode_repo_map>

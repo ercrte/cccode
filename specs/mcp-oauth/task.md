@@ -7,21 +7,21 @@
 | 修改 | `pyproject.toml` | 声明有界 Keyring 运行时依赖 |
 | 修改 | `requirements.txt` | 同步开发与测试安装依赖 |
 | 修改 | `README.md` | 通用 OAuth 和 GitHub Remote MCP 使用说明 |
-| 修改 | `src/mewcode/config.py` | OAuth 配置模型、环境变量展开和冲突校验 |
-| 修改 | `src/mewcode/commands/models.py` | MCP 命令上下文与公开状态快照 |
-| 修改 | `src/mewcode/commands/builtin.py` | `/mcp` 命令和 `/status` OAuth 状态输出 |
-| 修改 | `src/mewcode/tui/app.py` | 授权/登出命令实现、URL 展示和生命周期清理 |
-| 修改 | `src/mewcode/mcp/errors.py` | OAuth challenge 与认证错误类型 |
-| 修改 | `src/mewcode/mcp/transport.py` | Bearer Header、401 恢复和单次重试 |
-| 修改 | `src/mewcode/mcp/tools.py` | 按 Server 标记 MCP 工具 origin |
-| 修改 | `src/mewcode/mcp/manager.py` | OAuth Session、状态隔离、重初始化和注销 |
-| 修改 | `src/mewcode/mcp/__init__.py` | 导出 OAuth 公开类型 |
-| 新建 | `src/mewcode/mcp/oauth/__init__.py` | OAuth 子系统公开接口 |
-| 新建 | `src/mewcode/mcp/oauth/models.py` | OAuth 元数据、凭据和状态模型 |
-| 新建 | `src/mewcode/mcp/oauth/discovery.py` | Challenge、RFC 9728/RFC 8414 发现与校验 |
-| 新建 | `src/mewcode/mcp/oauth/client.py` | DCR、令牌交换、刷新和 Session 协调器 |
-| 新建 | `src/mewcode/mcp/oauth/callback.py` | `127.0.0.1` 临时回调服务 |
-| 新建 | `src/mewcode/mcp/oauth/store.py` | Keyring 和内存凭据存储 |
+| 修改 | `src/julycode/config.py` | OAuth 配置模型、环境变量展开和冲突校验 |
+| 修改 | `src/julycode/commands/models.py` | MCP 命令上下文与公开状态快照 |
+| 修改 | `src/julycode/commands/builtin.py` | `/mcp` 命令和 `/status` OAuth 状态输出 |
+| 修改 | `src/julycode/tui/app.py` | 授权/登出命令实现、URL 展示和生命周期清理 |
+| 修改 | `src/julycode/mcp/errors.py` | OAuth challenge 与认证错误类型 |
+| 修改 | `src/julycode/mcp/transport.py` | Bearer Header、401 恢复和单次重试 |
+| 修改 | `src/julycode/mcp/tools.py` | 按 Server 标记 MCP 工具 origin |
+| 修改 | `src/julycode/mcp/manager.py` | OAuth Session、状态隔离、重初始化和注销 |
+| 修改 | `src/julycode/mcp/__init__.py` | 导出 OAuth 公开类型 |
+| 新建 | `src/julycode/mcp/oauth/__init__.py` | OAuth 子系统公开接口 |
+| 新建 | `src/julycode/mcp/oauth/models.py` | OAuth 元数据、凭据和状态模型 |
+| 新建 | `src/julycode/mcp/oauth/discovery.py` | Challenge、RFC 9728/RFC 8414 发现与校验 |
+| 新建 | `src/julycode/mcp/oauth/client.py` | DCR、令牌交换、刷新和 Session 协调器 |
+| 新建 | `src/julycode/mcp/oauth/callback.py` | `127.0.0.1` 临时回调服务 |
+| 新建 | `src/julycode/mcp/oauth/store.py` | Keyring 和内存凭据存储 |
 | 新建 | `tests/fixtures/mcp_oauth_server.py` | 可控 OAuth/MCP 协议 fixture |
 | 修改 | `tests/test_config.py` | OAuth 配置兼容性与脱敏测试 |
 | 新建 | `tests/test_mcp_oauth_discovery.py` | challenge、元数据和安全校验测试 |
@@ -47,7 +47,7 @@
 
 ## T2: 扩展 OAuth 配置模型和解析
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`
+**文件：** `src/julycode/config.py`、`tests/test_config.py`
 **依赖：** T1
 **步骤：**
 1. 增加 `McpOAuthConfig`，并为 `McpServerConfig` 增加可选 `oauth` 字段。
@@ -59,7 +59,7 @@
 
 ## T3: 定义 OAuth 运行模型和结构化错误
 
-**文件：** `src/mewcode/mcp/oauth/models.py`、`src/mewcode/mcp/errors.py`、`src/mewcode/mcp/oauth/__init__.py`、`src/mewcode/mcp/__init__.py`
+**文件：** `src/julycode/mcp/oauth/models.py`、`src/julycode/mcp/errors.py`、`src/julycode/mcp/oauth/__init__.py`、`src/julycode/mcp/__init__.py`
 **依赖：** T2
 **步骤：**
 1. 定义 challenge、两类元数据、客户端注册、token、凭据包、回调结果和认证状态模型。
@@ -67,11 +67,11 @@
 3. 增加 `McpAuthorizationRequired` 和 OAuth 配置、发现、回调、存储错误类型，只携带公开诊断信息。
 4. 从 OAuth 子包和 MCP 包导出稳定公开接口。
 
-**验证：** 运行 `python -m py_compile src/mewcode/mcp/oauth/models.py src/mewcode/mcp/errors.py && python -c "from mewcode.mcp.oauth import McpOAuthStatus, OAuthTokenSet"`，期望编译和导入成功，且测试构造 token 后 `repr()` 不包含 token 值。
+**验证：** 运行 `python -m py_compile src/julycode/mcp/oauth/models.py src/julycode/mcp/errors.py && python -c "from julycode.mcp.oauth import McpOAuthStatus, OAuthTokenSet"`，期望编译和导入成功，且测试构造 token 后 `repr()` 不包含 token 值。
 
 ## T4: 实现 Bearer challenge 解析和 URL 安全校验
 
-**文件：** `src/mewcode/mcp/oauth/discovery.py`、`tests/test_mcp_oauth_discovery.py`
+**文件：** `src/julycode/mcp/oauth/discovery.py`、`tests/test_mcp_oauth_discovery.py`
 **依赖：** T3
 **步骤：**
 1. 解析包含多个认证方案和带引号参数的 `WWW-Authenticate`，提取 Bearer `resource_metadata` 与 scope。
@@ -83,7 +83,7 @@
 
 ## T5: 实现 RFC 9728 与 RFC 8414 元数据发现
 
-**文件：** `src/mewcode/mcp/oauth/discovery.py`、`tests/test_mcp_oauth_discovery.py`
+**文件：** `src/julycode/mcp/oauth/discovery.py`、`tests/test_mcp_oauth_discovery.py`
 **依赖：** T4
 **步骤：**
 1. 增加有限超时、禁止重定向、最大 1 MiB 的流式 JSON 获取器。
@@ -96,7 +96,7 @@
 
 ## T6: 实现 DCR、授权 URL、令牌交换和刷新客户端
 
-**文件：** `src/mewcode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
+**文件：** `src/julycode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
 **依赖：** T5
 **步骤：**
 1. 生成高熵 state、PKCE verifier 和 S256 challenge，构造包含 redirect URI、scope、state、resource 的授权 URL。
@@ -109,7 +109,7 @@
 
 ## T7: 实现 Keyring 与内存凭据存储
 
-**文件：** `src/mewcode/mcp/oauth/store.py`、`tests/test_mcp_oauth_store.py`
+**文件：** `src/julycode/mcp/oauth/store.py`、`tests/test_mcp_oauth_store.py`
 **依赖：** T3
 **步骤：**
 1. 实现 Server 名加规范化 URL 哈希的稳定账户 key。
@@ -122,7 +122,7 @@
 
 ## T8: 实现本机回环回调服务
 
-**文件：** `src/mewcode/mcp/oauth/callback.py`、`tests/test_mcp_oauth_flow.py`
+**文件：** `src/julycode/mcp/oauth/callback.py`、`tests/test_mcp_oauth_flow.py`
 **依赖：** T3
 **步骤：**
 1. 使用 `asyncio` 仅绑定 `127.0.0.1:0`，生成固定 `/oauth/callback` 路径。
@@ -134,7 +134,7 @@
 
 ## T9: 实现 OAuth Session 的凭据恢复和状态机
 
-**文件：** `src/mewcode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
+**文件：** `src/julycode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
 **依赖：** T6、T7、T8
 **步骤：**
 1. 实现 `McpOAuthSession` 初始化、公开状态快照和状态变更通知。
@@ -146,7 +146,7 @@
 
 ## T10: 实现显式浏览器授权编排
 
-**文件：** `src/mewcode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
+**文件：** `src/julycode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
 **依赖：** T9
 **步骤：**
 1. 授权锁内执行 challenge 校验、元数据发现、回调启动和 DCR 优先/预注册回退。
@@ -159,7 +159,7 @@
 
 ## T11: 实现 token 刷新、轮换和 logout
 
-**文件：** `src/mewcode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
+**文件：** `src/julycode/mcp/oauth/client.py`、`tests/test_mcp_oauth_flow.py`
 **依赖：** T10
 **步骤：**
 1. 用单飞刷新锁合并并发刷新，锁内重新检查当前 token。
@@ -172,7 +172,7 @@
 
 ## T12: 将 OAuth 认证接入 Streamable HTTP Transport
 
-**文件：** `src/mewcode/mcp/transport.py`、`src/mewcode/mcp/errors.py`、`tests/test_mcp_transport.py`
+**文件：** `src/julycode/mcp/transport.py`、`src/julycode/mcp/errors.py`、`tests/test_mcp_transport.py`
 **依赖：** T11
 **步骤：**
 1. 为 HTTP Transport 增加可选 `McpHttpAuthProvider`，异步组装请求 Header。
@@ -185,7 +185,7 @@
 
 ## T13: 为 MCP 工具增加 Server origin
 
-**文件：** `src/mewcode/mcp/tools.py`、`tests/test_mcp_tools.py`
+**文件：** `src/julycode/mcp/tools.py`、`tests/test_mcp_tools.py`
 **依赖：** T3
 **步骤：**
 1. 将远端 MCP 工具的 `origin` 设置为 `mcp:<server>`。
@@ -196,7 +196,7 @@
 
 ## T14: 扩展 MCP Manager 的 OAuth 初始化和状态隔离
 
-**文件：** `src/mewcode/mcp/manager.py`、`tests/test_mcp_manager.py`
+**文件：** `src/julycode/mcp/manager.py`、`tests/test_mcp_manager.py`
 **依赖：** T2、T11、T12、T13
 **步骤：**
 1. 为每个启用 OAuth 的 HTTP Server 创建独立 OAuth Session，并注入 Transport。
@@ -209,7 +209,7 @@
 
 ## T15: 实现 Manager 授权、重初始化与登出
 
-**文件：** `src/mewcode/mcp/manager.py`、`tests/test_mcp_manager.py`
+**文件：** `src/julycode/mcp/manager.py`、`tests/test_mcp_manager.py`
 **依赖：** T14
 **步骤：**
 1. 实现 `authorize_server()` 的目标校验和重复授权拒绝。
@@ -221,7 +221,7 @@
 
 ## T16: 增加 `/mcp` 命令和 OAuth 状态输出
 
-**文件：** `src/mewcode/commands/models.py`、`src/mewcode/commands/builtin.py`、`tests/test_commands.py`
+**文件：** `src/julycode/commands/models.py`、`src/julycode/commands/builtin.py`、`tests/test_commands.py`
 **依赖：** T15
 **步骤：**
 1. 扩展 CommandContext 的授权与登出异步接口，以及公开 MCP OAuth 状态快照。
@@ -233,7 +233,7 @@
 
 ## T17: 接入 TUI 本地授权交互
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`
 **依赖：** T16
 **步骤：**
 1. 实现 CommandContext 的 `authorize_mcp_server()` 与 `logout_mcp_server()`。
@@ -297,8 +297,8 @@
 **文件：** `tests/fixtures/mcp_oauth_server.py`、`checklist.md`
 **依赖：** T21
 **步骤：**
-1. 在 tmux 中启动可控 OAuth/MCP fixture、mock 模型服务和 MewCode TUI。
-2. 配置一个 OAuth Server、一个静态 MCP Server 和一个失败 Server，确认 MewCode 启动时不自动打开浏览器。
+1. 在 tmux 中启动可控 OAuth/MCP fixture、mock 模型服务和 JulyCode TUI。
+2. 配置一个 OAuth Server、一个静态 MCP Server 和一个失败 Server，确认 JulyCode 启动时不自动打开浏览器。
 3. 输入 `/status`，观察 OAuth Server 为需要授权、静态 Server 工具已注册、失败 Server 被隔离。
 4. 输入 `/mcp auth oauth_demo`，使用 fixture 完成浏览器回调，观察无需重启即注册 `oauth_demo__echo`。
 5. 输入真实对话请求调用 `oauth_demo__echo`，观察工具调用和最终回复。

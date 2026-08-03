@@ -7,18 +7,18 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, PreparedChatRequest, RequestFootprint
-from mewcode.memory.index import MemoryIndexBuilder
-from mewcode.memory.manager import SessionMemoryManager
-from mewcode.memory.models import BootstrapOptions, MemoryUpdateJob, SessionMemoryConfig
-from mewcode.memory.notes import MemoryNoteStore
-from mewcode.memory.recovery import SessionBootstrapper, SessionHistoryValidator
-from mewcode.memory.session_store import SessionJsonlStore, message_to_json
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
-from mewcode.prompting.base import GeneratedContextBlock, PromptBundle
-from mewcode.session import ChatSession
-from mewcode.session_id import SessionId
-from mewcode.tools.base import ToolCall
+from julycode.context.models import ContextCompactionReport, ContextConfig, ContextLimitError, PreparedChatRequest, RequestFootprint
+from julycode.memory.index import MemoryIndexBuilder
+from julycode.memory.manager import SessionMemoryManager
+from julycode.memory.models import BootstrapOptions, MemoryUpdateJob, SessionMemoryConfig
+from julycode.memory.notes import MemoryNoteStore
+from julycode.memory.recovery import SessionBootstrapper, SessionHistoryValidator
+from julycode.memory.session_store import SessionJsonlStore, message_to_json
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from julycode.prompting.base import GeneratedContextBlock, PromptBundle
+from julycode.session import ChatSession
+from julycode.session_id import SessionId
+from julycode.tools.base import ToolCall
 from tests.test_memory_notes import note
 
 
@@ -58,7 +58,7 @@ def test_repo_map_prompt_is_not_saved_or_restored(tmp_path: Path) -> None:
     repo_map = GeneratedContextBlock(
         name="repo_map",
         title="仓库地图",
-        text='<mewcode_repo_map revision="abc123">\ntarget.py:1\n</mewcode_repo_map>',
+        text='<julycode_repo_map revision="abc123">\ntarget.py:1\n</julycode_repo_map>',
         kind="repo_map",
         snapshot_id="snapshot-secret-id",
     )
@@ -72,9 +72,9 @@ def test_repo_map_prompt_is_not_saved_or_restored(tmp_path: Path) -> None:
     restored, _report = store.load_session(session_id)
     restored_text = "\n".join(message.content for message in restored.messages)
 
-    assert "<mewcode_repo_map" not in persisted
+    assert "<julycode_repo_map" not in persisted
     assert "snapshot-secret-id" not in persisted
-    assert "<mewcode_repo_map" not in restored_text
+    assert "<julycode_repo_map" not in restored_text
     assert "snapshot-secret-id" not in restored_text
 
 
@@ -235,8 +235,19 @@ async def test_memory_manager_returns_runtime_context(tmp_path: Path) -> None:
     assert manager.runtime_context().restore_report is not None
 
 
+def test_disabled_memory_manager_does_not_create_runtime_directories(tmp_path: Path) -> None:
+    config = _config(tmp_path, enabled=False)
+    manager = SessionMemoryManager(tmp_path, config)
+
+    context = manager.load_runtime_context()
+
+    assert context.user_memory_index is None
+    assert context.project_memory_index is None
+    assert not (tmp_path / "home" / ".julycode").exists()
+
+
 def _config(tmp_path: Path, **overrides) -> SessionMemoryConfig:
-    data = {"user_dir": str(tmp_path / "home" / ".mewcode")}
+    data = {"user_dir": str(tmp_path / "home" / ".julycode")}
     data.update(overrides)
     return SessionMemoryConfig(**data)
 
@@ -258,7 +269,7 @@ def _bootstrapper(
 
 
 def _write_message_record(tmp_path: Path, session_id: str, content: str, created_at: datetime) -> None:
-    path = tmp_path / ".mewcode" / "sessions" / f"{session_id}.jsonl"
+    path = tmp_path / ".julycode" / "sessions" / f"{session_id}.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "kind": "message",

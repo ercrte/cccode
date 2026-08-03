@@ -4,18 +4,18 @@
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/memory/updater.py` | 提取 Prompt 重写，增加分类指南 |
-| 修改 | `src/mewcode/memory/extraction.py` | Validator：放宽 critical 类别 + evidence 归一化匹配 |
-| 修改 | `src/mewcode/memory/index.py` | 索引格式微调（粗体关键标记 + 标签追加） |
-| 修改 | `src/mewcode/memory/models.py` | index_max_lines/index_max_bytes 默认值翻倍 |
-| 修改 | `src/mewcode/prompting/builder.py` | 记忆注入引导语重写 |
+| 修改 | `src/julycode/memory/updater.py` | 提取 Prompt 重写，增加分类指南 |
+| 修改 | `src/julycode/memory/extraction.py` | Validator：放宽 critical 类别 + evidence 归一化匹配 |
+| 修改 | `src/julycode/memory/index.py` | 索引格式微调（粗体关键标记 + 标签追加） |
+| 修改 | `src/julycode/memory/models.py` | index_max_lines/index_max_bytes 默认值翻倍 |
+| 修改 | `src/julycode/prompting/builder.py` | 记忆注入引导语重写 |
 | 修改 | `tests/test_memory_extraction.py` | 新增 critical+project_knowledge 和归一化 evidence 测试 |
 | 修改 | `tests/test_memory_index.py` | 新索引格式断言 |
 | 修改 | `tests/test_prompting.py` | 新引导语内容断言 |
 
 ## T1: 提取 Prompt 重写
 
-**文件：** `src/mewcode/memory/updater.py`
+**文件：** `src/julycode/memory/updater.py`
 **依赖：** 无
 **步骤：**
 1. 在 `_prompt()` 方法中，将现有的单行分类描述替换为结构化的分类指南块。
@@ -29,7 +29,7 @@
 
 ## T2: Validator 规则放宽 — critical 类别扩展
 
-**文件：** `src/mewcode/memory/extraction.py`
+**文件：** `src/julycode/memory/extraction.py`
 **依赖：** 无
 **步骤：**
 1. 找到 `_validate_one()` 中 critical 门控检查（约第 181-183 行）。
@@ -40,7 +40,7 @@
 
 ## T3: Validator 规则放宽 — evidence 归一化匹配
 
-**文件：** `src/mewcode/memory/extraction.py`
+**文件：** `src/julycode/memory/extraction.py`
 **依赖：** 无
 **步骤：**
 1. 找到 `_validate_one()` 中 evidence 检查（约第 173-177 行）。
@@ -52,7 +52,7 @@
 
 ## T4: 索引格式微调
 
-**文件：** `src/mewcode/memory/index.py`
+**文件：** `src/julycode/memory/index.py`
 **依赖：** 无
 **步骤：**
 1. 找到 `MemoryIndexBuilder.build()` 中索引条目生成行（约第 35-38 行）。
@@ -64,7 +64,7 @@
 
 ## T5: 索引上限提升
 
-**文件：** `src/mewcode/memory/models.py`
+**文件：** `src/julycode/memory/models.py`
 **依赖：** 无
 **步骤：**
 1. 找到 `SessionMemoryConfig` 的 `index_max_lines` 和 `index_max_bytes` 默认值。
@@ -75,7 +75,7 @@
 
 ## T6: 记忆注入引导语强化
 
-**文件：** `src/mewcode/prompting/builder.py`
+**文件：** `src/julycode/prompting/builder.py`
 **依赖：** 无
 **步骤：**
 1. 找到 `_dynamic_knowledge_context_lines()` 中注入记忆索引的引导语（约第 317-323 行）。

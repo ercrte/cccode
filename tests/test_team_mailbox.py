@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.teams.events import TeamOutboxDispatcher
-from mewcode.teams.mailbox import MailboxService
-from mewcode.teams.models import MessageDraft, TeamActor, TeamDataError, TeamMemberRecord
-from mewcode.teams.store import TeamStore
+from julycode.teams.events import TeamOutboxDispatcher
+from julycode.teams.mailbox import MailboxService
+from julycode.teams.models import MessageDraft, TeamActor, TeamDataError, TeamMemberRecord
+from julycode.teams.store import TeamStore
 from tests.test_worktrees import init_repository
 
 
@@ -100,7 +100,7 @@ async def test_broadcast_delivers_to_other_participants(tmp_path: Path) -> None:
 @pytest.mark.asyncio
 async def test_outbox_dispatch_is_idempotent(tmp_path: Path) -> None:
     repo, store, mailbox = await setup_mailbox(tmp_path)
-    from mewcode.teams.models import OutboxEvent
+    from julycode.teams.models import OutboxEvent
     event = OutboxEvent(
         "event-1", "team", "member_idle", "one", ("lead",), "idle", "idle", None, None, None,
         "2026-01-01T00:00:00+00:00",

@@ -3,8 +3,8 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from mewcode.mcp.errors import McpOAuthDiscoveryError
-from mewcode.mcp.oauth.discovery import OAuthMetadataDiscovery, parse_www_authenticate
+from julycode.mcp.errors import McpOAuthDiscoveryError
+from julycode.mcp.oauth.discovery import OAuthMetadataDiscovery, parse_www_authenticate
 
 
 def test_oauth_challenge_parses_multiple_schemes_and_quoted_params() -> None:

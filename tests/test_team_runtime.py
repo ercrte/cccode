@@ -6,20 +6,20 @@ import asyncio
 
 import pytest
 
-from mewcode.teams.locking import ProcessLease
-from mewcode.teams.models import TeamConfig, TeamDataError
-from mewcode.teams.manager import TeamManager
-from mewcode.teams.models import MemberSpawnRequest, MessageDraft, TeamActor
-from mewcode.teams.runtime import TeamMemberRunnerFactory, TeamRuntimeSupervisor, _worktree_owner_id
-from mewcode.teams.sessions import TeamMemberSessionStore
-from mewcode.teams.store import TeamStore
-from mewcode.teams.tools import create_team_tools
-from mewcode.subagents.models import SubAgentRoleDefinition, SubAgentRoleFrontmatter
-from mewcode.tools.base import ToolContext
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import create_default_registry
-from mewcode.worktrees import WorktreeManager
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from julycode.teams.locking import ProcessLease
+from julycode.teams.models import TeamConfig, TeamDataError
+from julycode.teams.manager import TeamManager
+from julycode.teams.models import MemberSpawnRequest, MessageDraft, TeamActor
+from julycode.teams.runtime import TeamMemberRunnerFactory, TeamRuntimeSupervisor, _worktree_owner_id
+from julycode.teams.sessions import TeamMemberSessionStore
+from julycode.teams.store import TeamStore
+from julycode.teams.tools import create_team_tools
+from julycode.subagents.models import SubAgentRoleDefinition, SubAgentRoleFrontmatter
+from julycode.tools.base import ToolContext
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import create_default_registry
+from julycode.worktrees import WorktreeManager
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent
 from tests.test_subagents import FakeProvider, make_app_config
 from tests.test_worktrees import init_repository
 

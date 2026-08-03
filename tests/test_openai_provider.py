@@ -5,13 +5,13 @@ import json
 import httpx
 import pytest
 
-from mewcode.config import AppConfig, PromptCacheConfig
-from mewcode.errors import ProviderError
-from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
-from mewcode.providers.base import ChatMessage, ChatRequest
-from mewcode.providers.factory import create_provider
-from mewcode.providers.openai import OpenAIProvider
-from mewcode.tools.base import ToolCall, ToolSpec
+from julycode.config import AppConfig, PromptCacheConfig
+from julycode.errors import ProviderError
+from julycode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
+from julycode.providers.base import ChatMessage, ChatRequest
+from julycode.providers.factory import create_provider
+from julycode.providers.openai import OpenAIProvider
+from julycode.tools.base import ToolCall, ToolSpec
 
 
 def openai_config(
@@ -67,21 +67,21 @@ def prompt_bundle() -> PromptBundle:
             PromptBlock(
                 "runtime_cache_prefix",
                 "可缓存运行时前缀",
-                "<mewcode_cacheable_runtime_context>\n允许工具：read_file(read_only)\n</mewcode_cacheable_runtime_context>",
+                "<julycode_cacheable_runtime_context>\n允许工具：read_file(read_only)\n</julycode_cacheable_runtime_context>",
                 stable=False,
                 cacheable=True,
             ),
             PromptBlock(
                 "runtime_context",
                 "运行时补充",
-                "<mewcode_runtime_context>\n环境信息：cwd=/repo\n模式状态：normal full 1/8\n</mewcode_runtime_context>",
+                "<julycode_runtime_context>\n环境信息：cwd=/repo\n模式状态：normal full 1/8\n</julycode_runtime_context>",
                 stable=False,
             ),
         ),
     )
 
 
-def repo_map_block(text: str = "<mewcode_repo_map>def target(...)</mewcode_repo_map>") -> GeneratedContextBlock:
+def repo_map_block(text: str = "<julycode_repo_map>def target(...)</julycode_repo_map>") -> GeneratedContextBlock:
     return GeneratedContextBlock(
         name="repo_map",
         title="仓库地图",
@@ -196,10 +196,10 @@ async def test_openai_payload_includes_structured_prompt_messages() -> None:
     assert "## 身份\n稳定规则" in messages[0]["content"]
     assert "## 可缓存运行时前缀" in messages[0]["content"]
     assert "允许工具：read_file(read_only)" in messages[0]["content"]
-    assert "<mewcode_runtime_context>" not in messages[0]["content"]
+    assert "<julycode_runtime_context>" not in messages[0]["content"]
     assert "name" not in messages[0]
     assert messages[1]["role"] == "system"
-    assert "<mewcode_runtime_context>" in messages[1]["content"]
+    assert "<julycode_runtime_context>" in messages[1]["content"]
     assert "环境信息：cwd=/repo" in messages[1]["content"]
     assert "允许工具：read_file(read_only)" not in messages[1]["content"]
     assert "name" not in messages[1]
@@ -221,8 +221,8 @@ def test_openai_repo_map_is_after_stable_prefix_and_before_dynamic_runtime() -> 
 
     assert len(messages) == 3
     assert "可缓存运行时前缀" in messages[0]["content"]
-    assert "<mewcode_repo_map>" in messages[1]["content"]
-    assert "<mewcode_runtime_context>" in messages[2]["content"]
+    assert "<julycode_repo_map>" in messages[1]["content"]
+    assert "<julycode_runtime_context>" in messages[2]["content"]
     assert all(message["role"] == "system" for message in messages)
 
 
@@ -261,7 +261,7 @@ async def test_openai_runtime_prompt_is_not_user_message() -> None:
 
     user_messages = [message for message in seen["payload"]["messages"] if message["role"] == "user"]
     assert user_messages == [{"role": "user", "content": "hello"}]
-    assert all("<mewcode_runtime_context>" not in message["content"] for message in user_messages)
+    assert all("<julycode_runtime_context>" not in message["content"] for message in user_messages)
 
 
 @pytest.mark.asyncio
@@ -287,7 +287,7 @@ async def test_openai_prompt_cache_key_is_safe_hash() -> None:
 
     key = seen["payload"]["prompt_cache_key"]
     assert isinstance(key, str)
-    assert key.startswith("mewcode:")
+    assert key.startswith("julycode:")
     assert "稳定规则" not in key
     assert "hello" not in key
     assert "/repo" not in key

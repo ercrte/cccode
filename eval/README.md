@@ -1,6 +1,6 @@
-# MewCode Agent 评测
+# JulyCode Agent 评测
 
-`eval/` 是 MewCode 的本地评测工作区，用来回答“这个 Agent 靠不靠谱、好不好用”。默认模式是**在线真实模型评测**：命令会读取 MewCode 当前配置，创建真实 Provider，通过真实 `AgentLoopRunner`、工具、权限、上下文和 Provider 抽象执行用例。
+`eval/` 是 JulyCode 的本地评测工作区，用来回答“这个 Agent 靠不靠谱、好不好用”。默认模式是**在线真实模型评测**：命令会读取 JulyCode 当前配置，创建真实 Provider，通过真实 `AgentLoopRunner`、工具、权限、上下文和 Provider 抽象执行用例。
 
 在线评测会消耗真实模型额度并产生费用，可能较慢，也会受到模型版本、网络、采样和服务状态影响。结果适合做人工复核和趋势比较，不保证每次完全一致。
 
@@ -62,7 +62,7 @@ python eval/run_eval.py --mode offline --output eval/results/offline --allow-rev
 
 离线用例位于 `eval/cases/offline/`，保留 7 个脚本化 smoke 用例。
 
-用例是 JSON，可直接新增或调整，不需要改 `src/mewcode` 核心代码。
+用例是 JSON，可直接新增或调整，不需要改 `src/julycode` 核心代码。
 
 ```json
 {
@@ -99,7 +99,7 @@ prompt cache 字段来自 Provider usage。不同 Provider 可能返回 `hit`、
 # 默认也是 offline；验证提取、指标、报告和成对跨会话流程
 python eval/run_memory_eval.py --mode offline --output eval/results/memory-quality/offline
 
-# 使用当前 MewCode Provider 和模型做发布验收
+# 使用当前 JulyCode Provider 和模型做发布验收
 python eval/run_memory_eval.py --mode online --output eval/results/memory-quality/latest
 ```
 
@@ -122,12 +122,12 @@ python eval/run_repo_map_eval.py \
   --output eval/results/repo-map/offline
 ```
 
-成对模式使用当前 MewCode Provider，对每个任务分别关闭和开启 Repo Map，统计首次读取目标文件前的 `find_files`、`search_code`、`read_file` 探索调用数：
+成对模式使用当前 JulyCode Provider，对每个任务分别关闭和开启 Repo Map，统计首次读取目标文件前的 `find_files`、`search_code`、`read_file` 探索调用数：
 
 ```bash
 python eval/run_repo_map_eval.py \
   --mode paired \
-  --model gpt-5.5 \
+  --model deepseek-flash \
   --output eval/results/repo-map/paired
 ```
 

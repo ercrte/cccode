@@ -9,13 +9,13 @@
   "setup_files": [
     {
       "path": "README.md",
-      "content": "# MewCode\n\nMewCode 是一个终端 AI 编程助手。\n"
+      "content": "# JulyCode\n\nJulyCode 是一个终端 AI 编程助手。\n"
     }
   ],
   "expectations": {
-    "final_contains": ["README", "MewCode", "终端 AI 编程助手"],
+    "final_contains": ["README", "JulyCode", "终端 AI 编程助手"],
     "required_tools": ["read_file"],
-    "forbidden_tools": ["write_file", "edit_file"],
+    "forbidden_tools": ["write_file", "edit_file", "run_command"],
     "min_tool_successes": 1,
     "require_usage": true,
     "max_tool_calls": 2

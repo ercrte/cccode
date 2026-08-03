@@ -1,13 +1,13 @@
-# MewCode 全屏对话 MVP Plan
+# JulyCode 全屏对话 MVP Plan
 
 ## 架构概览
-MewCode 采用分层结构：CLI 启动层负责解析命令并启动应用；配置层负责读取、合并和校验 YAML；会话层维护当前运行期的消息历史；Provider 层把不同供应商协议转换成统一的流事件；TUI 层消费统一事件并更新全屏界面。各层单向依赖，TUI 不直接理解 OpenAI 或 Anthropic 的原始流式协议。
+JulyCode 采用分层结构：CLI 启动层负责解析命令并启动应用；配置层负责读取、合并和校验 YAML；会话层维护当前运行期的消息历史；Provider 层把不同供应商协议转换成统一的流事件；TUI 层消费统一事件并更新全屏界面。各层单向依赖，TUI 不直接理解 OpenAI 或 Anthropic 的原始流式协议。
 
 全屏界面使用 Textual 构建。界面包含顶部状态栏、消息滚动区、可折叠思考区、底部输入区和退出提示。用户提交输入后，界面创建一次异步生成任务，禁用输入区并显示生成状态；收到文本或思考增量时立即更新对应区域；请求结束后把助手回复写入当前会话历史并恢复输入。
 
 Provider 层使用 `httpx.AsyncClient.stream()` 直接访问供应商 HTTP API，并用内部 SSE 解析器处理事件流。这样可以统一处理 `base_url`、错误响应、超时、认证头和流式事件，也便于以后新增 Provider。
 
-配置层读取用户级 `~/.mewcode/config.yaml`，再从启动目录向上查找首个 `.mewcode.yaml` 作为项目级配置。两份配置按字段浅合并，项目级同名字段覆盖用户级字段。`api_key` 支持明文和 `${ENV_VAR}` 形式，错误信息统一走脱敏处理。
+配置层读取用户级 `~/.julycode/config.yaml`，再从启动目录向上查找首个 `.julycode.yaml` 作为项目级配置。两份配置按字段浅合并，项目级同名字段覆盖用户级字段。`api_key` 支持明文和 `${ENV_VAR}` 形式，错误信息统一走脱敏处理。
 
 ## 核心数据结构
 
@@ -96,16 +96,16 @@ class SessionState:
     last_error: str | None = None
 ```
 
-表示当前 MewCode 进程内的对话状态。退出进程后不写入磁盘。
+表示当前 JulyCode 进程内的对话状态。退出进程后不写入磁盘。
 
 ## 模块设计
 
-### `mewcode.cli`
-**职责：** 提供 `mewcode` 命令入口，加载配置，创建 Provider 和 TUI 应用。  
+### `julycode.cli`
+**职责：** 提供 `julycode` 命令入口，加载配置，创建 Provider 和 TUI 应用。  
 **对外接口：** `main(argv: Sequence[str] | None = None) -> int`。  
-**依赖：** `mewcode.config`、`mewcode.providers`、`mewcode.tui.app`。
+**依赖：** `julycode.config`、`julycode.providers`、`julycode.tui.app`。
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 发现配置文件、读取 YAML、合并用户级和项目级配置、解析环境变量、校验必填字段、脱敏错误。  
 **对外接口：**
 ```python
@@ -113,22 +113,22 @@ def load_config(cwd: Path | None = None) -> AppConfig
 def discover_project_config(cwd: Path) -> Path | None
 def resolve_api_key(raw_value: str) -> str
 ```
-**依赖：** `yaml`、`pathlib`、`os`、`mewcode.errors`。
+**依赖：** `yaml`、`pathlib`、`os`、`julycode.errors`。
 
-### `mewcode.providers.base`
+### `julycode.providers.base`
 **职责：** 定义统一 Provider 接口、请求结构、流事件和 Provider 错误模型。  
 **对外接口：** `LLMProvider`、`ChatRequest`、`StreamEvent`、`ChatMessage`。  
 **依赖：** 标准库类型系统。
 
-### `mewcode.providers.factory`
+### `julycode.providers.factory`
 **职责：** 根据 `AppConfig.protocol` 创建具体 Provider；对未知协议返回可理解错误。  
 **对外接口：**
 ```python
 def create_provider(config: AppConfig) -> LLMProvider
 ```
-**依赖：** `mewcode.providers.openai`、`mewcode.providers.anthropic`、`mewcode.errors`。
+**依赖：** `julycode.providers.openai`、`julycode.providers.anthropic`、`julycode.errors`。
 
-### `mewcode.providers.sse`
+### `julycode.providers.sse`
 **职责：** 解析标准 SSE 文本流，支持 `event:`、`data:`、空行分隔和多行 `data:`；忽略注释行。  
 **对外接口：**
 ```python
@@ -141,21 +141,21 @@ async def iter_sse_lines(response: httpx.Response) -> AsyncIterator[SSEEvent]
 ```
 **依赖：** `httpx`。
 
-### `mewcode.providers.openai`
+### `julycode.providers.openai`
 **职责：** 调用 OpenAI Chat Completions 流式接口，把 data-only SSE chunk 转换为统一 `StreamEvent`。  
 **对外接口：** `OpenAIProvider(config: AppConfig)`。  
 **请求规则：** 请求 `POST {base_url}/chat/completions`，认证头使用 `Authorization: Bearer <api_key>`，请求体包含 `model`、`messages`、`stream: true`。  
 **流式解析：** 读取 `choices[0].delta.content` 作为 `text_delta`；遇到 `[DONE]` 或结束 chunk 后发出 `message_done`。  
-**依赖：** `httpx`、`mewcode.providers.sse`、`mewcode.providers.base`。
+**依赖：** `httpx`、`julycode.providers.sse`、`julycode.providers.base`。
 
-### `mewcode.providers.anthropic`
+### `julycode.providers.anthropic`
 **职责：** 调用 Claude Messages 流式接口，把命名 SSE 事件转换为统一 `StreamEvent`，并处理 Claude extended thinking。  
 **对外接口：** `AnthropicProvider(config: AppConfig)`。  
 **请求规则：** 请求 `POST {base_url}/messages`，认证头使用 `x-api-key`、`anthropic-version: 2023-06-01`、`content-type: application/json`，请求体包含 `model`、`messages`、`max_tokens`、`stream: true`，并在配置开启时加入 `thinking`。  
 **流式解析：** `text_delta` 转换为 `text_delta`；`thinking_delta` 转换为 `thinking_delta`；`signature_delta` 保存到 `provider_payload`；`message_stop` 后发出 `message_done`。未知事件忽略但不中断。  
-**依赖：** `httpx`、`mewcode.providers.sse`、`mewcode.providers.base`。
+**依赖：** `httpx`、`julycode.providers.sse`、`julycode.providers.base`。
 
-### `mewcode.session`
+### `julycode.session`
 **职责：** 维护当前进程内的消息历史，封装提交用户消息、追加助手回复和记录错误。  
 **对外接口：**
 ```python
@@ -164,48 +164,48 @@ class ChatSession:
     def append_assistant_message(self, message: ChatMessage) -> None
     def build_request(self) -> ChatRequest
 ```
-**依赖：** `mewcode.providers.base`。
+**依赖：** `julycode.providers.base`。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** Textual 应用主体，组织界面布局、键盘绑定、异步生成任务和状态更新。  
-**对外接口：** `MewCodeApp(session: ChatSession, provider: LLMProvider)`。  
-**依赖：** `textual`、`mewcode.session`、`mewcode.providers.base`。
+**对外接口：** `JulyCodeApp(session: ChatSession, provider: LLMProvider)`。  
+**依赖：** `textual`、`julycode.session`、`julycode.providers.base`。
 
-### `mewcode.tui.widgets`
+### `julycode.tui.widgets`
 **职责：** 提供消息视图、可折叠思考区、输入区和状态栏组件。  
 **对外接口：** `MessageList`、`MessageView`、`ThinkingPanel`、`Composer`、`StatusBar`。  
 **依赖：** `textual`。
 
-### `mewcode.errors`
+### `julycode.errors`
 **职责：** 定义配置错误、Provider 错误和脱敏工具，保证错误不会泄露完整密钥。  
 **对外接口：**
 ```python
-class MewCodeError(Exception): ...
-class ConfigError(MewCodeError): ...
-class ProviderError(MewCodeError): ...
+class JulyCodeError(Exception): ...
+class ConfigError(JulyCodeError): ...
+class ProviderError(JulyCodeError): ...
 def redact_secret(text: str, secret: str | None = None) -> str
 ```
 **依赖：** 标准库。
 
 ## 模块交互
-1. 用户运行 `mewcode`。
-2. `mewcode.cli` 调用 `load_config()`，读取 `~/.mewcode/config.yaml` 和启动目录向上的 `.mewcode.yaml`，合并并校验配置。
-3. `mewcode.cli` 调用 `create_provider(config)` 得到具体 Provider。
-4. `mewcode.cli` 创建 `ChatSession` 和 `MewCodeApp`，进入全屏 TUI。
+1. 用户运行 `julycode`。
+2. `julycode.cli` 调用 `load_config()`，读取 `~/.julycode/config.yaml` 和启动目录向上的 `.julycode.yaml`，合并并校验配置。
+3. `julycode.cli` 调用 `create_provider(config)` 得到具体 Provider。
+4. `julycode.cli` 创建 `ChatSession` 和 `JulyCodeApp`，进入全屏 TUI。
 5. 用户在输入区提交文本。
 6. TUI 调用 `ChatSession.append_user_message()`，再用 `build_request()` 取当前会话上下文。
 7. TUI 创建异步任务并遍历 `provider.stream_chat(request)`。
 8. Provider 将供应商 SSE 数据转换为统一 `StreamEvent`。
 9. TUI 收到 `thinking_delta` 时更新对应助手消息的可折叠思考区；收到 `text_delta` 时更新助手回复正文；收到 `message_done` 时写入 `ChatSession`。
-10. 如果任何层抛出 `MewCodeError`，TUI 在状态栏和消息区显示脱敏后的错误，恢复输入并允许用户继续或退出。
+10. 如果任何层抛出 `JulyCodeError`，TUI 在状态栏和消息区显示脱敏后的错误，恢复输入并允许用户继续或退出。
 
 ## 文件组织
 ```text
-mewcode/
+julycode/
 ├── pyproject.toml                         — 包元数据、命令入口、依赖和测试配置
 ├── README.md                              — 最小安装、配置和启动说明
 ├── src/
-│   └── mewcode/
+│   └── julycode/
 │       ├── __init__.py                    — 包版本
 │       ├── cli.py                         — 命令入口
 │       ├── config.py                      — YAML 配置加载、合并、校验
@@ -240,12 +240,12 @@ mewcode/
 ## 需求覆盖
 | 需求 | 架构归属 |
 |------|----------|
-| F1 | `mewcode.tui.app` 和 `mewcode.tui.widgets` 提供全屏界面、消息区、输入区、状态提示和退出键绑定。 |
+| F1 | `julycode.tui.app` 和 `julycode.tui.widgets` 提供全屏界面、消息区、输入区、状态提示和退出键绑定。 |
 | F2 | Provider 的 `stream_chat()` 返回统一增量事件，TUI 逐事件更新界面。 |
 | F3 | `ChatSession` 在当前进程内维护 `messages`，每次请求都传入完整当前会话上下文。 |
 | F4 | `AppConfig.protocol` 和 `create_provider()` 在 OpenAI 与 Anthropic Provider 间切换。 |
-| F5 | `mewcode.config` 读取 YAML 并校验 `protocol`、`model`、`base_url`、`api_key`。 |
-| F6 | `mewcode.config` 先读用户级配置，再以项目级配置覆盖同名字段。 |
+| F5 | `julycode.config` 读取 YAML 并校验 `protocol`、`model`、`base_url`、`api_key`。 |
+| F6 | `julycode.config` 先读用户级配置，再以项目级配置覆盖同名字段。 |
 | F7 | `resolve_api_key()` 支持明文和 `${ENV_VAR}`，缺失时抛出脱敏 `ConfigError`。 |
 | F8 | `AnthropicProvider` 把 `thinking_delta` 转换为统一事件，TUI 的 `ThinkingPanel` 可折叠展示。 |
 | F9 | `errors.py` 和 TUI 错误处理路径展示可理解错误并恢复输入。 |

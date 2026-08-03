@@ -4,7 +4,7 @@ import json
 from collections.abc import AsyncIterator, Sequence
 
 from memory_quality.models import ExpectedMemory, ExtractionCase, InheritanceCase
-from mewcode.providers.base import ChatMessage, ChatRequest, LLMProvider, StreamEvent
+from julycode.providers.base import ChatMessage, ChatRequest, LLMProvider, StreamEvent
 
 
 class ScriptedMemoryQualityProvider(LLMProvider):
@@ -27,7 +27,7 @@ class ScriptedMemoryQualityProvider(LLMProvider):
 
     def _response(self, request: ChatRequest) -> str:
         last = request.messages[-1].content if request.messages else ""
-        if "你正在为 MewCode 提取可跨会话使用的长期记忆" in last:
+        if "你正在为 JulyCode 提取可跨会话使用的长期记忆" in last:
             expected = self._expected_for_extraction()
             return _operations(expected)
         if self.inheritance_case is None:

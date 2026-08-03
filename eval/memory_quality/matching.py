@@ -11,7 +11,7 @@ from memory_quality.models import (
     ExtractionMatch,
     ExtractionMetrics,
 )
-from mewcode.memory.models import MemoryExtractionResult, MemoryNote
+from julycode.memory.models import MemoryExtractionResult, MemoryNote
 
 
 _SPACE_RE = re.compile(r"\s+")

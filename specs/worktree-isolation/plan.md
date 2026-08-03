@@ -1,11 +1,11 @@
-# MewCode Worktree 隔离 Plan
+# JulyCode Worktree 隔离 Plan
 
 ## 架构概览
 
 本功能拆为五层，依赖方向保持从子 Agent 集成层指向 Worktree 领域层，Worktree 领域层不依赖 TUI、模型或 Agent Loop。
 
 1. **配置与角色声明层**：扩展子 Agent 角色 frontmatter 和 `sub_agents.worktree` 项目配置。角色只声明是否需要隔离；目录名、分支名和生命周期策略不由模型输入控制。
-2. **Worktree 领域层**：新增独立 `mewcode.worktrees` 包，负责仓库布局发现、安全路径、Git 命令、环境初始化、元数据、创建/恢复、状态检查和保护删除。
+2. **Worktree 领域层**：新增独立 `julycode.worktrees` 包，负责仓库布局发现、安全路径、Git 命令、环境初始化、元数据、创建/恢复、状态检查和保护删除。
 3. **子 Agent 集成层**：`SubAgentManager` 在定义式隔离角色运行前取得 Worktree lease，在所有结束路径中释放 lease，并把处置结果写入子 Agent 结果。`SubAgentRunnerFactory` 只接收已经确定的绝对运行目录。
 4. **目录隔离运行层**：工具执行器、权限控制器、Hook、上下文存储、项目指令和项目记忆均由子 Agent 的绝对 `cwd` 构造。进程不调用 `chdir`，也不共享按相对路径标识的状态。
 5. **后台清理层**：独立 janitor 在应用挂载后立即调度一次清理，随后按间隔运行；应用卸载时取消。清理复用同一套路径、元数据、任务占用和 Git 保护检查。
@@ -44,7 +44,7 @@ class WorktreeConfig:
 sub_agents:
   worktree:
     copy_paths:
-      - .mewcode.permissions.local.yaml
+      - .julycode.permissions.local.yaml
     symlink_paths:
       - .venv
     ignored_copy_paths:
@@ -78,7 +78,7 @@ class RepositoryLayout:
     repository_id: str
 ```
 
-`main_cwd`、`repository_root` 和 `storage_root` 均为规范化绝对路径。`storage_root` 固定为仓库根目录下的 `.mewcode/worktrees`；`relative_cwd` 用于 MewCode 从仓库子目录启动时，让子 Agent 进入 Worktree 中对应的逻辑子目录。`repository_id` 由规范化仓库根路径稳定派生，恢复时不需要 Git。
+`main_cwd`、`repository_root` 和 `storage_root` 均为规范化绝对路径。`storage_root` 固定为仓库根目录下的 `.julycode/worktrees`；`relative_cwd` 用于 JulyCode 从仓库子目录启动时，让子 Agent 进入 Worktree 中对应的逻辑子目录。`repository_id` 由规范化仓库根路径稳定派生，恢复时不需要 Git。
 
 ### `WorktreeMetadata`
 
@@ -95,7 +95,7 @@ class WorktreeMetadata:
     created_at: str
 ```
 
-元数据写在 Worktree 根目录的固定 MewCode 标记文件中。该标记路径通过仓库本地 exclude 忽略，不参与工作树 dirty 判定。恢复时要求版本受支持，所有身份字段与根据当前主目录、角色和任务 ID 计算的期望值一致，并要求提交值满足完整十六进制对象 ID 格式。
+元数据写在 Worktree 根目录的固定 JulyCode 标记文件中。该标记路径通过仓库本地 exclude 忽略，不参与工作树 dirty 判定。恢复时要求版本受支持，所有身份字段与根据当前主目录、角色和任务 ID 计算的期望值一致，并要求提交值满足完整十六进制对象 ID 格式。
 
 ### `WorktreeLease`
 
@@ -358,79 +358,79 @@ class ToolContext:
 
 ## 模块设计
 
-### `mewcode.worktrees.models`
+### `julycode.worktrees.models`
 
 **职责：** 定义配置、仓库布局、元数据、lease、变更状态、处置结果、清理报告和错误类型。  
 **对外接口：** 上述 dataclass、Literal、`WorktreeError(stage, message)`。  
 **依赖：** 标准库 `dataclasses`、`datetime`、`pathlib`。
 
-### `mewcode.worktrees.paths`
+### `julycode.worktrees.paths`
 
 **职责：** 发现文件系统仓库边界，校验安全名称和配置路径，生成确定性目录/分支，执行规范化边界判断。  
 **对外接口：** `validate_relative_name()`、`validate_config_path()`、`discover_repository_layout()`、`resolve_inside()`、`worktree_name(role, task_id)`、`branch_name(relative_name)`。  
-**依赖：** `mewcode.worktrees.models`、标准库路径与哈希模块。
+**依赖：** `julycode.worktrees.models`、标准库路径与哈希模块。
 
-### `mewcode.worktrees.git`
+### `julycode.worktrees.git`
 
 **职责：** 以显式 cwd 执行 Git 原子命令，归一化 Git 错误，创建/移除 Worktree，配置 hooks，读取状态和提交保护信息。  
 **对外接口：** `GitClient`、`GitCommandResult`。  
-**依赖：** `asyncio.subprocess`、`mewcode.errors.redact_secret`、Worktree models。
+**依赖：** `asyncio.subprocess`、`julycode.errors.redact_secret`、Worktree models。
 
-### `mewcode.worktrees.environment`
+### `julycode.worktrees.environment`
 
 **职责：** 执行配置驱动的复制、ignored 文件补齐、目录软链和失败回滚。  
 **对外接口：** `WorktreeEnvironmentInitializer.initialize()`。  
 **依赖：** `shutil`、`pathlib`、路径模块、GitClient。
 
-### `mewcode.worktrees.manager`
+### `julycode.worktrees.manager`
 
 **职责：** 协调整个创建/恢复/进入/退出/删除流程，管理目标锁和 active lease，读写元数据，执行三层安全过滤。  
 **对外接口：** `WorktreeManager`。  
 **依赖：** Worktree models、paths、git、environment；不依赖子 Agent 或 TUI。
 
-### `mewcode.worktrees.janitor`
+### `julycode.worktrees.janitor`
 
 **职责：** 管理启动即运行和周期运行的清理任务，逐候选隔离失败并输出报告。  
 **对外接口：** `WorktreeJanitor`。  
 **依赖：** WorktreeManager、`asyncio`。
 
-### `mewcode.subagents.loader` / `mewcode.subagents.models`
+### `julycode.subagents.loader` / `julycode.subagents.models`
 
 **职责：** 解析 `isolation`，扩展角色、运行提示、结果与后台记录的数据模型。  
 **对外接口调整：** `SubAgentRoleFrontmatter.isolation`、`ActiveSubAgentPrompt` Worktree 字段、`SubAgentResult.worktree`。  
 **依赖：** Worktree 结果只通过轻量 `SubAgentWorktreeInfo` 表达，不让通用角色加载器依赖 GitClient。
 
-### `mewcode.subagents.manager`
+### `julycode.subagents.manager`
 
 **职责：** 根据角色隔离声明建立 `SubAgentWorkingContext`，用 `try/finally` 覆盖完成、失败、取消和工厂异常的退出处置；管理并启动 janitor；补充前台结果和后台通知。  
 **对外接口调整：** 构造函数可注入 `WorktreeManager`/`WorktreeJanitor`；新增 `start()`；`close()` 同时关闭 janitor。  
 **依赖：** Worktree manager/janitor、现有 runner factory。
 
-### `mewcode.subagents.runtime`
+### `julycode.subagents.runtime`
 
 **职责：** 从显式 `SubAgentWorkingContext` 构造所有 cwd 相关子运行组件和隔离提示。  
 **对外接口调整：** `SubAgentRunnerFactory.create_runner(..., working_context=...)`。  
 **依赖：** 现有 Agent Loop、工具、权限、上下文、Hook、记忆模块。
 
-### `mewcode.prompting.builder`
+### `julycode.prompting.builder`
 
 **职责：** 在 active 子 Agent 块中注入 isolation、隔离目录、主目录、分支和禁止越界说明。  
 **对外接口：** 不新增公开接口，只扩展 `_sub_agent_context_lines()` 输出。  
 **依赖：** 扩展后的 `ActiveSubAgentPrompt`。
 
-### `mewcode.config`
+### `julycode.config`
 
 **职责：** 解析 `sub_agents.worktree`，校验正数时间、字符串数组、安全相对路径和三类规则不重复。  
 **对外接口调整：** `SubAgentConfig.worktree: WorktreeConfig`。  
 **依赖：** Worktree config 与路径校验。
 
-### `mewcode.tools.base` / `mewcode.context.manager` / `mewcode.memory`
+### `julycode.tools.base` / `julycode.context.manager` / `julycode.memory`
 
 **职责：** 在公共构造边界规范化 cwd；提供不恢复会话的项目知识加载入口。  
 **对外接口调整：** `ToolContext.__post_init__()`、`SessionBootstrapper.load_knowledge()`、`SessionMemoryManager.load_runtime_context()`。  
 **依赖：** 现有模块，不反向依赖 Worktree。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 
 **职责：** `on_mount()` 在子 Agent 角色刷新后调用 `SubAgentManager.start()`；`on_unmount()` 通过现有 `close()` 取消子任务和 janitor；清理失败报告写入 stderr，不阻断界面。  
 **对外接口：** 无。  
@@ -496,7 +496,7 @@ TUI on_unmount
 ## 文件组织
 
 ```text
-src/mewcode/
+src/julycode/
 ├── config.py                         — 解析 sub_agents.worktree 配置
 ├── tools/base.py                     — ToolContext 规范化绝对 cwd
 ├── context/manager.py                — 上下文边界保存绝对 cwd
@@ -531,10 +531,10 @@ README.md                             — 角色 isolation 与项目初始化配
 
 | 决策点 | 选择 | 理由 |
 |--------|------|------|
-| 生命周期归属 | 独立 `mewcode.worktrees` 包 | 避免 Git、文件初始化和清理调度挤入 SubAgentManager，便于无模型测试 |
-| 存储根 | 固定 `<repo>/.mewcode/worktrees` | 目录可预测且不接受模型配置；通过仓库本地 exclude 保证不追踪 |
-| 目录与分支命名 | `<role>/<task_id>` 与 `mewcode/<role>/<task_id>` | 只使用已验证角色和内部 ID，支持嵌套且不读取任务文本 |
-| 仓库子目录启动 | Worktree 内进入与主 cwd 相同的相对子目录 | 保持现有 MewCode 项目边界语义，不强制切到仓库顶层 |
+| 生命周期归属 | 独立 `julycode.worktrees` 包 | 避免 Git、文件初始化和清理调度挤入 SubAgentManager，便于无模型测试 |
+| 存储根 | 固定 `<repo>/.julycode/worktrees` | 目录可预测且不接受模型配置；通过仓库本地 exclude 保证不追踪 |
+| 目录与分支命名 | `<role>/<task_id>` 与 `julycode/<role>/<task_id>` | 只使用已验证角色和内部 ID，支持嵌套且不读取任务文本 |
+| 仓库子目录启动 | Worktree 内进入与主 cwd 相同的相对子目录 | 保持现有 JulyCode 项目边界语义，不强制切到仓库顶层 |
 | Git 调用 | 异步子进程、argv、显式 cwd、无 shell | 避免命令注入和全局 chdir，错误与超时可控 |
 | 快速恢复身份 | 文件系统布局 + 固定元数据 + 确定性字段 | 目录存在分支可以完全不调用 Git，异常元数据保守拒绝 |
 | 元数据位置 | Worktree 根固定隐藏标记，本地 exclude 忽略 | 恢复只需读目标目录，且标记不制造 dirty 状态 |
@@ -558,4 +558,4 @@ README.md                             — 角色 isolation 与项目初始化配
 - 删除保护测试覆盖未提交、未跟踪、新增无 upstream、新增落后 upstream、新增已推送和 Git 状态未知。
 - janitor 测试注入时钟，覆盖未过期、active、根外、坏元数据、dirty、未推送、已推送、单候选失败不影响其他候选，以及 start/close 不阻塞。
 - 子 Agent 集成测试覆盖共享角色不创建 Worktree、隔离角色传入绝对 cwd、完成/失败/取消均 finish、结果 payload 和后台通知包含处置信息、Fork 行为不变。
-- 全量回归运行 `python -m pytest`；最终按项目要求在 tmux 中启动 MewCode，用真实对话触发隔离定义式子 Agent，并逐项对照 `checklist.md` 验收。
+- 全量回归运行 `python -m pytest`；最终按项目要求在 tmux 中启动 JulyCode，用真实对话触发隔离定义式子 Agent，并逐项对照 `checklist.md` 验收。

@@ -6,7 +6,7 @@
 
 - 自动化：`pytest -q` 最终结果为 `734 passed in 24.87s`；`python -m compileall -q src tests` 与 `git diff --check` 退出码均为 0。
 - OAuth 专项：challenge/元数据、DCR 与预注册回退、PKCE/回调、Keyring/内存 Store、授权码交换、单飞刷新与 refresh token 轮换、Transport 401 单次重试、Manager 动态注册/注销、命令和 TUI 本地消息隔离均有测试覆盖。
-- tmux E2E：隔离会话 `oauth-e2e` 中同时启动静态 MCP、OAuth MCP、失败 Server、mock 模型和 MewCode。启动状态为 `oauth_demo=需要授权`、已加载 Server 1、失败 Server 1；执行 `/mcp auth oauth_demo` 后显示 loopback URL，并变为已加载 Server 2、工具 3、`oauth_demo=已授权`。
+- tmux E2E：隔离会话 `oauth-e2e` 中同时启动静态 MCP、OAuth MCP、失败 Server、mock 模型和 JulyCode。启动状态为 `oauth_demo=需要授权`、已加载 Server 1、失败 Server 1；执行 `/mcp auth oauth_demo` 后显示 loopback URL，并变为已加载 Server 2、工具 3、`oauth_demo=已授权`。
 - tmux 真实对话：输入“请调用 oauth_demo 工具 echo 内容 hello-oauth”，界面记录 `工具: oauth_demo__echo`、完成状态和最终“工具结果已收到”；fixture 日志确认 DCR、`code_challenge_method=S256`、resource、token exchange 和 `tools/call`。
 - tmux logout：执行 `/mcp logout oauth_demo` 后显示“相关工具已移除”，状态恢复为已加载 Server 1、工具 2、`oauth_demo=需要授权`，静态 Server 和失败 Server 状态未受影响。
 - 安全与清理：tmux 输出未出现 fixture access/refresh token；工作区未生成 OAuth token 文件；E2E 使用显式内存 Store 并显示降级告警；结束后 `ps` 无 tmux/fixture/mock/TUI 进程。测试注入层只为本机 HTTP fixture 放宽发现，生产 OAuth 仍强制 HTTPS。
@@ -49,12 +49,12 @@
 - [x] OAuth 成功后只注册目标 Server 的工具；刷新失败或 logout 只移除对应 `mcp:<server>` origin，不影响内置工具和其他 MCP Server（验证：运行 `pytest -q tests/test_mcp_manager.py tests/test_mcp_tools.py -k "origin or isolated or logout"`）
 - [x] Agent Loop 继续把授权后的 `server__tool` 当作普通工具执行并把结果回灌模型（验证：运行 `pytest -q tests/test_agent.py -k remote_mcp`）
 - [x] `/mcp` 是纯本地命令，授权 URL、OAuth 状态和命令结果不进入 ChatSession 或模型请求（验证：运行 `pytest -q tests/test_tui_smoke.py tests/test_commands.py -k "mcp and oauth"`，检查 session message 数量和 Provider 请求）
-- [x] MewCode 退出会关闭 OAuth HTTP Client、MCP Session 和回调监听，但不会删除持久 token（验证：运行 `pytest -q tests/test_mcp_manager.py tests/test_tui_smoke.py -k "oauth and close"`）
+- [x] JulyCode 退出会关闭 OAuth HTTP Client、MCP Session 和回调监听，但不会删除持久 token（验证：运行 `pytest -q tests/test_mcp_manager.py tests/test_tui_smoke.py -k "oauth and close"`）
 - [x] OpenAI 与 Anthropic Provider 的 MCP 工具格式和权限行为没有回归（验证：运行 `pytest -q tests/test_openai_provider.py tests/test_anthropic_provider.py tests/test_tool_scheduler.py -k "mcp or tool"`）
 
 ## 编译与测试
 
-- [x] OAuth 模块和 fixture 可编译（验证：运行 `python -m py_compile src/mewcode/mcp/oauth/*.py tests/fixtures/mcp_oauth_server.py`，期望退出码为 0）
+- [x] OAuth 模块和 fixture 可编译（验证：运行 `python -m py_compile src/julycode/mcp/oauth/*.py tests/fixtures/mcp_oauth_server.py`，期望退出码为 0）
 - [x] OAuth 专项测试全部通过（验证：运行 `pytest -q tests/test_mcp_oauth_discovery.py tests/test_mcp_oauth_store.py tests/test_mcp_oauth_flow.py`）
 - [x] 配置、MCP、命令和 TUI 受影响测试全部通过（验证：运行 `pytest -q tests/test_config.py tests/test_mcp_transport.py tests/test_mcp_client.py tests/test_mcp_tools.py tests/test_mcp_manager.py tests/test_commands.py tests/test_tui_smoke.py`）
 - [x] Agent、Provider、权限和工具回归测试通过（验证：运行 `pytest -q tests/test_agent.py tests/test_openai_provider.py tests/test_anthropic_provider.py tests/test_tool_scheduler.py tests/test_permissions.py tests/test_tools.py`）
@@ -65,9 +65,9 @@
 
 ## 端到端场景
 
-- [x] 场景 1：首次 OAuth 授权并调用工具——在 tmux 启动 OAuth/MCP fixture、mock 模型和 MewCode；启动后不弹浏览器，`/status` 显示 `oauth_demo` 需要授权；执行 `/mcp auth oauth_demo`，访问显示的 URL 完成回调；无需重启即可在真实对话中调用 `oauth_demo__echo` 并获得最终回复（验证：`tmux capture-pane -p -S -200` 同时包含需要授权、授权 URL、授权成功、工具调用和最终回复）
+- [x] 场景 1：首次 OAuth 授权并调用工具——在 tmux 启动 OAuth/MCP fixture、mock 模型和 JulyCode；启动后不弹浏览器，`/status` 显示 `oauth_demo` 需要授权；执行 `/mcp auth oauth_demo`，访问显示的 URL 完成回调；无需重启即可在真实对话中调用 `oauth_demo__echo` 并获得最终回复（验证：`tmux capture-pane -p -S -200` 同时包含需要授权、授权 URL、授权成功、工具调用和最终回复）
 - [x] 场景 2：认证隔离——同时配置 `oauth_demo`、静态 `local_demo` 和不可达 `broken_demo`；OAuth 未授权和失败 Server 不影响 `local_demo__echo` 与内置 `read_file`（验证：在 tmux 中分别发送两段真实请求，观察两个工具成功并在 `/status` 中看到三个独立状态）
 - [x] 场景 3：刷新与轮换——fixture 令首次 access token 失效并返回一次 401；下一次真实工具请求触发单次 refresh，使用轮换后的 token 成功，界面不要求重新授权（验证：fixture 请求计数显示一次 refresh、一次重试，tmux 最终回复成功）
 - [x] 场景 4：logout——执行 `/mcp logout oauth_demo` 后 `/status` 恢复需要授权，`oauth_demo__echo` 从可用工具中移除，静态 MCP 和内置工具继续工作（验证：tmux 输出包含 logout 成功、OAuth 状态变化和静态工具后续成功调用）
-- [x] 场景 5：安全存储降级——在无可用 Keyring backend 的隔离 HOME 启动 MewCode，授权成功后显示“仅当前进程有效”警告；退出并重启后重新要求授权，且隔离 HOME 中找不到明文 token（验证：`rg -uuu "test-access-token|test-refresh-token" <隔离HOME>` 无命中）
-- [x] 场景 6：验收环境清理——完成测试后关闭 MewCode、mock 模型、OAuth/MCP fixture 和浏览器模拟进程，删除临时配置与测试 Keyring 记录（验证：`tmux ls` 不包含测试会话，`ps` 不包含 fixture/mock 命令，`git status --short` 不包含临时文件）
+- [x] 场景 5：安全存储降级——在无可用 Keyring backend 的隔离 HOME 启动 JulyCode，授权成功后显示“仅当前进程有效”警告；退出并重启后重新要求授权，且隔离 HOME 中找不到明文 token（验证：`rg -uuu "test-access-token|test-refresh-token" <隔离HOME>` 无命中）
+- [x] 场景 6：验收环境清理——完成测试后关闭 JulyCode、mock 模型、OAuth/MCP fixture 和浏览器模拟进程，删除临时配置与测试 Keyring 记录（验证：`tmux ls` 不包含测试会话，`ps` 不包含 fixture/mock 命令，`git status --short` 不包含临时文件）

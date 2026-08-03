@@ -6,19 +6,19 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.agent import AgentLoopRunner
-from mewcode.commands import AgentCommand
-from mewcode.config import AgentConfig, RepoMapConfig
-from mewcode.context.manager import ContextManager
-from mewcode.context.models import ContextConfig
-from mewcode.memory.models import KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
-from mewcode.memory.session_store import SessionJsonlStore
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
-from mewcode.repo_map.manager import RepoMapManager
-from mewcode.session_id import SessionId
-from mewcode.tools.base import ToolCall, ToolContext, ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry
+from julycode.agent import AgentLoopRunner
+from julycode.commands import AgentCommand
+from julycode.config import AgentConfig, RepoMapConfig
+from julycode.context.manager import ContextManager
+from julycode.context.models import ContextConfig
+from julycode.memory.models import KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
+from julycode.memory.session_store import SessionJsonlStore
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from julycode.repo_map.manager import RepoMapManager
+from julycode.session_id import SessionId
+from julycode.tools.base import ToolCall, ToolContext, ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry
 
 
 class StubProvider:
@@ -100,7 +100,7 @@ async def test_repo_map_refreshes_after_edit_and_stays_out_of_persistence(tmp_pa
     memory = CapturingMemoryManager()
     store = SessionJsonlStore(
         tmp_path,
-        SessionMemoryConfig(project_dir=".mewcode", user_dir=str(tmp_path / "user-memory")),
+        SessionMemoryConfig(project_dir=".julycode", user_dir=str(tmp_path / "user-memory")),
     )
     session = store.create_session(SessionId("20260716-010203-abcd"))
     manager = RepoMapManager(tmp_path, RepoMapConfig(enabled=True, max_tokens=2000))
@@ -141,19 +141,19 @@ async def test_repo_map_refreshes_after_edit_and_stays_out_of_persistence(tmp_pa
     persisted_path = store.sessions_dir / "20260716-010203-abcd.jsonl"
     persisted = persisted_path.read_text(encoding="utf-8")
     history_text = "\n".join(message.content for message in session.messages)
-    assert "<mewcode_repo_map" not in history_text
+    assert "<julycode_repo_map" not in history_text
     assert first.snapshot_id not in history_text
-    assert "<mewcode_repo_map" not in persisted
+    assert "<julycode_repo_map" not in persisted
     assert first.snapshot_id not in persisted
     restored, _report = store.load_session(SessionId("20260716-010203-abcd"))
     restored_text = "\n".join(message.content for message in restored.messages)
-    assert "<mewcode_repo_map" not in restored_text
+    assert "<julycode_repo_map" not in restored_text
     assert first.snapshot_id not in restored_text
     assert len(memory.jobs) == 1
     memory_payload = "\n".join(
         [*(message.content for message in memory.jobs[0].turn_messages), memory.jobs[0].final_message.content]
     )
-    assert "<mewcode_repo_map" not in memory_payload
+    assert "<julycode_repo_map" not in memory_payload
     assert first.snapshot_id not in memory_payload
 
     await manager.close()

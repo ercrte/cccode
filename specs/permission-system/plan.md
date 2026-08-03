@@ -1,7 +1,7 @@
-# MewCode 权限系统 Plan
+# JulyCode 权限系统 Plan
 
 ## 架构概览
-权限系统新增 `mewcode.permissions` 包，作为工具调度与工具执行之间的统一决策层。所有内置工具调用先经过现有 `ToolPolicy` 处理未知工具和 Plan Mode 限制，再进入权限决策；权限允许后才调用 `ToolExecutor.execute()`。这样 Plan Mode 的只读约束仍是上游硬约束，权限规则无法把规划阶段升级成可写可执行。
+权限系统新增 `julycode.permissions` 包，作为工具调度与工具执行之间的统一决策层。所有内置工具调用先经过现有 `ToolPolicy` 处理未知工具和 Plan Mode 限制，再进入权限决策；权限允许后才调用 `ToolExecutor.execute()`。这样 Plan Mode 的只读约束仍是上游硬约束，权限规则无法把规划阶段升级成可写可执行。
 
 权限决策分为五层：命令黑名单、路径沙箱、规则引擎、权限模式和人在回路。黑名单和沙箱由 `PermissionEngine` 在规则前执行，命中后直接返回拒绝。规则引擎加载用户级、项目级、本地级和会话级规则，按会话、本地、项目、用户的顺序查找。权限模式只处理未被硬拒绝、沙箱拒绝或显式 deny 拒绝的调用，并在严格模式下把有副作用工具转为用户确认。
 
@@ -185,7 +185,7 @@ class PermissionController:
 
 ## 模块设计
 
-### `mewcode.permissions.models`
+### `julycode.permissions.models`
 **职责：** 定义权限模式、规则、决策、提示和事件载荷等基础模型。
 
 **对外接口：**
@@ -204,9 +204,9 @@ PermissionEventPayload
 PermissionPrompter
 ```
 
-**依赖：** `dataclasses`、`typing`、`mewcode.tools.base`。
+**依赖：** `dataclasses`、`typing`、`julycode.tools.base`。
 
-### `mewcode.permissions.blacklist`
+### `julycode.permissions.blacklist`
 **职责：** 对 `run_command` 的命令字符串执行不可配置的高危正则匹配。
 
 **对外接口：**
@@ -217,9 +217,9 @@ class DangerousCommandGuard:
 
 **规则范围：** 初始覆盖已知高危模式：根目录或家目录递归删除、`sudo rm`、磁盘格式化、裸设备写入、关机重启、fork bomb、全局权限破坏、`kill -9 -1`、`git clean -fdx` 等。命中后返回 `error_type="permission_dangerous_command"`。
 
-**依赖：** `re`、`mewcode.permissions.models`。
+**依赖：** `re`、`julycode.permissions.models`。
 
-### `mewcode.permissions.sandbox`
+### `julycode.permissions.sandbox`
 **职责：** 对内置文件类工具做项目路径沙箱检查，并为规则引擎提供规范化目标。
 
 **对外接口：**
@@ -245,9 +245,9 @@ class ProjectSandbox:
 - `search_code` 必须检查可选 `path`，缺省按 `.` 处理。
 - `find_files` 拒绝绝对 glob 和包含 `..` 的 glob，并在执行前展开候选匹配，确认所有已匹配文件的真实路径仍位于项目内；工具自身返回时继续只展示项目内相对路径。
 
-**依赖：** `pathlib`、`mewcode.tools.base`、`mewcode.permissions.models`。
+**依赖：** `pathlib`、`julycode.tools.base`、`julycode.permissions.models`。
 
-### `mewcode.permissions.rules`
+### `julycode.permissions.rules`
 **职责：** 解析 YAML 规则文件、匹配工具调用、处理规则优先级，并写入本地持久规则。
 
 **YAML 格式：**
@@ -259,9 +259,9 @@ rules:
 ```
 
 **文件位置：**
-- 用户级：`~/.mewcode/permissions.yaml`
-- 项目级：`<cwd>/.mewcode.permissions.yaml`
-- 本地级：`<cwd>/.mewcode.permissions.local.yaml`
+- 用户级：`~/.julycode/permissions.yaml`
+- 项目级：`<cwd>/.julycode.permissions.yaml`
+- 本地级：`<cwd>/.julycode.permissions.local.yaml`
 - 会话级：内存中的 `SessionPermissionRules`
 
 **对外接口：**
@@ -284,9 +284,9 @@ class SessionPermissionRules:
     def as_rule_set(self) -> PermissionRuleSet: ...
 ```
 
-**依赖：** `yaml`、`fnmatch`、`pathlib`、`mewcode.errors.ConfigError`。
+**依赖：** `yaml`、`fnmatch`、`pathlib`、`julycode.errors.ConfigError`。
 
-### `mewcode.permissions.engine`
+### `julycode.permissions.engine`
 **职责：** 编排黑名单、沙箱、规则引擎和权限模式，输出 `PermissionDecision`。
 
 **对外接口：**
@@ -313,9 +313,9 @@ class PermissionEngine:
 6. 显式 allow 在默认和放行模式下 allow。
 7. 未命中时，读类工具 allow；有副作用工具按模式处理：严格和默认 prompt，放行 allow。
 
-**依赖：** `mewcode.permissions.blacklist`、`sandbox`、`rules`、`models`。
+**依赖：** `julycode.permissions.blacklist`、`sandbox`、`rules`、`models`。
 
-### `mewcode.permissions.controller`
+### `julycode.permissions.controller`
 **职责：** 提供调度器可调用的权限 API，处理用户确认选择，并生成工具失败结果。
 
 **对外接口：**
@@ -338,9 +338,9 @@ def create_permission_controller(
 - `allow_permanent` 生成 `source="local"` 的 allow 规则，写入本地级 YAML 后返回 allow；写入失败返回 `permission_persist_failed`。
 - `deny` 返回 `permission_user_denied`。
 
-**依赖：** `mewcode.tools.base`、`mewcode.errors.redact_secret`、权限模型。
+**依赖：** `julycode.tools.base`、`julycode.errors.redact_secret`、权限模型。
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 加载权限模式配置，并保持原有模型供应商配置行为。
 
 **改动接口：**
@@ -362,7 +362,7 @@ permissions:
   mode: default
 ```
 
-### `mewcode.tools.scheduler`
+### `julycode.tools.scheduler`
 **职责：** 在工具执行前接入权限控制，并继续负责多工具分批、并发读类和串行有副作用工具。
 
 **改动接口：**
@@ -385,7 +385,7 @@ class ToolCallScheduler:
 
 并发读类批次继续使用 `asyncio.gather()`；读类工具要么 allow，要么 deny，不进入 prompt。有副作用工具本来就是单独串行批次，调度器在每个有副作用调用真正执行前同步完成权限确认。无法确认安全性的工具必须在 `ToolSpec.safety` 上标为 `side_effect`，从而进入串行批次。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 扩展事件模型，把权限等待和权限决策传递给 TUI 与测试。
 
 **改动接口：**
@@ -404,7 +404,7 @@ class TurnEvent:
 
 `AgentLoopRunner` 新增可选 `permission_controller` 参数，并传给 `ToolCallScheduler`。未传入时用 `executor.context.cwd` 创建一个加载现有规则、模式为 `permissive`、无 prompter 的非交互控制器，保证非 TUI 测试不会挂起；生产 CLI 和 TUI 必须传入由配置创建的控制器。
 
-### `mewcode.tui.widgets`
+### `julycode.tui.widgets`
 **职责：** 增加权限确认视图和权限状态展示。
 
 **新增接口：**
@@ -417,24 +417,24 @@ class PermissionPromptView(Vertical):
 
 `ToolStatusView` 继续用于显示工具运行结果；权限拒绝表现为失败工具结果，body 展示 `permission_*` 错误类型。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 实现 `PermissionPrompter`，把权限请求转为 TUI 上的确认视图，并处理权限事件。
 
 **改动接口：**
 ```python
-class MewCodeApp(App[None], PermissionPrompter):
+class JulyCodeApp(App[None], PermissionPrompter):
     async def request_permission(self, prompt: PermissionPrompt) -> UserPermissionChoice: ...
 ```
 
-`MewCodeApp.__init__()` 接收 `permission_controller`。运行任务时创建 `AgentLoopRunner(..., permission_controller=...)`。收到 `permission_requested` 事件时更新状态栏或追加提示信息；收到 `permission_resolved` 事件时清理等待状态。
+`JulyCodeApp.__init__()` 接收 `permission_controller`。运行任务时创建 `AgentLoopRunner(..., permission_controller=...)`。收到 `permission_requested` 事件时更新状态栏或追加提示信息；收到 `permission_resolved` 事件时清理等待状态。
 
-### `mewcode.cli`
+### `julycode.cli`
 **职责：** 在启动时创建权限控制器，并把 TUI prompter 接入。
 
 **改动流程：**
 1. `load_config()` 读取 `permissions.mode`。
 2. 创建 registry、executor。
-3. 创建 `MewCodeApp`。
+3. 创建 `JulyCodeApp`。
 4. 用 app 作为 prompter 创建 `PermissionController`。
 5. 通过 `app.set_permission_controller(controller)` 注入权限控制器后启动 TUI。
 
@@ -480,9 +480,9 @@ ToolPolicy.validate_call()
 ```text
 create_permission_controller(cwd, config, prompter)
   → PermissionRuleStore.load(cwd)
-      → ~/.mewcode/permissions.yaml
-      → <cwd>/.mewcode.permissions.yaml
-      → <cwd>/.mewcode.permissions.local.yaml
+      → ~/.julycode/permissions.yaml
+      → <cwd>/.julycode.permissions.yaml
+      → <cwd>/.julycode.permissions.local.yaml
   → SessionPermissionRules()
   → PermissionEngine(...)
 ```
@@ -491,16 +491,16 @@ create_permission_controller(cwd, config, prompter)
 
 ```text
 PermissionPromptView: 永久允许
-  → MewCodeApp.request_permission() 返回 allow_permanent
+  → JulyCodeApp.request_permission() 返回 allow_permanent
   → PermissionController.resolve_prompt()
   → PermissionRuleStore.add_local_rule()
-  → <cwd>/.mewcode.permissions.local.yaml 写入 allow 规则
+  → <cwd>/.julycode.permissions.local.yaml 写入 allow 规则
   → 当前调用继续执行
 ```
 
 ## 文件组织
 ```text
-src/mewcode/
+src/julycode/
 ├── permissions/
 │   ├── __init__.py              — 权限系统公共导出
 │   ├── models.py                — 权限模式、规则、决策、提示和事件模型
@@ -540,7 +540,7 @@ README.md                       — 权限系统用户说明
 |--------|------|------|
 | 权限接入位置 | 接在 `ToolCallScheduler` 与 `ToolExecutor` 之间 | 调度器已经集中处理工具调用顺序和 Plan Mode，接入后能覆盖所有真实执行路径，并保持 Provider 层无感知 |
 | Plan Mode 优先级 | `ToolPolicy.validate_call()` 先于权限控制器执行 | 确保权限规则和放行模式不能绕过规划阶段只读约束 |
-| 规则文件位置 | 用户级 `~/.mewcode/permissions.yaml`，项目级 `<cwd>/.mewcode.permissions.yaml`，本地级 `<cwd>/.mewcode.permissions.local.yaml` | 保持规则与主模型配置分离；本地级文件适合作为当前机器上的项目覆盖 |
+| 规则文件位置 | 用户级 `~/.julycode/permissions.yaml`，项目级 `<cwd>/.julycode.permissions.yaml`，本地级 `<cwd>/.julycode.permissions.local.yaml` | 保持规则与主模型配置分离；本地级文件适合作为当前机器上的项目覆盖 |
 | 永久允许写入位置 | 写入本地级规则文件 | 避免一次项目内确认扩大成所有项目的全局允许，同时满足跨运行保留 |
 | 规则格式 | `rules` 映射中使用 `"工具名(模式)": allow|deny` | 贴合用户给出的格式，便于手写和 diff |
 | 规则匹配 | 自动区分精确和 glob，精确优先，deny 冲突优先 | 满足可预测的优先级要求，避免宽泛 allow 意外覆盖精确 deny |

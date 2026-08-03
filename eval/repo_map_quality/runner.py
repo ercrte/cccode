@@ -12,18 +12,18 @@ from repo_map_quality.models import (
     RepoMapQualityReport,
     RepoMapQualityRunOptions,
 )
-from mewcode.agent import AgentLoopRunner
-from mewcode.commands import AgentCommand
-from mewcode.config import AgentConfig, RepoMapConfig
-from mewcode.context.estimator import TokenEstimator
-from mewcode.context.manager import ContextManager
-from mewcode.context.models import ContextConfig
-from mewcode.repo_map.manager import RepoMapManager
-from mewcode.session import ChatSession
-from mewcode.tools.base import ToolContext
-from mewcode.tools.builtin import FindFilesTool, ReadFileTool, SearchCodeTool
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry
+from julycode.agent import AgentLoopRunner
+from julycode.commands import AgentCommand
+from julycode.config import AgentConfig, RepoMapConfig
+from julycode.context.estimator import TokenEstimator
+from julycode.context.manager import ContextManager
+from julycode.context.models import ContextConfig
+from julycode.repo_map.manager import RepoMapManager
+from julycode.session import ChatSession
+from julycode.tools.base import ToolContext
+from julycode.tools.builtin import FindFilesTool, ReadFileTool, SearchCodeTool
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry
 
 
 class RepoMapQualityRunner:

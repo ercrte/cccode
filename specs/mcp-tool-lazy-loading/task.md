@@ -4,23 +4,23 @@
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/tools/base.py` | 增加 `deferred` 工具可见性 |
-| 修改 | `src/mewcode/tools/scheduler.py` | 按轮次激活集合过滤和校验延迟工具 |
-| 新建 | `src/mewcode/mcp/search.py` | MCP 工具目录、规范化、确定性检索和搜索结果类型 |
-| 新建 | `src/mewcode/mcp/scope.py` | 单个 Agent Runner 的轮次激活状态 |
-| 修改 | `src/mewcode/mcp/tools.py` | 轻量检索工具和远端工具延迟可见性 |
-| 修改 | `src/mewcode/mcp/manager.py` | Catalog 同步、延迟注册、搜索状态、OAuth 更新和报告 |
-| 修改 | `src/mewcode/mcp/__init__.py` | 导出新增 MCP 公共类型 |
-| 修改 | `src/mewcode/prompting/base.py` | 运行时提示上下文增加 MCP 摘要 |
-| 修改 | `src/mewcode/prompting/builder.py` | 渲染紧凑的 MCP Server 名称和工具数量 |
-| 修改 | `src/mewcode/agent.py` | 接入轮次激活、检索结果消费和终止清理 |
-| 修改 | `src/mewcode/tui/app.py` | 向各 Runner 传递 Manager并显示当前暴露状态 |
-| 修改 | `src/mewcode/skills/execution.py` | 独立 Skill Runner 使用独立 MCP 轮次状态 |
-| 修改 | `src/mewcode/subagents/manager.py` | 向子 Agent Runner Factory 传递 Manager |
-| 修改 | `src/mewcode/subagents/runtime.py` | 子 Agent Runner 使用独立 MCP 轮次状态 |
-| 修改 | `src/mewcode/teams/runtime.py` | 团队成员 Runner 使用独立 MCP 轮次状态 |
-| 修改 | `src/mewcode/commands/models.py` | 状态快照记录当前暴露的 MCP 工具 |
-| 修改 | `src/mewcode/commands/builtin.py` | `/status` 区分发现数和暴露数 |
+| 修改 | `src/julycode/tools/base.py` | 增加 `deferred` 工具可见性 |
+| 修改 | `src/julycode/tools/scheduler.py` | 按轮次激活集合过滤和校验延迟工具 |
+| 新建 | `src/julycode/mcp/search.py` | MCP 工具目录、规范化、确定性检索和搜索结果类型 |
+| 新建 | `src/julycode/mcp/scope.py` | 单个 Agent Runner 的轮次激活状态 |
+| 修改 | `src/julycode/mcp/tools.py` | 轻量检索工具和远端工具延迟可见性 |
+| 修改 | `src/julycode/mcp/manager.py` | Catalog 同步、延迟注册、搜索状态、OAuth 更新和报告 |
+| 修改 | `src/julycode/mcp/__init__.py` | 导出新增 MCP 公共类型 |
+| 修改 | `src/julycode/prompting/base.py` | 运行时提示上下文增加 MCP 摘要 |
+| 修改 | `src/julycode/prompting/builder.py` | 渲染紧凑的 MCP Server 名称和工具数量 |
+| 修改 | `src/julycode/agent.py` | 接入轮次激活、检索结果消费和终止清理 |
+| 修改 | `src/julycode/tui/app.py` | 向各 Runner 传递 Manager并显示当前暴露状态 |
+| 修改 | `src/julycode/skills/execution.py` | 独立 Skill Runner 使用独立 MCP 轮次状态 |
+| 修改 | `src/julycode/subagents/manager.py` | 向子 Agent Runner Factory 传递 Manager |
+| 修改 | `src/julycode/subagents/runtime.py` | 子 Agent Runner 使用独立 MCP 轮次状态 |
+| 修改 | `src/julycode/teams/runtime.py` | 团队成员 Runner 使用独立 MCP 轮次状态 |
+| 修改 | `src/julycode/commands/models.py` | 状态快照记录当前暴露的 MCP 工具 |
+| 修改 | `src/julycode/commands/builtin.py` | `/status` 区分发现数和暴露数 |
 | 新建 | `tests/test_mcp_search.py` | 检索、Catalog、轮次状态、性能和占用测试 |
 | 修改 | `tests/test_mcp_tools.py` | 检索 ToolSpec、紧凑结果和 deferred 属性测试 |
 | 修改 | `tests/test_mcp_manager.py` | Manager、Catalog、注册、报告和 OAuth 测试 |
@@ -40,7 +40,7 @@
 
 ## T1: 增加 deferred 可见性
 
-**文件：** `src/mewcode/tools/base.py`、`src/mewcode/mcp/tools.py`、`tests/test_mcp_tools.py`
+**文件：** `src/julycode/tools/base.py`、`src/julycode/mcp/tools.py`、`tests/test_mcp_tools.py`
 **依赖：** 无
 
 **步骤：**
@@ -52,7 +52,7 @@
 
 ## T2: 在 ToolPolicy 中过滤未激活工具
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
 **依赖：** T1
 
 **步骤：**
@@ -65,7 +65,7 @@
 
 ## T3: 定义检索数据结构和文本规范化
 
-**文件：** `src/mewcode/mcp/search.py`、`tests/test_mcp_search.py`
+**文件：** `src/julycode/mcp/search.py`、`tests/test_mcp_search.py`
 **依赖：** T1
 
 **步骤：**
@@ -78,7 +78,7 @@
 
 ## T4: 实现 MCP 工具 Catalog 生命周期
 
-**文件：** `src/mewcode/mcp/search.py`、`tests/test_mcp_search.py`
+**文件：** `src/julycode/mcp/search.py`、`tests/test_mcp_search.py`
 **依赖：** T3
 
 **步骤：**
@@ -91,7 +91,7 @@
 
 ## T5: 实现确定性加权检索
 
-**文件：** `src/mewcode/mcp/search.py`、`tests/test_mcp_search.py`
+**文件：** `src/julycode/mcp/search.py`、`tests/test_mcp_search.py`
 **依赖：** T4
 
 **步骤：**
@@ -117,7 +117,7 @@
 
 ## T7: 实现轻量 MCP 检索工具
 
-**文件：** `src/mewcode/mcp/tools.py`、`tests/test_mcp_tools.py`
+**文件：** `src/julycode/mcp/tools.py`、`tests/test_mcp_tools.py`
 **依赖：** T3、T5
 
 **步骤：**
@@ -131,7 +131,7 @@
 
 ## T8: 实现 Runner 独立的 McpTurnState
 
-**文件：** `src/mewcode/mcp/scope.py`、`tests/test_mcp_search.py`
+**文件：** `src/julycode/mcp/scope.py`、`tests/test_mcp_search.py`
 **依赖：** T2、T4、T7
 
 **步骤：**
@@ -145,7 +145,7 @@
 
 ## T9: 将 Catalog 接入 MCP Manager
 
-**文件：** `src/mewcode/mcp/manager.py`、`src/mewcode/mcp/__init__.py`、`tests/test_mcp_manager.py`
+**文件：** `src/julycode/mcp/manager.py`、`src/julycode/mcp/__init__.py`、`tests/test_mcp_manager.py`
 **依赖：** T4、T8
 
 **步骤：**
@@ -160,7 +160,7 @@
 
 ## T10: 注册检索入口和 deferred 远端工具
 
-**文件：** `src/mewcode/mcp/manager.py`、`tests/test_mcp_manager.py`
+**文件：** `src/julycode/mcp/manager.py`、`tests/test_mcp_manager.py`
 **依赖：** T1、T7、T9
 
 **步骤：**
@@ -173,7 +173,7 @@
 
 ## T11: 同步 OAuth 与可检索目录
 
-**文件：** `src/mewcode/mcp/manager.py`、`tests/test_mcp_manager.py`
+**文件：** `src/julycode/mcp/manager.py`、`tests/test_mcp_manager.py`
 **依赖：** T9、T10
 
 **步骤：**
@@ -187,7 +187,7 @@
 
 ## T12: 注入紧凑 MCP 运行时提示
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/builder.py`、`tests/test_prompting.py`
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/builder.py`、`tests/test_prompting.py`
 **依赖：** T9
 
 **步骤：**
@@ -200,7 +200,7 @@
 
 ## T13: 接入 Agent Loop 的基础两阶段流程
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T2、T8、T10、T12
 
 **步骤：**
@@ -214,7 +214,7 @@
 
 ## T14: 覆盖重复检索和既有策略交集
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T13
 
 **步骤：**
@@ -227,7 +227,7 @@
 
 ## T15: 覆盖所有终止路径的轮次清理
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T13
 
 **步骤：**
@@ -240,7 +240,7 @@
 
 ## T16: 把 Manager 传入主 Agent和独立 Skill
 
-**文件：** `src/mewcode/tui/app.py`、`src/mewcode/skills/execution.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/tui/app.py`、`src/julycode/skills/execution.py`、`tests/test_tui_smoke.py`
 **依赖：** T13、T15
 
 **步骤：**
@@ -253,7 +253,7 @@
 
 ## T17: 隔离子 Agent 的 MCP 激活状态
 
-**文件：** `src/mewcode/subagents/manager.py`、`src/mewcode/subagents/runtime.py`、`tests/test_subagents.py`
+**文件：** `src/julycode/subagents/manager.py`、`src/julycode/subagents/runtime.py`、`tests/test_subagents.py`
 **依赖：** T13、T16
 
 **步骤：**
@@ -266,7 +266,7 @@
 
 ## T18: 隔离团队成员的 MCP 激活状态
 
-**文件：** `src/mewcode/teams/runtime.py`、`src/mewcode/tui/app.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/runtime.py`、`src/julycode/tui/app.py`、`tests/test_team_runtime.py`
 **依赖：** T13、T16
 
 **步骤：**
@@ -279,7 +279,7 @@
 
 ## T19: 更新 MCP 状态报告
 
-**文件：** `src/mewcode/commands/models.py`、`src/mewcode/commands/builtin.py`、`src/mewcode/tui/app.py`、`tests/test_commands.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/commands/models.py`、`src/julycode/commands/builtin.py`、`src/julycode/tui/app.py`、`tests/test_commands.py`、`tests/test_tui_smoke.py`
 **依赖：** T9、T13、T16
 
 **步骤：**
@@ -312,7 +312,7 @@
 **步骤：**
 1. 为两个 Provider 构造相同的“检索入口 + 已激活候选”ChatRequest。
 2. 断言初始请求都不含未激活 MCP 工具，激活后都包含相同名称、说明和 Schema。
-3. 断言 payload 不包含 MewCode 内部的 `deferred`、origin 或 MCP 状态字段。
+3. 断言 payload 不包含 JulyCode 内部的 `deferred`、origin 或 MCP 状态字段。
 4. 保留原有 MCP 前缀工具序列化测试。
 
 **验证：** 运行 `python -m pytest tests/test_openai_provider.py tests/test_anthropic_provider.py -k "mcp or deferred" -q`，期望两种 Provider 工具语义一致。
@@ -345,7 +345,7 @@
 
 ## T24: 运行 MCP 与策略专项回归
 
-**文件：** `src/mewcode/mcp/search.py`、`src/mewcode/mcp/scope.py`、`src/mewcode/mcp/tools.py`、`src/mewcode/mcp/manager.py`、`src/mewcode/tools/scheduler.py`、`src/mewcode/agent.py`、`tests/test_mcp_search.py`、`tests/test_mcp_tools.py`、`tests/test_mcp_manager.py`、`tests/test_mcp_oauth_flow.py`、`tests/test_tool_scheduler.py`、`tests/test_agent.py`、`tests/test_prompting.py`、`tests/test_context_estimator.py`、`tests/test_commands.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/mcp/search.py`、`src/julycode/mcp/scope.py`、`src/julycode/mcp/tools.py`、`src/julycode/mcp/manager.py`、`src/julycode/tools/scheduler.py`、`src/julycode/agent.py`、`tests/test_mcp_search.py`、`tests/test_mcp_tools.py`、`tests/test_mcp_manager.py`、`tests/test_mcp_oauth_flow.py`、`tests/test_tool_scheduler.py`、`tests/test_agent.py`、`tests/test_prompting.py`、`tests/test_context_estimator.py`、`tests/test_commands.py`、`tests/test_tui_smoke.py`
 **依赖：** T1-T23
 
 **步骤：**
@@ -357,7 +357,7 @@
 
 ## T25: 运行多 Agent 与 Provider 回归
 
-**文件：** `src/mewcode/skills/execution.py`、`src/mewcode/subagents/manager.py`、`src/mewcode/subagents/runtime.py`、`src/mewcode/teams/runtime.py`、`tests/test_skills.py`、`tests/test_subagents.py`、`tests/test_team_runtime.py`、`tests/test_team_e2e.py`、`tests/test_openai_provider.py`、`tests/test_anthropic_provider.py`
+**文件：** `src/julycode/skills/execution.py`、`src/julycode/subagents/manager.py`、`src/julycode/subagents/runtime.py`、`src/julycode/teams/runtime.py`、`tests/test_skills.py`、`tests/test_subagents.py`、`tests/test_team_runtime.py`、`tests/test_team_e2e.py`、`tests/test_openai_provider.py`、`tests/test_anthropic_provider.py`
 **依赖：** T17、T18、T21、T24
 
 **步骤：**
@@ -369,7 +369,7 @@
 
 ## T26: 运行全量自动化测试
 
-**文件：** `src/mewcode/`、`tests/`、`README.md`、`_estimate_tokens.py`
+**文件：** `src/julycode/`、`tests/`、`README.md`、`_estimate_tokens.py`
 **依赖：** T24、T25
 
 **步骤：**
@@ -385,7 +385,7 @@
 **依赖：** T22、T26
 
 **步骤：**
-1. 在独立 tmux session 中启动 mock OpenAI、stdio/HTTP MCP fixture 和 MewCode。
+1. 在独立 tmux session 中启动 mock OpenAI、stdio/HTTP MCP fixture 和 JulyCode。
 2. 发送普通代码请求，检查首轮请求日志只含检索入口和非 MCP 工具，不含远端完整定义。
 3. 发送真实对话请求“调用 remote_demo 的 echo 工具返回 lazy-mcp”，观察先调用检索工具，下一迭代只加载命中候选，再调用 `remote_demo__echo`。
 4. 再发送普通请求，确认新轮次远端候选恢复为 0。
@@ -398,7 +398,7 @@
 **依赖：** T27
 
 **步骤：**
-1. 使用当前已配置并授权的 GitHub MCP，在 tmux 中启动 MewCode。
+1. 使用当前已配置并授权的 GitHub MCP，在 tmux 中启动 JulyCode。
 2. 先发送与 GitHub 无关的真实请求，记录输入 token 和工具列表，确认没有 `github__*` 完整定义。
 3. 发送只读真实请求“查询当前认证的 GitHub 用户信息”，观察模型先检索并只加载相关候选，再调用命中的 GitHub 工具。
 4. 请求完成后发送另一段普通代码问题，确认 GitHub 候选没有跨轮保留。
@@ -414,10 +414,10 @@
 **步骤：**
 1. 关闭两个 E2E tmux session及其 fixture/mock 子进程。
 2. 删除测试期间生成的临时配置、请求日志和输出文件，不删除用户原有配置或凭据。
-3. 检查没有遗留 MewCode、fixture、mock Provider 或 OAuth callback 进程。
+3. 检查没有遗留 JulyCode、fixture、mock Provider 或 OAuth callback 进程。
 4. 检查 Git 工作区只包含本功能预期文件。
 
-**验证：** 运行 `tmux ls`、`ps -ef | rg "mcp_(stdio|http)_server|e2e_mock_openai_server|mewcode"` 和 `git status --short`，期望没有 E2E 残留进程/会话，工作区只显示预期改动。
+**验证：** 运行 `tmux ls`、`ps -ef | rg "mcp_(stdio|http)_server|e2e_mock_openai_server|julycode"` 和 `git status --short`，期望没有 E2E 残留进程/会话，工作区只显示预期改动。
 
 ## 执行顺序
 

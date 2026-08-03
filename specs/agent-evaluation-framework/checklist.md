@@ -3,7 +3,7 @@
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
 ## 实现完整性
-- [ ] `eval/` 独立工作区存在，包含 `README.md`、`run_eval.py`、`metrics/`、`cases/`、`results/` 和 `mew_eval/`（验证：运行 `python - <<'PY'\nfrom pathlib import Path\nfor p in ['eval/README.md','eval/run_eval.py','eval/metrics/default_metrics.json','eval/cases','eval/results/.gitignore','eval/mew_eval/models.py']:\n    assert Path(p).exists(), p\nprint('ok')\nPY`，期望输出 `ok`）
+- [ ] `eval/` 独立工作区存在，包含 `README.md`、`run_eval.py`、`metrics/`、`cases/`、`results/` 和 `july_eval/`（验证：运行 `python - <<'PY'\nfrom pathlib import Path\nfor p in ['eval/README.md','eval/run_eval.py','eval/metrics/default_metrics.json','eval/cases','eval/results/.gitignore','eval/july_eval/models.py']:\n    assert Path(p).exists(), p\nprint('ok')\nPY`，期望输出 `ok`）
 - [ ] 默认评测维度覆盖任务完成度、工具使用合理性、代码或文件修改质量、验证充分性、安全与权限遵守、上下文/记忆连续性、错误恢复能力、交互体验、效率与成本、结果稳定性，且每个维度都有评分范围、权重和证据说明（验证：运行 `python -m pytest tests/test_eval_framework.py::test_default_metrics_and_cases_cover_required_dimensions -q`，期望通过）
 - [ ] 初始用例至少覆盖普通问答、只读代码搜索、多轮工具调用、文件修改与验证、权限拒绝后调整、上下文或长任务、Skill 或子 Agent 中的六类以上场景（验证：运行 `python -m pytest tests/test_eval_framework.py::test_default_metrics_and_cases_cover_required_dimensions -q`，期望通过）
 - [ ] 评测数据结构能表达用例、期望、运行轨迹、维度评分、用例结果和 suite 汇总，默认值不会共享可变状态（验证：运行 `python -m pytest tests/test_eval_framework.py::test_eval_models_have_expected_defaults -q`，期望通过）
@@ -17,7 +17,7 @@
 - [ ] 自动评分能根据最终回复、工具调用序列、文件内容、权限拒绝、上下文事件、usage 和耗时计算维度分，并对主观项标记 `needs_review`（验证：运行 `python -m pytest tests/test_eval_framework.py -k "score_case or metric_score" -q`，期望通过）
 - [ ] JSON 报告和 Markdown 报告都包含总体摘要、各维度均分、用例结果、失败详情、人工复核项和关键证据，且不包含 API key 或过长工具结果全文（验证：运行 `python -m pytest tests/test_eval_framework.py -k report -q`，期望通过）
 - [ ] CLI 能按成功、失败、错误和人工复核状态返回清晰退出码，并始终写出可检查报告（验证：运行 `python -m pytest tests/test_eval_framework.py -k run_eval_cli -q`，期望通过）
-- [ ] 用户可以通过编辑 `eval/cases/*.json` 和 `eval/metrics/default_metrics.json` 增加用例或调整权重，而不需要改动 `src/mewcode` 核心代码（验证：运行 `python -m pytest tests/test_eval_framework.py -k "load_cases or load_metrics" -q`，期望通过；人工确认用例和指标是 JSON 文件）
+- [ ] 用户可以通过编辑 `eval/cases/*.json` 和 `eval/metrics/default_metrics.json` 增加用例或调整权重，而不需要改动 `src/julycode` 核心代码（验证：运行 `python -m pytest tests/test_eval_framework.py -k "load_cases or load_metrics" -q`，期望通过；人工确认用例和指标是 JSON 文件）
 
 ## 编译与测试
 - [ ] 评测框架测试全部通过（验证：运行 `python -m pytest tests/test_eval_framework.py -q`，期望通过）

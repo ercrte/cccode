@@ -8,15 +8,15 @@ from typing import Any
 
 import pytest
 
-from mewcode.hooks import parse_hook_config
-from mewcode.hooks.manager import create_hook_manager
-from mewcode.hooks.models import HookRuntimeContext
-from mewcode.permissions import PermissionConfig
-from mewcode.permissions.controller import create_permission_controller
-from mewcode.tools.base import ToolCall, ToolContext, ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry
-from mewcode.tools.scheduler import ToolCallScheduler, ToolPolicy
+from julycode.hooks import parse_hook_config
+from julycode.hooks.manager import create_hook_manager
+from julycode.hooks.models import HookRuntimeContext
+from julycode.permissions import PermissionConfig
+from julycode.permissions.controller import create_permission_controller
+from julycode.tools.base import ToolCall, ToolContext, ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry
+from julycode.tools.scheduler import ToolCallScheduler, ToolPolicy
 
 
 class FakeTool:
@@ -343,7 +343,7 @@ async def test_scheduler_permission_allow_executes_tool(tmp_path: Path, monkeypa
 @pytest.mark.asyncio
 async def test_scheduler_permission_deny_skips_tool(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
-    (tmp_path / ".mewcode.permissions.local.yaml").write_text('rules:\n  "write(*)": deny\n', encoding="utf-8")
+    (tmp_path / ".julycode.permissions.local.yaml").write_text('rules:\n  "write(*)": deny\n', encoding="utf-8")
     log: list[str] = []
     registry = make_registry(FakeTool("write", safety="side_effect", log=log))
     controller = create_permission_controller(tmp_path, PermissionConfig(mode="permissive"))

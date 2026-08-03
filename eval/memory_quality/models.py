@@ -4,12 +4,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
-from mew_eval.models import EvalProviderInfo
-from mewcode.memory.models import MemoryCategory, MemoryNote, MemoryRejection, MemoryScope
-from mewcode.providers.base import ChatMessage
+from july_eval.models import EvalProviderInfo
+from julycode.memory.models import MemoryCategory, MemoryNote, MemoryRejection, MemoryScope
+from julycode.providers.base import ChatMessage
 
 if TYPE_CHECKING:
-    from mewcode.providers.base import LLMProvider
+    from julycode.providers.base import LLMProvider
 
 
 MemoryQualityMode = Literal["offline", "online"]

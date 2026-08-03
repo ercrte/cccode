@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.teams.models import TaskDraft, TaskPatch, TaskResult, TeamActor, TeamDataError, TeamMemberRecord
-from mewcode.teams.store import TeamStore
-from mewcode.teams.tasks import TaskService
+from julycode.teams.models import TaskDraft, TaskPatch, TaskResult, TeamActor, TeamDataError, TeamMemberRecord
+from julycode.teams.store import TeamStore
+from julycode.teams.tasks import TaskService
 from tests.test_worktrees import git, init_repository
 
 

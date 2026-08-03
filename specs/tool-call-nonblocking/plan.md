@@ -53,7 +53,7 @@ async def _run_blocking(function: Any, *args: Any, **kwargs: Any) -> Any:
 
 ## 模块设计
 
-### `mewcode.tools.builtin`
+### `julycode.tools.builtin`
 
 **职责：** 提供内置工具的非阻塞实现。  
 **对外接口：** 保持现有 `execute(arguments, context)` 接口和返回结构不变。  
@@ -66,7 +66,7 @@ async def _run_blocking(function: Any, *args: Any, **kwargs: Any) -> Any:
 - `ReadFileTool`、`WriteFileTool`、`EditFileTool`、`FindFilesTool` 的同步文件 IO 或 glob 扫描放入 daemon 工作线程。
 - `SearchCodeTool._search_with_python()` 保持同步实现本体，但由异步入口放入线程执行。
 
-### `mewcode.skills.tools`
+### `julycode.skills.tools`
 
 **职责：** 提供 Skill 专属脚本工具执行。  
 **对外接口：** 保持 `SkillScriptTool.execute()` 返回结构、错误类型和 JSON 解析行为不变。  
@@ -75,10 +75,10 @@ async def _run_blocking(function: Any, *args: Any, **kwargs: Any) -> Any:
 改动内容：
 
 - 将脚本执行移入 daemon 工作线程，避免阻塞主事件循环。
-- 保持 `MEWCODE_SKILL_NAME`、`MEWCODE_SKILL_TOOL`、`MEWCODE_SKILL_DIR` 环境变量。
+- 保持 `JULYCODE_SKILL_NAME`、`JULYCODE_SKILL_TOOL`、`JULYCODE_SKILL_DIR` 环境变量。
 - 超时后清理子进程，并返回当前一致的 `skill_tool_timeout` 错误。
 
-### `mewcode.tools.scheduler`
+### `julycode.tools.scheduler`
 
 **职责：** 调度工具调用并把工具生命周期事件交给 Agent/TUI。  
 **对外接口：** 保持 `run()`、`results()`、`make_batches()` 行为兼容。  
@@ -122,10 +122,10 @@ async def _run_blocking(function: Any, *args: Any, **kwargs: Any) -> Any:
 ## 文件组织
 
 ```text
-mewcode/
-├── src/mewcode/tools/builtin.py       — 内置工具非阻塞执行实现
-├── src/mewcode/tools/scheduler.py     — 只读并发批次逐项完成事件
-├── src/mewcode/skills/tools.py        — Skill 脚本工具非阻塞执行实现
+julycode/
+├── src/julycode/tools/builtin.py       — 内置工具非阻塞执行实现
+├── src/julycode/tools/scheduler.py     — 只读并发批次逐项完成事件
+├── src/julycode/skills/tools.py        — Skill 脚本工具非阻塞执行实现
 ├── tests/test_tools.py                — 内置工具非阻塞与兼容测试
 ├── tests/test_tool_scheduler.py       — 调度器逐项完成事件测试
 └── tests/test_skills.py               — Skill 脚本工具非阻塞测试

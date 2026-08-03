@@ -4,15 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.teams.manager import TeamManager
-from mewcode.teams.models import MessageDraft, TeamActor, TeamDataError, TeamMemberRecord
-from mewcode.teams.policy import ApprovalGate, TeamAudienceGate, TeamMemberRoleGate
-from mewcode.teams.store import TeamStore
-from mewcode.teams.tools import create_team_tools
-from mewcode.tools.base import RuntimePrincipal, ToolCall, ToolContext, ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry
-from mewcode.tools.scheduler import ToolPolicy
+from julycode.teams.manager import TeamManager
+from julycode.teams.models import MessageDraft, TeamActor, TeamDataError, TeamMemberRecord
+from julycode.teams.policy import ApprovalGate, TeamAudienceGate, TeamMemberRoleGate
+from julycode.teams.store import TeamStore
+from julycode.teams.tools import create_team_tools
+from julycode.tools.base import RuntimePrincipal, ToolCall, ToolContext, ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry
+from julycode.tools.scheduler import ToolPolicy
 from tests.test_worktrees import init_repository
 
 

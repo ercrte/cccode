@@ -5,13 +5,13 @@ import json
 import httpx
 import pytest
 
-from mewcode.config import AppConfig, PromptCacheConfig, ThinkingConfig
-from mewcode.errors import ProviderError
-from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
-from mewcode.providers.anthropic import AnthropicProvider
-from mewcode.providers.base import ChatMessage, ChatRequest
-from mewcode.providers.factory import create_provider
-from mewcode.tools.base import ToolCall, ToolSpec
+from julycode.config import AppConfig, PromptCacheConfig, ThinkingConfig
+from julycode.errors import ProviderError
+from julycode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
+from julycode.providers.anthropic import AnthropicProvider
+from julycode.providers.base import ChatMessage, ChatRequest
+from julycode.providers.factory import create_provider
+from julycode.tools.base import ToolCall, ToolSpec
 
 
 def anthropic_config(
@@ -72,21 +72,21 @@ def prompt_bundle() -> PromptBundle:
             PromptBlock(
                 "runtime_cache_prefix",
                 "可缓存运行时前缀",
-                "<mewcode_cacheable_runtime_context>\n允许工具：read_file(read_only)\n</mewcode_cacheable_runtime_context>",
+                "<julycode_cacheable_runtime_context>\n允许工具：read_file(read_only)\n</julycode_cacheable_runtime_context>",
                 stable=False,
                 cacheable=True,
             ),
             PromptBlock(
                 "runtime_context",
                 "运行时补充",
-                "<mewcode_runtime_context>\n环境信息：cwd=/repo\n模式状态：normal full 1/8\n</mewcode_runtime_context>",
+                "<julycode_runtime_context>\n环境信息：cwd=/repo\n模式状态：normal full 1/8\n</julycode_runtime_context>",
                 stable=False,
             ),
         ),
     )
 
 
-def repo_map_block(text: str = "<mewcode_repo_map>def target(...)</mewcode_repo_map>") -> GeneratedContextBlock:
+def repo_map_block(text: str = "<julycode_repo_map>def target(...)</julycode_repo_map>") -> GeneratedContextBlock:
     return GeneratedContextBlock(
         name="repo_map",
         title="仓库地图",
@@ -203,14 +203,14 @@ async def test_anthropic_payload_includes_structured_system_blocks() -> None:
         "type": "text",
         "text": (
             "## 可缓存运行时前缀\n"
-            "<mewcode_cacheable_runtime_context>\n允许工具：read_file(read_only)\n"
-            "</mewcode_cacheable_runtime_context>"
+            "<julycode_cacheable_runtime_context>\n允许工具：read_file(read_only)\n"
+            "</julycode_cacheable_runtime_context>"
         ),
         "cache_control": {"type": "ephemeral"},
     }
     assert system[3] == {
         "type": "text",
-        "text": "## 运行时补充\n<mewcode_runtime_context>\n环境信息：cwd=/repo\n模式状态：normal full 1/8\n</mewcode_runtime_context>",
+        "text": "## 运行时补充\n<julycode_runtime_context>\n环境信息：cwd=/repo\n模式状态：normal full 1/8\n</julycode_runtime_context>",
     }
     assert seen["payload"]["tools"]
     assert seen["payload"]["messages"] == [{"role": "user", "content": "hello"}]
@@ -225,9 +225,9 @@ def test_anthropic_repo_map_has_second_snapshot_cache_boundary() -> None:
 
     assert "可缓存运行时前缀" in system[2]["text"]
     assert system[2]["cache_control"] == {"type": "ephemeral"}
-    assert "<mewcode_repo_map>" in system[3]["text"]
+    assert "<julycode_repo_map>" in system[3]["text"]
     assert system[3]["cache_control"] == {"type": "ephemeral"}
-    assert "<mewcode_runtime_context>" in system[4]["text"]
+    assert "<julycode_runtime_context>" in system[4]["text"]
     assert "cache_control" not in system[4]
 
 
@@ -260,7 +260,7 @@ async def test_anthropic_runtime_prompt_is_not_cache_controlled() -> None:
     await client.aclose()
 
     runtime_block = seen["payload"]["system"][-1]
-    assert "<mewcode_runtime_context>" in runtime_block["text"]
+    assert "<julycode_runtime_context>" in runtime_block["text"]
     assert "cache_control" not in runtime_block
 
 

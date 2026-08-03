@@ -4,17 +4,17 @@
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/config.py` | 主 Agent 配置默认值和子 Agent 配置解析默认值 |
-| 修改 | `src/mewcode/subagents/models.py` | 子 Agent 数据结构默认值 |
-| 修改 | `src/mewcode/subagents/builtin/reviewer.md` | 内置审查角色上限 |
-| 修改 | `src/mewcode/subagents/builtin/code-searcher.md` | 内置搜索角色上限 |
+| 修改 | `src/julycode/config.py` | 主 Agent 配置默认值和子 Agent 配置解析默认值 |
+| 修改 | `src/julycode/subagents/models.py` | 子 Agent 数据结构默认值 |
+| 修改 | `src/julycode/subagents/builtin/reviewer.md` | 内置审查角色上限 |
+| 修改 | `src/julycode/subagents/builtin/code-searcher.md` | 内置搜索角色上限 |
 | 修改 | `tests/test_config.py` | 主/子 Agent 默认值与显式覆盖测试 |
 | 修改 | `tests/test_subagents.py` | 子 Agent 优先级与内置角色测试 |
 | 修改 | `README.md` | 40 轮默认值和角色示例 |
 
 ## T1: 调整主 Agent 和子 Agent 默认配置
 
-**文件：** `src/mewcode/config.py`、`src/mewcode/subagents/models.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`src/julycode/subagents/models.py`、`tests/test_config.py`  
 **依赖：** 无  
 **步骤：**
 1. 将主 Agent 数据结构和 YAML 缺省解析值改为 40。
@@ -25,7 +25,7 @@
 
 ## T2: 调整内置角色并验证优先级
 
-**文件：** `src/mewcode/subagents/builtin/reviewer.md`、`src/mewcode/subagents/builtin/code-searcher.md`、`tests/test_subagents.py`  
+**文件：** `src/julycode/subagents/builtin/reviewer.md`、`src/julycode/subagents/builtin/code-searcher.md`、`tests/test_subagents.py`  
 **依赖：** T1  
 **步骤：**
 1. 将两个内置角色 frontmatter 的迭代上限改为 40。
@@ -51,8 +51,8 @@
 **依赖：** T1、T2、T3  
 **步骤：**
 1. 运行配置、子 Agent 和 Agent Loop 回归测试。
-2. 在 tmux 中启动 MewCode 新会话，输入要求读取项目文件并回答的真实请求。
-3. 观察 MewCode 调用读取工具、进度显示 40 轮上限并最终生成回复。
+2. 在 tmux 中启动 JulyCode 新会话，输入要求读取项目文件并回答的真实请求。
+3. 观察 JulyCode 调用读取工具、进度显示 40 轮上限并最终生成回复。
 4. 对照 `checklist.md` 逐项记录证据。
 
 **验证：** 运行 `python -m pytest tests/test_config.py tests/test_subagents.py tests/test_agent.py -q`，并确认 tmux 捕获输出包含工具执行、`/40` 进度或等价上限信息及最终回复。

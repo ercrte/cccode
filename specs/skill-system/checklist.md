@@ -1,4 +1,4 @@
-# MewCode Skill 系统 Checklist
+# JulyCode Skill 系统 Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
@@ -44,9 +44,9 @@
 - [ ] 内置 Markdown 被打包配置覆盖（验证：运行 `python -m pytest tests/test_skills_loader.py -q -k "builtin"`，期望通过，并检查默认发现 commit、review、test）
 
 ## 端到端场景
-- [ ] 场景 1：启动后查看帮助，用户输入 `/help` → 界面展示 commit、review、test 三个 Skill 命令，且说明为中文（验证：在 tmux 会话 `mewcode-skill-e2e` 中启动 MewCode，输入 `/help`，运行 `tmux capture-pane -pt mewcode-skill-e2e`，期望看到 `/commit`、`/review`、`/test`）
-- [ ] 场景 2：通过斜杠命令触发共享 Skill，用户输入 `/review README.md` → 界面展示用户命令，模型请求携带 review 完整 SOP，最终回复保留在主对话（验证：使用 mock OpenAI server 或请求记录，运行 `tmux capture-pane -pt mewcode-skill-e2e` 并检查请求日志，期望看到 `/review README.md` 和 review SOP 标记）
+- [ ] 场景 1：启动后查看帮助，用户输入 `/help` → 界面展示 commit、review、test 三个 Skill 命令，且说明为中文（验证：在 tmux 会话 `julycode-skill-e2e` 中启动 JulyCode，输入 `/help`，运行 `tmux capture-pane -pt julycode-skill-e2e`，期望看到 `/commit`、`/review`、`/test`）
+- [ ] 场景 2：通过斜杠命令触发共享 Skill，用户输入 `/review README.md` → 界面展示用户命令，模型请求携带 review 完整 SOP，最终回复保留在主对话（验证：使用 mock OpenAI server 或请求记录，运行 `tmux capture-pane -pt julycode-skill-e2e` 并检查请求日志，期望看到 `/review README.md` 和 review SOP 标记）
 - [ ] 场景 3：模型按需加载 Skill，用户输入普通请求“用 review Skill 检查 README.md” → 模型调用 `load_skill`，后续请求包含完整 SOP 且工具集合按白名单收窄（验证：查看 tmux pane 和 mock 请求日志，期望看到 `load_skill` 工具状态、review 激活上下文和收窄后的工具列表）
-- [ ] 场景 4：清空对话清理激活 Skill，用户输入 `/clear` 后再输入普通问题 → 后续请求只包含可用 Skill 摘要，不再包含之前 review 的完整 SOP（验证：查看 mock 请求日志和 `tmux capture-pane -pt mewcode-skill-e2e`，期望 `/clear` 后仍可继续对话且运行时上下文不含旧完整 SOP）
-- [ ] 场景 5：非法 Skill 可恢复，创建一个 YAML 非法的项目级 Skill 后热更新 → 界面展示 warning，合法内置 Skill 仍可用（验证：在项目 `.mewcode/skills/` 放入非法 Markdown，触发一次输入或重启，运行 `tmux capture-pane -pt mewcode-skill-e2e`，期望看到 warning 且 `/help` 仍展示内置 Skill）
-- [ ] 场景 6：白名单 fatal 可诊断，创建一个引用不存在工具的项目级 Skill 后热更新 → 界面显示具体 Skill 名和工具名并禁用误用路径（验证：在项目 `.mewcode/skills/` 放入白名单错误的 Skill，触发启动或热更新，运行 `tmux capture-pane -pt mewcode-skill-e2e`，期望看到缺失工具名和对应 Skill 名）
+- [ ] 场景 4：清空对话清理激活 Skill，用户输入 `/clear` 后再输入普通问题 → 后续请求只包含可用 Skill 摘要，不再包含之前 review 的完整 SOP（验证：查看 mock 请求日志和 `tmux capture-pane -pt julycode-skill-e2e`，期望 `/clear` 后仍可继续对话且运行时上下文不含旧完整 SOP）
+- [ ] 场景 5：非法 Skill 可恢复，创建一个 YAML 非法的项目级 Skill 后热更新 → 界面展示 warning，合法内置 Skill 仍可用（验证：在项目 `.julycode/skills/` 放入非法 Markdown，触发一次输入或重启，运行 `tmux capture-pane -pt julycode-skill-e2e`，期望看到 warning 且 `/help` 仍展示内置 Skill）
+- [ ] 场景 6：白名单 fatal 可诊断，创建一个引用不存在工具的项目级 Skill 后热更新 → 界面显示具体 Skill 名和工具名并禁用误用路径（验证：在项目 `.julycode/skills/` 放入白名单错误的 Skill，触发启动或热更新，运行 `tmux capture-pane -pt julycode-skill-e2e`，期望看到缺失工具名和对应 Skill 名）

@@ -1,27 +1,27 @@
-# MewCode Hook System Tasks
+# JulyCode Hook System Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/matching.py` | 权限和 Hook 共用的匹配表达式解析、字段读取和匹配执行 |
-| 修改 | `src/mewcode/permissions/models.py` | 扩展权限规则匹配模型以复用通用匹配表达式 |
-| 修改 | `src/mewcode/permissions/rules.py` | 将权限规则匹配迁移到通用匹配模块，并保持现有优先级语义 |
-| 新建 | `src/mewcode/hooks/__init__.py` | Hook 包公共导出 |
-| 新建 | `src/mewcode/hooks/models.py` | Hook 配置、事件、动作、运行期状态和执行结果模型 |
-| 新建 | `src/mewcode/hooks/config.py` | Hook YAML 配置解析和集中校验 |
-| 新建 | `src/mewcode/hooks/conditions.py` | Hook 条件组合判断 |
-| 新建 | `src/mewcode/hooks/actions.py` | command、prompt、http、sub_agent 动作执行 |
-| 新建 | `src/mewcode/hooks/manager.py` | HookManager、once、后台任务、提示注入和工具拦截 |
-| 修改 | `src/mewcode/config.py` | AppConfig 增加 hooks 字段并解析主配置 |
-| 修改 | `src/mewcode/prompting/base.py` | RuntimePromptContext 增加 Hook 提示注入字段 |
-| 修改 | `src/mewcode/prompting/builder.py` | 运行时提示追加 Hook 注入块 |
-| 修改 | `src/mewcode/agent.py` | 接入轮次、消息、系统级 Hook 和 Hook TurnEvent |
-| 修改 | `src/mewcode/tools/scheduler.py` | 接入 tool.before 和 tool.after Hook |
-| 修改 | `src/mewcode/tui/app.py` | 创建和传递 HookManager，触发会话级 Hook，展示 Hook 状态 |
-| 修改 | `src/mewcode/cli.py` | 使用配置创建 HookManager |
+| 新建 | `src/julycode/matching.py` | 权限和 Hook 共用的匹配表达式解析、字段读取和匹配执行 |
+| 修改 | `src/julycode/permissions/models.py` | 扩展权限规则匹配模型以复用通用匹配表达式 |
+| 修改 | `src/julycode/permissions/rules.py` | 将权限规则匹配迁移到通用匹配模块，并保持现有优先级语义 |
+| 新建 | `src/julycode/hooks/__init__.py` | Hook 包公共导出 |
+| 新建 | `src/julycode/hooks/models.py` | Hook 配置、事件、动作、运行期状态和执行结果模型 |
+| 新建 | `src/julycode/hooks/config.py` | Hook YAML 配置解析和集中校验 |
+| 新建 | `src/julycode/hooks/conditions.py` | Hook 条件组合判断 |
+| 新建 | `src/julycode/hooks/actions.py` | command、prompt、http、sub_agent 动作执行 |
+| 新建 | `src/julycode/hooks/manager.py` | HookManager、once、后台任务、提示注入和工具拦截 |
+| 修改 | `src/julycode/config.py` | AppConfig 增加 hooks 字段并解析主配置 |
+| 修改 | `src/julycode/prompting/base.py` | RuntimePromptContext 增加 Hook 提示注入字段 |
+| 修改 | `src/julycode/prompting/builder.py` | 运行时提示追加 Hook 注入块 |
+| 修改 | `src/julycode/agent.py` | 接入轮次、消息、系统级 Hook 和 Hook TurnEvent |
+| 修改 | `src/julycode/tools/scheduler.py` | 接入 tool.before 和 tool.after Hook |
+| 修改 | `src/julycode/tui/app.py` | 创建和传递 HookManager，触发会话级 Hook，展示 Hook 状态 |
+| 修改 | `src/julycode/cli.py` | 使用配置创建 HookManager |
 | 修改 | `README.md` | 补充 Hook 配置示例和行为说明 |
-| 临时创建 | `.mewcode.yaml` | tmux 端到端验证时使用的本地 mock 配置 |
+| 临时创建 | `.julycode.yaml` | tmux 端到端验证时使用的本地 mock 配置 |
 | 新建 | `tests/test_matching.py` | 通用匹配表达式单元测试 |
 | 新建 | `tests/test_hooks_config.py` | Hook 配置解析和配置错误测试 |
 | 新建 | `tests/test_hooks.py` | Hook 条件、动作、Manager、once、后台和拦截测试 |
@@ -34,7 +34,7 @@
 
 ## T1: 实现通用匹配模块
 
-**文件：** `src/mewcode/matching.py`、`tests/test_matching.py`  
+**文件：** `src/julycode/matching.py`、`tests/test_matching.py`  
 **依赖：** 无  
 **步骤：**
 1. 定义 `MatchExpression` 和 `MatchKind`。
@@ -47,7 +47,7 @@
 
 ## T2: 迁移权限规则到通用匹配模块
 
-**文件：** `src/mewcode/permissions/models.py`、`src/mewcode/permissions/rules.py`、`tests/test_permissions.py`  
+**文件：** `src/julycode/permissions/models.py`、`src/julycode/permissions/rules.py`、`tests/test_permissions.py`  
 **依赖：** T1  
 **步骤：**
 1. 调整权限规则模型，使规则保存通用匹配表达式或等价字段。
@@ -60,10 +60,10 @@
 
 ## T3: 定义 Hook 数据模型和公共导出
 
-**文件：** `src/mewcode/hooks/__init__.py`、`src/mewcode/hooks/models.py`、`tests/test_hooks.py`  
+**文件：** `src/julycode/hooks/__init__.py`、`src/julycode/hooks/models.py`、`tests/test_hooks.py`  
 **依赖：** 无  
 **步骤：**
-1. 新建 `mewcode.hooks` 包。
+1. 新建 `julycode.hooks` 包。
 2. 定义 Hook 事件名、动作类型、条件组合、动作配置、事件载体、执行结果、运行期状态、提示注入和工具决策模型。
 3. 在 `__init__.py` 导出外部需要使用的模型和工厂函数占位引用。
 4. 添加模型可导入和默认值测试。
@@ -72,7 +72,7 @@
 
 ## T4: 实现 Hook 配置解析和集中校验
 
-**文件：** `src/mewcode/hooks/config.py`、`tests/test_hooks_config.py`  
+**文件：** `src/julycode/hooks/config.py`、`tests/test_hooks_config.py`  
 **依赖：** T1、T3  
 **步骤：**
 1. 实现 `parse_hook_config(raw)`，缺失或 `None` 返回空配置。
@@ -86,7 +86,7 @@
 
 ## T5: 接入 AppConfig 的 hooks 字段
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`tests/test_config.py`  
 **依赖：** T4  
 **步骤：**
 1. 给 `AppConfig` 增加 `hooks: HookConfig` 默认字段。
@@ -98,7 +98,7 @@
 
 ## T6: 实现 Hook 条件判断
 
-**文件：** `src/mewcode/hooks/conditions.py`、`tests/test_hooks.py`  
+**文件：** `src/julycode/hooks/conditions.py`、`tests/test_hooks.py`  
 **依赖：** T1、T3、T4  
 **步骤：**
 1. 实现 `rule_matches(rule, event)`。
@@ -112,7 +112,7 @@
 
 ## T7: 实现 prompt 和 sub_agent 动作
 
-**文件：** `src/mewcode/hooks/actions.py`、`tests/test_hooks.py`  
+**文件：** `src/julycode/hooks/actions.py`、`tests/test_hooks.py`  
 **依赖：** T3  
 **步骤：**
 1. 新建 `HookActionRunner`。
@@ -125,7 +125,7 @@
 
 ## T8: 实现 command 动作
 
-**文件：** `src/mewcode/hooks/actions.py`、`tests/test_hooks.py`  
+**文件：** `src/julycode/hooks/actions.py`、`tests/test_hooks.py`  
 **依赖：** T2、T7  
 **步骤：**
 1. 在 `HookActionRunner` 中实现 command 动作。
@@ -139,7 +139,7 @@
 
 ## T9: 实现 HTTP 动作
 
-**文件：** `src/mewcode/hooks/actions.py`、`tests/test_hooks.py`  
+**文件：** `src/julycode/hooks/actions.py`、`tests/test_hooks.py`  
 **依赖：** T7  
 **步骤：**
 1. 在 `HookActionRunner` 中实现 HTTP 动作。
@@ -153,7 +153,7 @@
 
 ## T10: 实现 HookManager 核心流程
 
-**文件：** `src/mewcode/hooks/manager.py`、`tests/test_hooks.py`  
+**文件：** `src/julycode/hooks/manager.py`、`tests/test_hooks.py`  
 **依赖：** T6、T7、T8、T9  
 **步骤：**
 1. 实现 `create_hook_manager(config)` 和 `HookManager.emit()`。
@@ -167,7 +167,7 @@
 
 ## T11: 实现工具前拦截决策
 
-**文件：** `src/mewcode/hooks/manager.py`、`tests/test_hooks.py`  
+**文件：** `src/julycode/hooks/manager.py`、`tests/test_hooks.py`  
 **依赖：** T10  
 **步骤：**
 1. 实现 `HookManager.before_tool()`，构造 `tool.before` 事件。
@@ -181,11 +181,11 @@
 
 ## T12: 接入 PromptBuilder 的 Hook 提示词注入
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/builder.py`、`tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/builder.py`、`tests/test_prompting.py`  
 **依赖：** T3、T10  
 **步骤：**
 1. 给 `RuntimePromptContext` 增加 `hook_injections` 字段，默认空序列。
-2. 在 `PromptBuilder.build_runtime_prompt()` 中追加 `<mewcode_hook_instructions>` 块。
+2. 在 `PromptBuilder.build_runtime_prompt()` 中追加 `<julycode_hook_instructions>` 块。
 3. 只在存在注入时输出 Hook 指令块。
 4. 确保注入块位于运行时补充中，不改变稳定提示块。
 5. 添加无注入不出现标签、有注入出现内容、稳定提示块不变测试。
@@ -194,7 +194,7 @@
 
 ## T13: 在工具调度器中接入 tool.before 和 tool.after
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`  
 **依赖：** T11  
 **步骤：**
 1. 给 `ToolCallScheduler` 增加可选 `hook_manager` 和 `hook_context`。
@@ -209,7 +209,7 @@
 
 ## T14: 扩展 Agent TurnEvent 和 Hook 运行上下文
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T10、T12、T13  
 **步骤：**
 1. 扩展 `TurnEventType` 增加 `hook_finished`，给 `TurnEvent` 增加 `hook_result`。
@@ -223,7 +223,7 @@
 
 ## T15: 接入 Agent 生命周期事件
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`  
 **依赖：** T14  
 **步骤：**
 1. 在用户消息追加后触发 `turn.start` 和 `message.user`。
@@ -238,11 +238,11 @@
 
 ## T16: 接入 TUI 和 CLI
 
-**文件：** `src/mewcode/tui/app.py`、`src/mewcode/cli.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`src/julycode/cli.py`、`tests/test_tui_smoke.py`  
 **依赖：** T5、T14、T15  
 **步骤：**
-1. 在 CLI 中根据 `config.hooks` 创建 HookManager 并传入 `MewCodeApp`。
-2. 给 `MewCodeApp.__init__()` 增加可选 `hook_manager`，测试可注入。
+1. 在 CLI 中根据 `config.hooks` 创建 HookManager 并传入 `JulyCodeApp`。
+2. 给 `JulyCodeApp.__init__()` 增加可选 `hook_manager`，测试可注入。
 3. 在 `on_mount()` 触发 `session.start`，在 `on_unmount()` 触发 `session.end` 并调用 `HookManager.close()`。
 4. 创建 `AgentLoopRunner` 时传入 `hook_manager`。
 5. 在 `_apply_turn_event()` 中处理 `hook_finished`，失败、拦截和占位状态显示简短消息。
@@ -275,7 +275,7 @@
 
 ## T19: 跑全量回归测试
 
-**文件：** `src/mewcode`、`tests`  
+**文件：** `src/julycode`、`tests`  
 **依赖：** T18  
 **步骤：**
 1. 运行完整测试套件。
@@ -286,16 +286,16 @@
 
 ## T20: tmux 端到端验证准备
 
-**文件：** `tests/e2e_mock_openai_server.py`、`.mewcode.yaml`、`README.md`  
+**文件：** `tests/e2e_mock_openai_server.py`、`.julycode.yaml`、`README.md`  
 **依赖：** T19  
 **步骤：**
-1. 准备一份本地 `.mewcode.yaml`，使用 mock OpenAI 配置和至少两条 Hook：一条 `tool.before` 拦截危险参数，一条 prompt 注入。
+1. 准备一份本地 `.julycode.yaml`，使用 mock OpenAI 配置和至少两条 Hook：一条 `tool.before` 拦截危险参数，一条 prompt 注入。
 2. 在 tmux 中启动 `python tests/e2e_mock_openai_server.py 18765`。
-3. 在另一个 tmux pane 启动 `mewcode --new-session`。
+3. 在另一个 tmux pane 启动 `julycode --new-session`。
 4. 输入真实请求，触发工具调用和 Hook 拦截。
 5. 观察工具被拦截后模型收到失败结果并调整回复，输入区恢复可用。
 
-**验证：** 在 tmux 中观察到 `tool.before` 拦截结果、最终模型回复引用拒绝原因、MewCode 未崩溃且可继续输入。
+**验证：** 在 tmux 中观察到 `tool.before` 拦截结果、最终模型回复引用拒绝原因、JulyCode 未崩溃且可继续输入。
 
 ## 执行顺序
 

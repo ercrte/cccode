@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.commands import (
+from julycode.commands import (
     CommandDefinition,
     CommandDispatcher,
     CommandInvocation,
@@ -23,13 +23,13 @@ from mewcode.commands import (
     UnknownCommandInput,
     create_builtin_command_registry,
 )
-from mewcode.mcp.manager import McpLoadReport
-from mewcode.mcp.oauth.models import McpOAuthStatus
-from mewcode.providers.base import TokenUsage
-from mewcode.repo_map.models import RepoMapCacheStatus, RepoMapStatus
-from mewcode.skills import LoadSkillTool, SkillManager
-from mewcode.skills.models import SkillRoots
-from mewcode.tools.registry import create_default_registry
+from julycode.mcp.manager import McpLoadReport
+from julycode.mcp.oauth.models import McpOAuthStatus
+from julycode.providers.base import TokenUsage
+from julycode.repo_map.models import RepoMapCacheStatus, RepoMapStatus
+from julycode.skills import LoadSkillTool, SkillManager
+from julycode.skills.models import SkillRoots
+from julycode.tools.registry import create_default_registry
 
 
 async def noop_handler(invocation, context) -> None:
@@ -107,7 +107,7 @@ class FakeContext:
         return CommandSessionSnapshot(
             session_id="20260614-010203-abcd",
             restored=True,
-            source_path=".mewcode/sessions/20260614-010203-abcd.jsonl",
+            source_path=".julycode/sessions/20260614-010203-abcd.jsonl",
             message_count=7,
             mode=self.current_mode,  # type: ignore[arg-type]
         )
@@ -131,7 +131,7 @@ class FakeContext:
         )
 
     def skill_snapshot(self):
-        from mewcode.commands import CommandSkillSnapshot
+        from julycode.commands import CommandSkillSnapshot
 
         return CommandSkillSnapshot(available=("commit", "review", "test"), active=(), warning_count=0)
 
@@ -195,7 +195,7 @@ def register_builtin_skills(registry: CommandRegistry, tmp_path: Path) -> SkillM
     roots = SkillRoots(
         project=tmp_path / "project-skills",
         user=tmp_path / "user-skills",
-        builtin=resources.files("mewcode.skills.builtin"),
+        builtin=resources.files("julycode.skills.builtin"),
     )
     manager = SkillManager(roots, tool_registry)
     tool_registry.register(LoadSkillTool(manager))
@@ -219,7 +219,7 @@ def test_registry_detects_internal_conflict() -> None:
 
 
 def test_cli_reports_command_registry_conflict(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-    from mewcode import cli as cli_module
+    from julycode import cli as cli_module
 
     def fail_registry():
         raise CommandRegistryError("命令入口冲突: `/x`")

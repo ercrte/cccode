@@ -1,37 +1,37 @@
-# MewCode 长期团队协作内核 Tasks
+# JulyCode 长期团队协作内核 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/teams/__init__.py` | 团队子系统公共导出 |
-| 新建 | `src/mewcode/teams/models.py` | 团队、成员、任务、审批、消息、outbox 和快照模型 |
-| 新建 | `src/mewcode/teams/paths.py` | 用户目录、名称和路径边界 |
-| 新建 | `src/mewcode/teams/locking.py` | 文件锁、原子 JSON 和运行租约 |
-| 新建 | `src/mewcode/teams/store.py` | 团队与花名册持久化 |
-| 新建 | `src/mewcode/teams/tasks.py` | 任务 CRUD、依赖图和状态机 |
-| 新建 | `src/mewcode/teams/approvals.py` | 审批状态机和授权查询 |
-| 新建 | `src/mewcode/teams/mailbox.py` | 注册表、邮箱、协议和广播 |
-| 新建 | `src/mewcode/teams/events.py` | 持久 outbox 幂等投递 |
-| 新建 | `src/mewcode/teams/sessions.py` | 成员会话保存、恢复和消息去重 |
-| 新建 | `src/mewcode/teams/policy.py` | audience、角色和审批工具门禁 |
-| 新建 | `src/mewcode/teams/runtime.py` | 成员 Runner、协程和运行租约 |
-| 新建 | `src/mewcode/teams/manager.py` | 团队生命周期和领域服务编排 |
-| 新建 | `src/mewcode/teams/tools.py` | 团队模型工具 |
-| 修改 | `src/mewcode/providers/base.py` | ChatMessage 本地 metadata |
-| 修改 | `src/mewcode/session.py` | 带 metadata 的用户消息追加 |
-| 修改 | `src/mewcode/memory/session_store.py` | 持久化消息 metadata |
-| 修改 | `src/mewcode/tools/base.py` | RuntimePrincipal 和 ToolContext |
-| 修改 | `src/mewcode/tools/scheduler.py` | 可组合 ToolGate |
-| 修改 | `src/mewcode/agent.py` | AgentLoopController 与完成审查挂点 |
-| 修改 | `src/mewcode/prompting/base.py` | TeamPromptContext 接入 |
-| 修改 | `src/mewcode/prompting/builder.py` | Lead/成员运行提示 |
-| 修改 | `src/mewcode/config.py` | TeamConfig 加载和校验 |
-| 修改 | `src/mewcode/worktrees/models.py` | persistent retention 元数据 |
-| 修改 | `src/mewcode/worktrees/manager.py` | persistent acquire/release/cleanup |
-| 修改 | `src/mewcode/worktrees/git.py` | 任务提交祖先与分支校验 |
-| 修改 | `src/mewcode/subagents/runtime.py` | 普通子 Agent 运行身份适配 |
-| 修改 | `src/mewcode/tui/app.py` | TeamManager、工具、通知与关闭流程 |
+| 新建 | `src/julycode/teams/__init__.py` | 团队子系统公共导出 |
+| 新建 | `src/julycode/teams/models.py` | 团队、成员、任务、审批、消息、outbox 和快照模型 |
+| 新建 | `src/julycode/teams/paths.py` | 用户目录、名称和路径边界 |
+| 新建 | `src/julycode/teams/locking.py` | 文件锁、原子 JSON 和运行租约 |
+| 新建 | `src/julycode/teams/store.py` | 团队与花名册持久化 |
+| 新建 | `src/julycode/teams/tasks.py` | 任务 CRUD、依赖图和状态机 |
+| 新建 | `src/julycode/teams/approvals.py` | 审批状态机和授权查询 |
+| 新建 | `src/julycode/teams/mailbox.py` | 注册表、邮箱、协议和广播 |
+| 新建 | `src/julycode/teams/events.py` | 持久 outbox 幂等投递 |
+| 新建 | `src/julycode/teams/sessions.py` | 成员会话保存、恢复和消息去重 |
+| 新建 | `src/julycode/teams/policy.py` | audience、角色和审批工具门禁 |
+| 新建 | `src/julycode/teams/runtime.py` | 成员 Runner、协程和运行租约 |
+| 新建 | `src/julycode/teams/manager.py` | 团队生命周期和领域服务编排 |
+| 新建 | `src/julycode/teams/tools.py` | 团队模型工具 |
+| 修改 | `src/julycode/providers/base.py` | ChatMessage 本地 metadata |
+| 修改 | `src/julycode/session.py` | 带 metadata 的用户消息追加 |
+| 修改 | `src/julycode/memory/session_store.py` | 持久化消息 metadata |
+| 修改 | `src/julycode/tools/base.py` | RuntimePrincipal 和 ToolContext |
+| 修改 | `src/julycode/tools/scheduler.py` | 可组合 ToolGate |
+| 修改 | `src/julycode/agent.py` | AgentLoopController 与完成审查挂点 |
+| 修改 | `src/julycode/prompting/base.py` | TeamPromptContext 接入 |
+| 修改 | `src/julycode/prompting/builder.py` | Lead/成员运行提示 |
+| 修改 | `src/julycode/config.py` | TeamConfig 加载和校验 |
+| 修改 | `src/julycode/worktrees/models.py` | persistent retention 元数据 |
+| 修改 | `src/julycode/worktrees/manager.py` | persistent acquire/release/cleanup |
+| 修改 | `src/julycode/worktrees/git.py` | 任务提交祖先与分支校验 |
+| 修改 | `src/julycode/subagents/runtime.py` | 普通子 Agent 运行身份适配 |
+| 修改 | `src/julycode/tui/app.py` | TeamManager、工具、通知与关闭流程 |
 | 修改 | `README.md` | 团队使用方式和范围说明 |
 | 新建 | `tests/test_team_store.py` | 模型、路径、锁和 TeamStore 测试 |
 | 新建 | `tests/test_team_tasks.py` | 任务与依赖测试 |
@@ -53,7 +53,7 @@
 
 ## T1: 建立团队领域模型
 
-**文件：** `src/mewcode/teams/models.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/models.py`、`tests/test_team_store.py`
 **依赖：** 无
 
 **步骤：**
@@ -64,7 +64,7 @@
 
 ## T2: 接入 teams 配置
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`
+**文件：** `src/julycode/config.py`、`tests/test_config.py`
 **依赖：** T1
 
 **步骤：**
@@ -75,7 +75,7 @@
 
 ## T3: 实现团队路径与名称边界
 
-**文件：** `src/mewcode/teams/paths.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/paths.py`、`tests/test_team_store.py`
 **依赖：** T1
 
 **步骤：**
@@ -86,7 +86,7 @@
 
 ## T4: 实现文件锁重试与超时
 
-**文件：** `src/mewcode/teams/locking.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/locking.py`、`tests/test_team_store.py`
 **依赖：** T2、T3
 
 **步骤：**
@@ -97,7 +97,7 @@
 
 ## T5: 实现旧锁安全接管
 
-**文件：** `src/mewcode/teams/locking.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/locking.py`、`tests/test_team_store.py`
 **依赖：** T4
 
 **步骤：**
@@ -108,7 +108,7 @@
 
 ## T6: 实现原子 JSON 快照
 
-**文件：** `src/mewcode/teams/locking.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/locking.py`、`tests/test_team_store.py`
 **依赖：** T4
 
 **步骤：**
@@ -119,7 +119,7 @@
 
 ## T7: 实现成员运行租约
 
-**文件：** `src/mewcode/teams/locking.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/locking.py`、`tests/test_team_runtime.py`
 **依赖：** T4、T5
 
 **步骤：**
@@ -130,7 +130,7 @@
 
 ## T8: 持久化 ChatMessage 本地 metadata
 
-**文件：** `src/mewcode/providers/base.py`、`src/mewcode/session.py`、`src/mewcode/memory/session_store.py`、`tests/test_session.py`、`tests/test_session_store.py`
+**文件：** `src/julycode/providers/base.py`、`src/julycode/session.py`、`src/julycode/memory/session_store.py`、`tests/test_session.py`、`tests/test_session_store.py`
 **依赖：** 无
 
 **步骤：**
@@ -141,7 +141,7 @@
 
 ## T9: 给工具上下文增加不可伪造运行身份
 
-**文件：** `src/mewcode/tools/base.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/tools/base.py`、`tests/test_team_tools.py`
 **依赖：** T1
 
 **步骤：**
@@ -152,7 +152,7 @@
 
 ## T10: 把工具策略改为可组合门禁
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_tool_scheduler.py`
 **依赖：** T9
 
 **步骤：**
@@ -163,7 +163,7 @@
 
 ## T11: 增加 Agent Loop 安全边界回调
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T8、T10
 
 **步骤：**
@@ -174,7 +174,7 @@
 
 ## T12: 增加候选完成审查
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T11
 
 **步骤：**
@@ -185,7 +185,7 @@
 
 ## T13: 渲染 Lead 与成员团队提示
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/builder.py`、`tests/test_prompting.py`
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/builder.py`、`tests/test_prompting.py`
 **依赖：** T1
 
 **步骤：**
@@ -196,7 +196,7 @@
 
 ## T14: 扩展 Worktree 元数据兼容持久保留
 
-**文件：** `src/mewcode/worktrees/models.py`、`src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`
+**文件：** `src/julycode/worktrees/models.py`、`src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`
 **依赖：** 无
 
 **步骤：**
@@ -207,7 +207,7 @@
 
 ## T15: 实现 persistent Worktree acquire/release
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`
 **依赖：** T14
 
 **步骤：**
@@ -218,7 +218,7 @@
 
 ## T16: 阻止 janitor 清理长期 Worktree
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`
 **依赖：** T15
 
 **步骤：**
@@ -229,7 +229,7 @@
 
 ## T17: 实现团队创建与列表存储
 
-**文件：** `src/mewcode/teams/store.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/store.py`、`tests/test_team_store.py`
 **依赖：** T1、T3、T6
 
 **步骤：**
@@ -240,7 +240,7 @@
 
 ## T18: 实现团队加载与仓库绑定
 
-**文件：** `src/mewcode/teams/store.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/store.py`、`tests/test_team_store.py`
 **依赖：** T17
 
 **步骤：**
@@ -251,7 +251,7 @@
 
 ## T19: 实现花名册原子更新
 
-**文件：** `src/mewcode/teams/store.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/store.py`、`tests/test_team_store.py`
 **依赖：** T17
 
 **步骤：**
@@ -262,7 +262,7 @@
 
 ## T20: 识别并持久化中断成员
 
-**文件：** `src/mewcode/teams/store.py`、`tests/test_team_store.py`
+**文件：** `src/julycode/teams/store.py`、`tests/test_team_store.py`
 **依赖：** T7、T19
 
 **步骤：**
@@ -273,7 +273,7 @@
 
 ## T21: 实现成员会话创建与恢复
 
-**文件：** `src/mewcode/teams/sessions.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/sessions.py`、`tests/test_team_runtime.py`
 **依赖：** T3、T4、T8
 
 **步骤：**
@@ -284,7 +284,7 @@
 
 ## T22: 实现邮箱消息会话去重
 
-**文件：** `src/mewcode/teams/sessions.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/sessions.py`、`tests/test_team_runtime.py`
 **依赖：** T21
 
 **步骤：**
@@ -295,7 +295,7 @@
 
 ## T23: 实现共享任务基础 CRUD
 
-**文件：** `src/mewcode/teams/tasks.py`、`tests/test_team_tasks.py`
+**文件：** `src/julycode/teams/tasks.py`、`tests/test_team_tasks.py`
 **依赖：** T1、T6、T17
 
 **步骤：**
@@ -306,7 +306,7 @@
 
 ## T24: 校验任务依赖图
 
-**文件：** `src/mewcode/teams/tasks.py`、`tests/test_team_tasks.py`
+**文件：** `src/julycode/teams/tasks.py`、`tests/test_team_tasks.py`
 **依赖：** T23
 
 **步骤：**
@@ -317,7 +317,7 @@
 
 ## T25: 实现阻塞状态重算和删除保护
 
-**文件：** `src/mewcode/teams/tasks.py`、`tests/test_team_tasks.py`
+**文件：** `src/julycode/teams/tasks.py`、`tests/test_team_tasks.py`
 **依赖：** T24
 
 **步骤：**
@@ -328,7 +328,7 @@
 
 ## T26: 实现并发原子领取
 
-**文件：** `src/mewcode/teams/tasks.py`、`tests/test_team_tasks.py`
+**文件：** `src/julycode/teams/tasks.py`、`tests/test_team_tasks.py`
 **依赖：** T25
 
 **步骤：**
@@ -339,7 +339,7 @@
 
 ## T27: 领取任务时记录审批状态和 Git 起点
 
-**文件：** `src/mewcode/teams/tasks.py`、`tests/test_team_tasks.py`
+**文件：** `src/julycode/teams/tasks.py`、`tests/test_team_tasks.py`
 **依赖：** T15、T19、T26
 
 **步骤：**
@@ -350,7 +350,7 @@
 
 ## T28: 实现研究任务完成、失败和 outbox
 
-**文件：** `src/mewcode/teams/tasks.py`、`tests/test_team_tasks.py`
+**文件：** `src/julycode/teams/tasks.py`、`tests/test_team_tasks.py`
 **依赖：** T27
 
 **步骤：**
@@ -361,7 +361,7 @@
 
 ## T29: 校验代码任务提交成果
 
-**文件：** `src/mewcode/teams/tasks.py`、`src/mewcode/worktrees/git.py`、`tests/test_team_tasks.py`
+**文件：** `src/julycode/teams/tasks.py`、`src/julycode/worktrees/git.py`、`tests/test_team_tasks.py`
 **依赖：** T15、T28
 
 **步骤：**
@@ -372,7 +372,7 @@
 
 ## T30: 实现审批请求和版本递增
 
-**文件：** `src/mewcode/teams/approvals.py`、`tests/test_team_approvals.py`
+**文件：** `src/julycode/teams/approvals.py`、`tests/test_team_approvals.py`
 **依赖：** T6、T23、T27
 
 **步骤：**
@@ -383,7 +383,7 @@
 
 ## T31: 实现批准与驳回状态转换
 
-**文件：** `src/mewcode/teams/approvals.py`、`tests/test_team_approvals.py`
+**文件：** `src/julycode/teams/approvals.py`、`tests/test_team_approvals.py`
 **依赖：** T30
 
 **步骤：**
@@ -394,7 +394,7 @@
 
 ## T32: 拒绝陈旧、重复和伪造审批
 
-**文件：** `src/mewcode/teams/approvals.py`、`tests/test_team_approvals.py`
+**文件：** `src/julycode/teams/approvals.py`、`tests/test_team_approvals.py`
 **依赖：** T31
 
 **步骤：**
@@ -405,7 +405,7 @@
 
 ## T33: 修复审批与任务投影崩溃窗口
 
-**文件：** `src/mewcode/teams/approvals.py`、`src/mewcode/teams/tasks.py`、`tests/test_team_approvals.py`
+**文件：** `src/julycode/teams/approvals.py`、`src/julycode/teams/tasks.py`、`tests/test_team_approvals.py`
 **依赖：** T28、T32
 
 **步骤：**
@@ -416,7 +416,7 @@
 
 ## T34: 实现名称注册与点对点邮箱
 
-**文件：** `src/mewcode/teams/mailbox.py`、`tests/test_team_mailbox.py`
+**文件：** `src/julycode/teams/mailbox.py`、`tests/test_team_mailbox.py`
 **依赖：** T1、T5、T6、T17
 
 **步骤：**
@@ -427,7 +427,7 @@
 
 ## T35: 校验全部结构化消息协议
 
-**文件：** `src/mewcode/teams/mailbox.py`、`tests/test_team_mailbox.py`
+**文件：** `src/julycode/teams/mailbox.py`、`tests/test_team_mailbox.py`
 **依赖：** T33、T34
 
 **步骤：**
@@ -438,7 +438,7 @@
 
 ## T36: 实现邮箱幂等写入和已读确认
 
-**文件：** `src/mewcode/teams/mailbox.py`、`tests/test_team_mailbox.py`
+**文件：** `src/julycode/teams/mailbox.py`、`tests/test_team_mailbox.py`
 **依赖：** T22、T34
 
 **步骤：**
@@ -449,7 +449,7 @@
 
 ## T37: 实现广播逐项投递
 
-**文件：** `src/mewcode/teams/mailbox.py`、`tests/test_team_mailbox.py`
+**文件：** `src/julycode/teams/mailbox.py`、`tests/test_team_mailbox.py`
 **依赖：** T34
 
 **步骤：**
@@ -460,7 +460,7 @@
 
 ## T38: 实现持久 outbox 补投
 
-**文件：** `src/mewcode/teams/events.py`、`tests/test_team_mailbox.py`
+**文件：** `src/julycode/teams/events.py`、`tests/test_team_mailbox.py`
 **依赖：** T28、T33、T36、T37
 
 **步骤：**
@@ -471,7 +471,7 @@
 
 ## T39: 实现团队 audience 工具门禁
 
-**文件：** `src/mewcode/teams/policy.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/policy.py`、`tests/test_team_tools.py`
 **依赖：** T10、T17
 
 **步骤：**
@@ -482,7 +482,7 @@
 
 ## T40: 合并角色工具规则与协作工具
 
-**文件：** `src/mewcode/teams/policy.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/policy.py`、`tests/test_team_tools.py`
 **依赖：** T39
 
 **步骤：**
@@ -493,7 +493,7 @@
 
 ## T41: 实现审批副作用门禁
 
-**文件：** `src/mewcode/teams/policy.py`、`tests/test_team_approvals.py`
+**文件：** `src/julycode/teams/policy.py`、`tests/test_team_approvals.py`
 **依赖：** T32、T40
 
 **步骤：**
@@ -504,7 +504,7 @@
 
 ## T42: 构造成员独立 Agent Runner
 
-**文件：** `src/mewcode/teams/runtime.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/runtime.py`、`tests/test_team_runtime.py`
 **依赖：** T13、T15、T21、T41
 
 **步骤：**
@@ -515,7 +515,7 @@
 
 ## T43: 在安全边界投递成员邮箱
 
-**文件：** `src/mewcode/teams/runtime.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/runtime.py`、`tests/test_team_runtime.py`
 **依赖：** T11、T22、T36、T42
 
 **步骤：**
@@ -526,7 +526,7 @@
 
 ## T44: 创建长期成员与固定 Worktree
 
-**文件：** `src/mewcode/teams/runtime.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/runtime.py`、`tests/test_team_runtime.py`
 **依赖：** T7、T15、T19、T42
 
 **步骤：**
@@ -537,7 +537,7 @@
 
 ## T45: 唤醒成员并保证单实例
 
-**文件：** `src/mewcode/teams/runtime.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/runtime.py`、`tests/test_team_runtime.py`
 **依赖：** T7、T43、T44
 
 **步骤：**
@@ -548,7 +548,7 @@
 
 ## T46: 实现成员 idle 与上下文恢复
 
-**文件：** `src/mewcode/teams/runtime.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/runtime.py`、`tests/test_team_runtime.py`
 **依赖：** T38、T43、T45
 
 **步骤：**
@@ -559,7 +559,7 @@
 
 ## T47: 实现终止与安全关闭
 
-**文件：** `src/mewcode/teams/runtime.py`、`tests/test_team_runtime.py`
+**文件：** `src/julycode/teams/runtime.py`、`tests/test_team_runtime.py`
 **依赖：** T27、T46
 
 **步骤：**
@@ -570,7 +570,7 @@
 
 ## T48: 实现 TeamManager 生命周期
 
-**文件：** `src/mewcode/teams/manager.py`、`tests/test_teams_integration.py`
+**文件：** `src/julycode/teams/manager.py`、`tests/test_teams_integration.py`
 **依赖：** T18、T20、T38、T47
 
 **步骤：**
@@ -581,7 +581,7 @@
 
 ## T49: 解析 Actor 并编排成员操作
 
-**文件：** `src/mewcode/teams/manager.py`、`tests/test_teams_integration.py`
+**文件：** `src/julycode/teams/manager.py`、`tests/test_teams_integration.py`
 **依赖：** T44、T48
 
 **步骤：**
@@ -592,7 +592,7 @@
 
 ## T50: 消息投递后唤醒正确成员
 
-**文件：** `src/mewcode/teams/manager.py`、`tests/test_teams_integration.py`
+**文件：** `src/julycode/teams/manager.py`、`tests/test_teams_integration.py`
 **依赖：** T37、T46、T49
 
 **步骤：**
@@ -603,7 +603,7 @@
 
 ## T51: 实现团队事件等待
 
-**文件：** `src/mewcode/teams/manager.py`、`tests/test_teams_integration.py`
+**文件：** `src/julycode/teams/manager.py`、`tests/test_teams_integration.py`
 **依赖：** T38、T48
 
 **步骤：**
@@ -614,7 +614,7 @@
 
 ## T52: 实现 Lead 邮箱注入与完成守卫
 
-**文件：** `src/mewcode/teams/manager.py`、`tests/test_teams_integration.py`
+**文件：** `src/julycode/teams/manager.py`、`tests/test_teams_integration.py`
 **依赖：** T12、T13、T23、T51
 
 **步骤：**
@@ -625,7 +625,7 @@
 
 ## T53: 实现团队生命周期工具
 
-**文件：** `src/mewcode/teams/tools.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/tools.py`、`tests/test_team_tools.py`
 **依赖：** T39、T48
 
 **步骤：**
@@ -636,7 +636,7 @@
 
 ## T54: 实现成员管理工具
 
-**文件：** `src/mewcode/teams/tools.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/tools.py`、`tests/test_team_tools.py`
 **依赖：** T39、T49
 
 **步骤：**
@@ -647,7 +647,7 @@
 
 ## T55: 实现共享任务工具
 
-**文件：** `src/mewcode/teams/tools.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/tools.py`、`tests/test_team_tools.py`
 **依赖：** T23、T49
 
 **步骤：**
@@ -658,7 +658,7 @@
 
 ## T56: 实现团队消息工具
 
-**文件：** `src/mewcode/teams/tools.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/tools.py`、`tests/test_team_tools.py`
 **依赖：** T35、T50、T39
 
 **步骤：**
@@ -669,7 +669,7 @@
 
 ## T57: 实现 Lead 等待工具
 
-**文件：** `src/mewcode/teams/tools.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/tools.py`、`tests/test_team_tools.py`
 **依赖：** T39、T51
 
 **步骤：**
@@ -680,7 +680,7 @@
 
 ## T58: 完成 teams 公共导出和工具集合
 
-**文件：** `src/mewcode/teams/__init__.py`、`src/mewcode/teams/tools.py`、`tests/test_team_tools.py`
+**文件：** `src/julycode/teams/__init__.py`、`src/julycode/teams/tools.py`、`tests/test_team_tools.py`
 **依赖：** T53、T54、T55、T56、T57
 
 **步骤：**
@@ -691,7 +691,7 @@
 
 ## T59: 适配普通子 Agent 的运行身份
 
-**文件：** `src/mewcode/subagents/runtime.py`、`tests/test_subagents.py`
+**文件：** `src/julycode/subagents/runtime.py`、`tests/test_subagents.py`
 **依赖：** T9、T10、T39
 
 **步骤：**
@@ -702,7 +702,7 @@
 
 ## T60: 在 TUI 初始化 TeamManager 与工具
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`
 **依赖：** T2、T58、T59
 
 **步骤：**
@@ -713,7 +713,7 @@
 
 ## T61: 给主 Runner 接入团队 gate、提示和 controller
 
-**文件：** `src/mewcode/tui/app.py`、`src/mewcode/agent.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/tui/app.py`、`src/julycode/agent.py`、`tests/test_tui_smoke.py`
 **依赖：** T13、T52、T60
 
 **步骤：**
@@ -724,7 +724,7 @@
 
 ## T62: 接入团队通知和 TUI 安全关闭
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`
 **依赖：** T47、T61
 
 **步骤：**
@@ -797,7 +797,7 @@
 1. 运行 compileall 和团队全部专项测试，修复语法、导入和领域集成失败。
 2. 运行 Agent、工具、配置、Worktree、子 Agent、提示和 TUI 聚焦测试，修复相关回归。
 
-**验证：** 分别运行 `python -m compileall -q src/mewcode tests/e2e_mock_openai_server.py` 和 `python -m pytest tests/test_team_store.py tests/test_team_tasks.py tests/test_team_approvals.py tests/test_team_mailbox.py tests/test_team_runtime.py tests/test_team_tools.py tests/test_teams_integration.py tests/test_agent.py tests/test_tool_scheduler.py tests/test_worktrees.py tests/test_subagents.py tests/test_prompting.py tests/test_config.py tests/test_tui_smoke.py -q`，期望退出码均为 0。
+**验证：** 分别运行 `python -m compileall -q src/julycode tests/e2e_mock_openai_server.py` 和 `python -m pytest tests/test_team_store.py tests/test_team_tasks.py tests/test_team_approvals.py tests/test_team_mailbox.py tests/test_team_runtime.py tests/test_team_tools.py tests/test_teams_integration.py tests/test_agent.py tests/test_tool_scheduler.py tests/test_worktrees.py tests/test_subagents.py tests/test_prompting.py tests/test_config.py tests/test_tui_smoke.py -q`，期望退出码均为 0。
 
 ## T69: 运行全量回归
 

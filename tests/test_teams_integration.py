@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.providers.base import ChatMessage
-from mewcode.session import ChatSession
-from mewcode.teams.manager import TeamManager
-from mewcode.teams.models import MessageDraft, TaskDraft, TeamActor, TeamMemberRecord
-from mewcode.teams.store import TeamStore
+from julycode.providers.base import ChatMessage
+from julycode.session import ChatSession
+from julycode.teams.manager import TeamManager
+from julycode.teams.models import MessageDraft, TaskDraft, TeamActor, TeamMemberRecord
+from julycode.teams.store import TeamStore
 from tests.test_worktrees import init_repository
 
 
@@ -32,11 +32,11 @@ async def test_lead_completion_guard_blocks_active_and_summarizes_complete(tmp_p
     services = manager._service("demo")
     lead = TeamActor("demo", "lead", "lead", repo)
     task = await services.tasks.create(lead, TaskDraft("research", "", kind="research"))
-    controller = manager.loop_controller(__import__("mewcode.tools.base", fromlist=["RuntimePrincipal"]).RuntimePrincipal())
+    controller = manager.loop_controller(__import__("julycode.tools.base", fromlist=["RuntimePrincipal"]).RuntimePrincipal())
     assert controller is not None
     blocked = await controller.review_completion(ChatMessage(role="assistant", content="完成"))
     assert not blocked.accept and "未完成" in (blocked.continuation or "")
-    await services.tasks.update(lead, task.id, __import__("mewcode.teams.models", fromlist=["TaskPatch"]).TaskPatch(status="cancelled"))
+    await services.tasks.update(lead, task.id, __import__("julycode.teams.models", fromlist=["TaskPatch"]).TaskPatch(status="cancelled"))
     failed = await controller.review_completion(ChatMessage(role="assistant", content="完成"))
     assert failed.accept and "尚未达成" in failed.message.content
 
@@ -48,9 +48,9 @@ async def test_lead_mailbox_is_injected_once(tmp_path: Path) -> None:
     await manager.create_team("demo")
     services = manager._service("demo")
     lead = TeamActor("demo", "lead", "lead", repo)
-    from mewcode.teams.models import MessageDraft
+    from julycode.teams.models import MessageDraft
     await services.mailbox.send(lead, MessageDraft("lead", "message", "event"))
-    controller = manager.loop_controller(__import__("mewcode.tools.base", fromlist=["RuntimePrincipal"]).RuntimePrincipal())
+    controller = manager.loop_controller(__import__("julycode.tools.base", fromlist=["RuntimePrincipal"]).RuntimePrincipal())
     session = ChatSession()
     await controller.before_iteration(session)  # type: ignore[union-attr]
     await controller.before_iteration(session)  # type: ignore[union-attr]

@@ -20,21 +20,21 @@ from memory_quality.models import (
 )
 from memory_quality.offline import ScriptedMemoryQualityProvider
 from memory_quality.report import acceptance_failures
-from mewcode.agent import AgentLoopRunner
-from mewcode.commands import AgentCommand
-from mewcode.config import AgentConfig
-from mewcode.context.manager import ContextManager
-from mewcode.context.models import ContextConfig
-from mewcode.memory.index import MemoryIndexBuilder
-from mewcode.memory.manager import SessionMemoryManager
-from mewcode.memory.models import BootstrapOptions, KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
-from mewcode.memory.notes import MemoryNoteStore
-from mewcode.memory.updater import MemoryNoteUpdater
-from mewcode.providers.base import ChatMessage, ChatRequest, LLMProvider, StreamEvent
-from mewcode.session_id import new_session_id
-from mewcode.tools.base import ToolContext
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import create_default_registry
+from julycode.agent import AgentLoopRunner
+from julycode.commands import AgentCommand
+from julycode.config import AgentConfig
+from julycode.context.manager import ContextManager
+from julycode.context.models import ContextConfig
+from julycode.memory.index import MemoryIndexBuilder
+from julycode.memory.manager import SessionMemoryManager
+from julycode.memory.models import BootstrapOptions, KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
+from julycode.memory.notes import MemoryNoteStore
+from julycode.memory.updater import MemoryNoteUpdater
+from julycode.providers.base import ChatMessage, ChatRequest, LLMProvider, StreamEvent
+from julycode.session_id import new_session_id
+from julycode.tools.base import ToolContext
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import create_default_registry
 
 
 class RecordingProvider(LLMProvider):
@@ -92,7 +92,7 @@ class MemoryQualityRunner:
         for case in cases:
             with tempfile.TemporaryDirectory(prefix=f"mew-memory-extract-{case.case_id}-", dir=_tmp_root(options)) as raw:
                 workspace = Path(raw)
-                config = SessionMemoryConfig(user_dir=str(workspace / ".mewcode-user"))
+                config = SessionMemoryConfig(user_dir=str(workspace / ".julycode-user"))
                 store = MemoryNoteStore(workspace, config)
                 updater = MemoryNoteUpdater(store, MemoryIndexBuilder(store, config))
                 provider = _case_provider(options, extraction_case=case)
@@ -129,7 +129,7 @@ class MemoryQualityRunner:
     ) -> InheritanceTrial:
         with tempfile.TemporaryDirectory(prefix=f"mew-memory-enabled-{case.case_id}-", dir=_tmp_root(options)) as raw:
             workspace = Path(raw)
-            config = SessionMemoryConfig(user_dir=str(workspace / ".mewcode-user"))
+            config = SessionMemoryConfig(user_dir=str(workspace / ".julycode-user"))
             base_provider = _case_provider(options, inheritance_case=case)
             source_provider = RecordingProvider(base_provider)
             source_context = ContextManager(ContextConfig(), workspace, max_output_tokens=4096)
@@ -190,7 +190,7 @@ class MemoryQualityRunner:
     ) -> InheritanceTrial:
         with tempfile.TemporaryDirectory(prefix=f"mew-memory-baseline-{case.case_id}-", dir=_tmp_root(options)) as raw:
             workspace = Path(raw)
-            config = SessionMemoryConfig(enabled=False, user_dir=str(workspace / ".mewcode-user"))
+            config = SessionMemoryConfig(enabled=False, user_dir=str(workspace / ".julycode-user"))
             provider = RecordingProvider(_case_provider(options, inheritance_case=case))
             context = ContextManager(ContextConfig(), workspace, max_output_tokens=4096)
             manager = SessionMemoryManager(workspace, config)

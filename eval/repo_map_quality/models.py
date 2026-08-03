@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from mewcode.providers.base import LLMProvider
+    from julycode.providers.base import LLMProvider
 
 
 RepoMapQualityMode = Literal["offline", "paired"]

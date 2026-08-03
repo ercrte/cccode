@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from mewcode.context.compactor import ToolResultCompactor
-from mewcode.context.estimator import TokenEstimator
-from mewcode.context.models import ContextConfig
-from mewcode.context.store import ContextStore
-from mewcode.providers.base import ChatMessage
-from mewcode.session import ChatSession
-from mewcode.tools.base import ToolCall
+from julycode.context.compactor import ToolResultCompactor
+from julycode.context.estimator import TokenEstimator
+from julycode.context.models import ContextConfig
+from julycode.context.store import ContextStore
+from julycode.providers.base import ChatMessage
+from julycode.session import ChatSession
+from julycode.tools.base import ToolCall
 
 
 def make_compactor(tmp_path: Path, config: ContextConfig) -> ToolResultCompactor:
@@ -32,7 +32,7 @@ def test_context_store_writes_tool_result_under_project(tmp_path: Path) -> None:
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["content"] == message.content
     assert payload["tool_call_id"] == "call-1"
-    assert ".mewcode/context/" in Path(".gitignore").read_text(encoding="utf-8")
+    assert ".julycode/context/" in Path(".gitignore").read_text(encoding="utf-8")
 
 
 def test_context_store_returns_readable_relative_path(tmp_path: Path) -> None:
@@ -55,7 +55,7 @@ def test_compacts_single_large_tool_result(tmp_path: Path) -> None:
     assert result.changed is True
     assert result.external_refs
     payload = json.loads(session.messages[0].content)
-    assert payload["mewcode_externalized"] is True
+    assert payload["julycode_externalized"] is True
     assert payload["external_path"] == result.external_refs[0].path
     assert payload["preview"] == "x" * 10
 
@@ -70,7 +70,7 @@ def test_light_compaction_keeps_user_messages_verbatim(tmp_path: Path) -> None:
 
 
 def test_compactor_does_not_reexternalize_existing_preview(tmp_path: Path) -> None:
-    content = json.dumps({"mewcode_externalized": True, "external_path": ".mewcode/context/a.json"})
+    content = json.dumps({"julycode_externalized": True, "external_path": ".julycode/context/a.json"})
     session = ChatSession(messages=[tool_message(content)])
 
     result = make_compactor(tmp_path, ContextConfig(single_tool_result_tokens=1)).compact(session)
@@ -97,7 +97,7 @@ def test_compacts_largest_results_when_turn_total_exceeds_limit(tmp_path: Path) 
 
     assert result.changed is True
     assert len(result.external_refs) >= 1
-    assert json.loads(session.messages[1].content)["mewcode_externalized"] is True
+    assert json.loads(session.messages[1].content)["julycode_externalized"] is True
     assert session.messages[2].content == "y" * 20
 
 

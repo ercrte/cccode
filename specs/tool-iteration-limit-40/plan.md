@@ -53,10 +53,10 @@ class SubAgentConfig:
 
 ## 文件组织
 ```text
-src/mewcode/config.py                              — 主 Agent 默认值及 YAML 解析默认值
-src/mewcode/subagents/models.py                    — 子 Agent 默认值
-src/mewcode/subagents/builtin/reviewer.md          — 内置审查角色上限
-src/mewcode/subagents/builtin/code-searcher.md     — 内置搜索角色上限
+src/julycode/config.py                              — 主 Agent 默认值及 YAML 解析默认值
+src/julycode/subagents/models.py                    — 子 Agent 默认值
+src/julycode/subagents/builtin/reviewer.md          — 内置审查角色上限
+src/julycode/subagents/builtin/code-searcher.md     — 内置搜索角色上限
 tests/test_config.py                               — 主/子 Agent 配置默认值与显式覆盖测试
 tests/test_subagents.py                            — 内置角色及子 Agent 优先级测试
 tests/test_agent.py                                — 复用现有迭代停止行为测试

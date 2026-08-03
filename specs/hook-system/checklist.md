@@ -1,9 +1,9 @@
-# MewCode Hook System Checklist
+# JulyCode Hook System Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
 ## 实现完整性
-- [x] [AC1] 未配置 `hooks` 时 MewCode 行为不变，普通对话和工具调用正常（验证：运行 `python -m pytest tests/test_config.py::test_loads_required_yaml_fields tests/test_agent.py::test_runner_runs_multiple_tool_iterations_until_final_answer tests/test_tool_scheduler.py::test_side_effect_tools_run_serially -q`，期望全部通过）
+- [x] [AC1] 未配置 `hooks` 时 JulyCode 行为不变，普通对话和工具调用正常（验证：运行 `python -m pytest tests/test_config.py::test_loads_required_yaml_fields tests/test_agent.py::test_runner_runs_multiple_tool_iterations_until_final_answer tests/test_tool_scheduler.py::test_side_effect_tools_run_serially -q`，期望全部通过）
 - [x] [AC2, AC3] Hook 配置缺少事件、缺少动作、未知事件、未知动作、无效条件、无效匹配表达式、无效 timeout 和 `tool.before` 后台异步都会在配置加载阶段报错（验证：运行 `python -m pytest tests/test_hooks_config.py -q`，期望全部通过）
 - [x] [AC4] 会话、轮次、消息、工具和系统级事件都能触发匹配 Hook（验证：运行 `python -m pytest tests/test_agent.py::test_runner_emits_turn_and_message_hooks tests/test_agent.py::test_runner_emits_system_hook_events tests/test_tool_scheduler.py::test_after_tool_emits_result_event tests/test_tui_smoke.py::test_tui_emits_session_hook_events -q`，期望全部通过）
 - [x] [AC5] 省略条件的 Hook 在对应事件发生时无条件触发（验证：运行 `python -m pytest tests/test_hooks.py::test_hook_conditions_match_expected_events -q`，期望无条件规则用例通过）
@@ -37,7 +37,7 @@
 - [x] 本项目当前未配置独立 lint 工具，不能跳过语法和测试检查（验证：查看 `pyproject.toml` 无 lint 配置，并已运行 `python -m compileall src tests -q` 与 `python -m pytest -q`）
 
 ## 端到端场景
-- [x] 场景 1：无 Hook 配置启动后执行普通工具任务，行为与现有版本一致（验证：在 tmux 中启动 `python tests/e2e_mock_openai_server.py 18765`；配置 `.mewcode.yaml` 使用 mock OpenAI 且不声明 `hooks`；另一个 tmux pane 启动 `mewcode --new-session`；输入“读取 README.md 并总结一句”；观察工具调用正常、最终回复正常、输入区恢复可用）
-- [x] 场景 2：`tool.before` Hook 拦截危险工具参数，拒绝原因回灌给模型后模型调整回复（验证：在 tmux 中使用 mock OpenAI 配置和 `tool.before` 拦截规则启动 `mewcode --new-session`；输入会触发被拦截工具的真实请求；观察工具未执行、工具结果包含 `hook_blocked` 和拒绝原因、最终回复引用拒绝原因、输入区恢复可用）
-- [x] 场景 3：prompt Hook 注入上下文影响下一次模型请求但不写入用户消息历史（验证：在 tmux 中配置 `turn.start` prompt Hook；启动 `mewcode --new-session` 并输入普通请求；观察 mock server 收到的请求运行时提示含 `<mewcode_hook_instructions>`，会话显示区没有伪造用户消息，最终回复正常）
-- [x] 场景 4：后台 Hook 失败不影响主流程（验证：在 tmux 中配置一个后台 HTTP Hook 指向不可达地址；启动 `mewcode --new-session` 并输入普通请求；观察 Agent 仍完成回复，TUI 未崩溃，输入区恢复可用）
+- [x] 场景 1：无 Hook 配置启动后执行普通工具任务，行为与现有版本一致（验证：在 tmux 中启动 `python tests/e2e_mock_openai_server.py 18765`；配置 `.julycode.yaml` 使用 mock OpenAI 且不声明 `hooks`；另一个 tmux pane 启动 `julycode --new-session`；输入“读取 README.md 并总结一句”；观察工具调用正常、最终回复正常、输入区恢复可用）
+- [x] 场景 2：`tool.before` Hook 拦截危险工具参数，拒绝原因回灌给模型后模型调整回复（验证：在 tmux 中使用 mock OpenAI 配置和 `tool.before` 拦截规则启动 `julycode --new-session`；输入会触发被拦截工具的真实请求；观察工具未执行、工具结果包含 `hook_blocked` 和拒绝原因、最终回复引用拒绝原因、输入区恢复可用）
+- [x] 场景 3：prompt Hook 注入上下文影响下一次模型请求但不写入用户消息历史（验证：在 tmux 中配置 `turn.start` prompt Hook；启动 `julycode --new-session` 并输入普通请求；观察 mock server 收到的请求运行时提示含 `<julycode_hook_instructions>`，会话显示区没有伪造用户消息，最终回复正常）
+- [x] 场景 4：后台 Hook 失败不影响主流程（验证：在 tmux 中配置一个后台 HTTP Hook 指向不可达地址；启动 `julycode --new-session` 并输入普通请求；观察 Agent 仍完成回复，TUI 未崩溃，输入区恢复可用）

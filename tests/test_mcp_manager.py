@@ -6,18 +6,18 @@ from typing import Any
 
 import pytest
 
-from mewcode.config import AppConfig, McpConfig, McpOAuthConfig, McpServerConfig
-from mewcode.errors import ConfigError
-from mewcode.mcp.errors import McpAuthorizationRequired, McpOAuthError
-from mewcode.mcp.manager import McpLoadReport, McpManager
-from mewcode.mcp.oauth.models import McpOAuthStatus
-from mewcode.mcp.tools import SEARCH_MCP_TOOLS_NAME
-from mewcode.session import ChatSession
-from mewcode.tools.base import ToolContext
-from mewcode.tools.base import ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry, create_default_registry
-from mewcode.tui.app import MewCodeApp
+from julycode.config import AppConfig, McpConfig, McpOAuthConfig, McpServerConfig
+from julycode.errors import ConfigError
+from julycode.mcp.errors import McpAuthorizationRequired, McpOAuthError
+from julycode.mcp.manager import McpLoadReport, McpManager
+from julycode.mcp.oauth.models import McpOAuthStatus
+from julycode.mcp.tools import SEARCH_MCP_TOOLS_NAME
+from julycode.session import ChatSession
+from julycode.tools.base import ToolContext
+from julycode.tools.base import ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry, create_default_registry
+from julycode.tui.app import JulyCodeApp
 
 
 class FakeTransport:
@@ -183,7 +183,7 @@ async def test_manager_close_closes_initialized_sessions() -> None:
 
 
 def test_cli_initializes_mcp_manager_and_closes_it(monkeypatch: pytest.MonkeyPatch) -> None:
-    from mewcode import cli
+    from julycode import cli
 
     events: list[str] = []
     fake_manager = object()
@@ -223,7 +223,7 @@ def test_cli_initializes_mcp_manager_and_closes_it(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(cli, "create_mcp_manager", lambda config: fake_manager)
     monkeypatch.setattr(cli, "create_permission_controller", lambda cwd, permissions, app: object())
     monkeypatch.setattr(cli, "SessionMemoryManager", lambda cwd, config: fake_memory_manager)
-    monkeypatch.setattr(cli, "MewCodeApp", FakeApp)
+    monkeypatch.setattr(cli, "JulyCodeApp", FakeApp)
 
     assert cli.main(["--new-session"]) == 0
     assert events == ["bootstrap", "app", "permission", "run"]
@@ -248,7 +248,7 @@ async def test_tui_lifecycle_initializes_and_closes_mcp_manager(tmp_path) -> Non
             events.append("close")
 
     registry = ToolRegistry()
-    app = MewCodeApp(
+    app = JulyCodeApp(
         ChatSession(),
         object(),
         AppConfig(protocol="openai", model="test", base_url="https://example.test/v1", api_key="key"),
@@ -264,7 +264,7 @@ async def test_tui_lifecycle_initializes_and_closes_mcp_manager(tmp_path) -> Non
 
 
 def test_cli_reports_mcp_config_error_without_secret(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-    from mewcode import cli
+    from julycode import cli
 
     secret = "sk-mcp-secret-1234567890"
 

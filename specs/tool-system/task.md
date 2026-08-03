@@ -1,23 +1,23 @@
-# MewCode 工具系统 Tasks
+# JulyCode 工具系统 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/tools/__init__.py` | 工具包公共导出 |
-| 新建 | `src/mewcode/tools/base.py` | Tool 接口、ToolSpec、ToolCall、ToolResult、ToolContext、工具异常 |
-| 新建 | `src/mewcode/tools/validation.py` | 内置工具参数 Schema 子集校验 |
-| 新建 | `src/mewcode/tools/builtin.py` | 六个核心工具实现 |
-| 新建 | `src/mewcode/tools/registry.py` | 工具注册中心和默认工具注册 |
-| 新建 | `src/mewcode/tools/executor.py` | 工具执行、超时和结构化错误包装 |
-| 新建 | `src/mewcode/agent.py` | 一次工具调用链路编排和 TurnEvent |
-| 修改 | `src/mewcode/providers/base.py` | Provider 统一消息、请求和流事件支持工具调用 |
-| 修改 | `src/mewcode/providers/openai.py` | OpenAI 工具描述、工具消息和流式 tool_calls 适配 |
-| 修改 | `src/mewcode/providers/anthropic.py` | Anthropic tools、tool_use、tool_result 和流式参数适配 |
-| 修改 | `src/mewcode/session.py` | 会话历史支持工具调用消息和工具结果消息 |
-| 修改 | `src/mewcode/tui/widgets.py` | 工具调用状态视图 |
-| 修改 | `src/mewcode/tui/app.py` | 使用工具编排器并展示工具状态 |
-| 修改 | `src/mewcode/cli.py` | 创建默认工具注册中心、执行器和工具上下文 |
+| 新建 | `src/julycode/tools/__init__.py` | 工具包公共导出 |
+| 新建 | `src/julycode/tools/base.py` | Tool 接口、ToolSpec、ToolCall、ToolResult、ToolContext、工具异常 |
+| 新建 | `src/julycode/tools/validation.py` | 内置工具参数 Schema 子集校验 |
+| 新建 | `src/julycode/tools/builtin.py` | 六个核心工具实现 |
+| 新建 | `src/julycode/tools/registry.py` | 工具注册中心和默认工具注册 |
+| 新建 | `src/julycode/tools/executor.py` | 工具执行、超时和结构化错误包装 |
+| 新建 | `src/julycode/agent.py` | 一次工具调用链路编排和 TurnEvent |
+| 修改 | `src/julycode/providers/base.py` | Provider 统一消息、请求和流事件支持工具调用 |
+| 修改 | `src/julycode/providers/openai.py` | OpenAI 工具描述、工具消息和流式 tool_calls 适配 |
+| 修改 | `src/julycode/providers/anthropic.py` | Anthropic tools、tool_use、tool_result 和流式参数适配 |
+| 修改 | `src/julycode/session.py` | 会话历史支持工具调用消息和工具结果消息 |
+| 修改 | `src/julycode/tui/widgets.py` | 工具调用状态视图 |
+| 修改 | `src/julycode/tui/app.py` | 使用工具编排器并展示工具状态 |
+| 修改 | `src/julycode/cli.py` | 创建默认工具注册中心、执行器和工具上下文 |
 | 修改 | `README.md` | 更新工具系统能力和范围说明 |
 | 新建 | `tests/test_tools.py` | 工具基础模型、参数校验、六个核心工具行为测试 |
 | 新建 | `tests/test_tool_executor.py` | 工具执行器成功、失败、超时和参数错误测试 |
@@ -30,19 +30,19 @@
 
 ## T1: 工具基础模型
 
-**文件：** `src/mewcode/tools/base.py`, `src/mewcode/tools/__init__.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/base.py`, `src/julycode/tools/__init__.py`, `tests/test_tools.py`  
 **依赖：** 无  
 **步骤：**
 1. 新建工具包并定义 `ToolSpec`、`ToolContext`、`ToolCall`、`ToolResult`、`ToolExecutionError` 和 `Tool` 协议。
 2. 实现 `ToolResult.to_model_content()`，输出稳定 JSON 字符串，包含 `success`、`data`、`error_type`、`error`、`elapsed_ms`。
-3. 在 `src/mewcode/tools/__init__.py` 导出基础类型。
+3. 在 `src/julycode/tools/__init__.py` 导出基础类型。
 4. 添加测试覆盖成功结果、失败结果、JSON 序列化和包导入。
 
 **验证：** 运行 `python -m pytest tests/test_tools.py::test_tool_result_serializes_success tests/test_tools.py::test_tool_result_serializes_error -q`，期望全部通过。
 
 ## T2: 参数 Schema 校验
 
-**文件：** `src/mewcode/tools/validation.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/validation.py`, `tests/test_tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `validate_arguments(schema, arguments)`。
@@ -54,7 +54,7 @@
 
 ## T3: 读取文件工具
 
-**文件：** `src/mewcode/tools/builtin.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/builtin.py`, `tests/test_tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 在 `builtin.py` 中实现 `ReadFileTool`，名称为 `read_file`。
@@ -67,7 +67,7 @@
 
 ## T4: 写入文件工具
 
-**文件：** `src/mewcode/tools/builtin.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/builtin.py`, `tests/test_tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `WriteFileTool`，名称为 `write_file`。
@@ -80,7 +80,7 @@
 
 ## T5: 原文唯一替换工具
 
-**文件：** `src/mewcode/tools/builtin.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/builtin.py`, `tests/test_tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `EditFileTool`，名称为 `edit_file`。
@@ -94,7 +94,7 @@
 
 ## T6: 命令执行工具
 
-**文件：** `src/mewcode/tools/builtin.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/builtin.py`, `tests/test_tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `RunCommandTool`，名称为 `run_command`。
@@ -107,7 +107,7 @@
 
 ## T7: 按模式找文件工具
 
-**文件：** `src/mewcode/tools/builtin.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/builtin.py`, `tests/test_tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `FindFilesTool`，名称为 `find_files`。
@@ -120,7 +120,7 @@
 
 ## T8: 搜索代码内容工具
 
-**文件：** `src/mewcode/tools/builtin.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/builtin.py`, `tests/test_tools.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `SearchCodeTool`，名称为 `search_code`。
@@ -133,7 +133,7 @@
 
 ## T9: 工具注册中心
 
-**文件：** `src/mewcode/tools/registry.py`, `src/mewcode/tools/__init__.py`, `tests/test_tools.py`  
+**文件：** `src/julycode/tools/registry.py`, `src/julycode/tools/__init__.py`, `tests/test_tools.py`  
 **依赖：** T3, T4, T5, T6, T7, T8  
 **步骤：**
 1. 实现 `ToolRegistry.register()`、`get()`、`list()` 和 `specs()`。
@@ -146,7 +146,7 @@
 
 ## T10: 工具执行器
 
-**文件：** `src/mewcode/tools/executor.py`, `src/mewcode/tools/__init__.py`, `tests/test_tool_executor.py`  
+**文件：** `src/julycode/tools/executor.py`, `src/julycode/tools/__init__.py`, `tests/test_tool_executor.py`  
 **依赖：** T2, T9  
 **步骤：**
 1. 实现 `ToolExecutor`，接收 `ToolRegistry` 和 `ToolContext`。
@@ -161,7 +161,7 @@
 
 ## T11: Provider 基础结构与会话扩展
 
-**文件：** `src/mewcode/providers/base.py`, `src/mewcode/session.py`, `tests/test_session.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/providers/base.py`, `src/julycode/session.py`, `tests/test_session.py`, `tests/test_tui_smoke.py`  
 **依赖：** T1  
 **步骤：**
 1. 将 `ChatRole` 扩展为 `user`、`assistant`、`tool`。
@@ -175,7 +175,7 @@
 
 ## T12: OpenAI 工具请求和消息格式
 
-**文件：** `src/mewcode/providers/openai.py`, `tests/test_openai_provider.py`  
+**文件：** `src/julycode/providers/openai.py`, `tests/test_openai_provider.py`  
 **依赖：** T1, T11  
 **步骤：**
 1. 将 `ToolSpec` 转换为 OpenAI Chat Completions `tools` function 格式。
@@ -189,7 +189,7 @@
 
 ## T13: OpenAI 流式工具调用解析
 
-**文件：** `src/mewcode/providers/openai.py`, `tests/test_openai_provider.py`  
+**文件：** `src/julycode/providers/openai.py`, `tests/test_openai_provider.py`  
 **依赖：** T12  
 **步骤：**
 1. 在流式解析中识别 `choices[*].delta.tool_calls`。
@@ -203,7 +203,7 @@
 
 ## T14: Anthropic 工具请求和消息格式
 
-**文件：** `src/mewcode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
 **依赖：** T1, T11  
 **步骤：**
 1. 将 `ToolSpec` 转换为 Anthropic 顶层 `tools` 格式。
@@ -218,7 +218,7 @@
 
 ## T15: Anthropic 流式工具调用解析
 
-**文件：** `src/mewcode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
 **依赖：** T14  
 **步骤：**
 1. 在 `content_block_start` 中识别 `tool_use` 块，记录 block index、tool id 和工具名。
@@ -233,7 +233,7 @@
 
 ## T16: 编排器纯聊天路径
 
-**文件：** `src/mewcode/agent.py`, `tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`, `tests/test_agent.py`  
 **依赖：** T10, T11  
 **步骤：**
 1. 定义 `TurnEvent` 和 `ToolAwareTurnRunner`。
@@ -245,7 +245,7 @@
 
 ## T17: 编排器一轮工具执行与结果回灌
 
-**文件：** `src/mewcode/agent.py`, `tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`, `tests/test_agent.py`  
 **依赖：** T16  
 **步骤：**
 1. 第一轮 `message_done` 包含一个 `ToolCall` 时，保存 assistant 工具调用消息。
@@ -259,7 +259,7 @@
 
 ## T18: 编排器工具边界和失败路径
 
-**文件：** `src/mewcode/agent.py`, `tests/test_agent.py`  
+**文件：** `src/julycode/agent.py`, `tests/test_agent.py`  
 **依赖：** T17  
 **步骤：**
 1. 第一轮响应包含多个工具调用时，只执行第一个，并在工具结果中说明本阶段只支持一个工具调用。
@@ -272,7 +272,7 @@
 
 ## T19: 工具状态视图
 
-**文件：** `src/mewcode/tui/widgets.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/widgets.py`, `tests/test_tui_smoke.py`  
 **依赖：** T1  
 **步骤：**
 1. 新增 `ToolStatusView`，显示工具名称、运行状态、成功/失败和简短摘要。
@@ -284,10 +284,10 @@
 
 ## T20: TUI 接入工具编排器
 
-**文件：** `src/mewcode/tui/app.py`, `src/mewcode/tui/widgets.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`, `src/julycode/tui/widgets.py`, `tests/test_tui_smoke.py`  
 **依赖：** T16, T17, T18, T19  
 **步骤：**
-1. 调整 `MewCodeApp` 构造参数，接收 `ToolRegistry` 和 `ToolExecutor`。
+1. 调整 `JulyCodeApp` 构造参数，接收 `ToolRegistry` 和 `ToolExecutor`。
 2. 提交输入后使用 `ToolAwareTurnRunner.run()`，不再直接遍历 Provider。
 3. 收到 `text_delta` 和 `thinking_delta` 时保持现有增量渲染。
 4. 收到 `tool_started` 时在消息区追加工具状态视图。
@@ -300,12 +300,12 @@
 
 ## T21: CLI 集成默认工具
 
-**文件：** `src/mewcode/cli.py`, `tests/test_tui_smoke.py`, `tests/test_config.py`  
+**文件：** `src/julycode/cli.py`, `tests/test_tui_smoke.py`, `tests/test_config.py`  
 **依赖：** T9, T10, T20  
 **步骤：**
 1. 在 CLI 启动时创建 `create_default_registry()`。
 2. 用当前工作目录创建 `ToolContext`。
-3. 创建 `ToolExecutor` 并传入 `MewCodeApp`。
+3. 创建 `ToolExecutor` 并传入 `JulyCodeApp`。
 4. 保持配置错误脱敏和非零退出码行为不变。
 5. 更新 CLI 可导入和配置错误测试，确认构造路径不破坏旧行为。
 
@@ -338,7 +338,7 @@
 
 ## T24: 全量回归和编译检查
 
-**文件：** `src/mewcode/**/*.py`, `tests/**/*.py`  
+**文件：** `src/julycode/**/*.py`, `tests/**/*.py`  
 **依赖：** T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23  
 **步骤：**
 1. 运行全部单元测试并修复失败。

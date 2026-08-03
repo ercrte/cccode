@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.context.manager import ContextManager
-from mewcode.context.models import ContextConfig, ContextLimitError, RequestFootprint, TokenAnchor
-from mewcode.context.segmenter import ConversationSegmenter
-from mewcode.context.estimator import TokenEstimator
-from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
-from mewcode.session import ChatSession
-from mewcode.tools.base import ToolCall
+from julycode.context.manager import ContextManager
+from julycode.context.models import ContextConfig, ContextLimitError, RequestFootprint, TokenAnchor
+from julycode.context.segmenter import ConversationSegmenter
+from julycode.context.estimator import TokenEstimator
+from julycode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from julycode.session import ChatSession
+from julycode.tools.base import ToolCall
 
 
 class FakeProvider:
@@ -34,7 +34,7 @@ class FakeProvider:
 def prompt_factory(session: ChatSession) -> PromptBundle:
     text = "runtime"
     if session.context_state.summary is not None:
-        text += f"\n<mewcode_context_summary>{session.context_state.summary.content}</mewcode_context_summary>"
+        text += f"\n<julycode_context_summary>{session.context_state.summary.content}</julycode_context_summary>"
     return PromptBundle(
         stable_blocks=(PromptBlock("identity", "身份", "stable", stable=True),),
         runtime_blocks=(PromptBlock("runtime_context", "运行时补充", text, stable=False),),
@@ -96,7 +96,7 @@ async def test_prepare_request_runs_light_compaction_before_building_request(tmp
         prompt_factory=lambda: prompt_factory(session),
     )
 
-    assert ".mewcode/context" in prepared.request.messages[0].content
+    assert ".julycode/context" in prepared.request.messages[0].content
     assert prepared.report is not None
     assert prepared.report.light_compacted is True
 

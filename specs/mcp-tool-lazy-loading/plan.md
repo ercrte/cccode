@@ -246,7 +246,7 @@ class McpLoadReport:
 
 ## 模块设计
 
-### `mewcode.mcp.search`
+### `julycode.mcp.search`
 
 **职责：** 定义检索数据结构、目录索引、文本规范化、稳定评分和紧凑摘要。
 **对外接口：** `McpToolCatalog`、`McpToolMatch`、`McpToolSearchResult`、`McpToolSearchProvider`、`McpServerToolSummary`。
@@ -254,7 +254,7 @@ class McpLoadReport:
 
 索引只在 Server 工具列表变化时重建对应分片。搜索路径只遍历预规范化文档，在 1,000 项规模下避免重复处理完整 Schema。
 
-### `mewcode.mcp.tools`
+### `julycode.mcp.tools`
 
 **职责：** 保留远端工具适配器，并新增轻量检索工具。
 **对外接口：** `RemoteMcpTool`、`SearchMcpToolsTool`、`SEARCH_MCP_TOOLS_NAME`。
@@ -284,7 +284,7 @@ class McpLoadReport:
 
 该工具为 `read_only`、`visibility="system"`，因此 Plan Mode 和 Skill 白名单下仍可检索，也不会触发权限确认。返回值仅包含状态、查询、Server、最多 5 个 `{name, server, title, summary}` 候选和激活摘要，不包含完整 Schema。实际远端工具仍为 `side_effect`，继续执行现有权限流程。
 
-### `mewcode.mcp.scope`
+### `julycode.mcp.scope`
 
 **职责：** 管理单个 Agent Runner 的轮次激活集合，并把检索结果转换为下一迭代可用工具。
 **对外接口：** `McpTurnState`、`McpPromptContext`。
@@ -292,7 +292,7 @@ class McpLoadReport:
 
 状态更新时先取检索候选名称，再用“候选已激活”的临时 `ToolPolicy` 计算实际可见集合，从而保留 Plan Mode、Skill、子 Agent 和团队限制。处理后的工具结果会明确列出 `activated_tools` 和因策略被过滤的数量，模型不会误以为不可用候选已经加载。
 
-### `mewcode.mcp.manager`
+### `julycode.mcp.manager`
 
 **职责：** 继续管理 Server 会话和 OAuth 生命周期，同时维护 Catalog、注册延迟工具并创建独立轮次状态。
 **对外接口：**
@@ -318,13 +318,13 @@ Catalog 能区分以下情况：
 
 OAuth 授权成功后重新写入目录并注册延迟工具；logout、refresh 失败或授权失效时同步撤销该 Server 的可检索标记并注销对应 origin。已有 Runner 即使仍保存旧名称，下一次策略计算也会因注册表中不存在该工具而停止暴露。
 
-### `mewcode.tools.base`
+### `julycode.tools.base`
 
 **职责：** 扩展工具可见性语义。
 **对外接口：** `ToolVisibility` 增加 `deferred`。
 **依赖：** 无新增依赖。
 
-### `mewcode.tools.scheduler`
+### `julycode.tools.scheduler`
 
 **职责：** 在现有模式、白名单和 Gate 之外执行延迟可见性过滤。
 **对外接口：** `ToolPolicy.activated_deferred_tools`。
@@ -332,7 +332,7 @@ OAuth 授权成功后重新写入目录并注册延迟工具；logout、refresh 
 
 检索工具是只读系统工具，沿用并发调度；若一个模型响应包含多个检索调用，Scheduler 最终结果仍按原始调用顺序排列，`McpTurnState` 依此保证最后一次替换前一次。实际 MCP 工具的调度与权限行为不变。
 
-### `mewcode.agent`
+### `julycode.agent`
 
 **职责：** 把轮次激活状态接入 Agent Loop。
 **对外接口：** `AgentLoopRunner` 增加可选 `mcp_manager` 参数和只读 `active_mcp_tools` 属性；`ToolAwareTurnRunner` 同步支持传入 Manager。
@@ -349,7 +349,7 @@ OAuth 授权成功后重新写入目录并注册延迟工具；logout、refresh 
 
 Provider 请求和 ContextManager 都继续使用同一个 `allowed_tools`，因此无须增加 Provider 特例，Token 估算自然只计算实际暴露集合。
 
-### `mewcode.prompting.base` 与 `mewcode.prompting.builder`
+### `julycode.prompting.base` 与 `julycode.prompting.builder`
 
 **职责：** 向模型提供紧凑的 MCP Server 摘要和延迟加载规则。
 **对外接口：** `RuntimePromptContext.mcp_context: McpPromptContext | None`。
@@ -358,21 +358,21 @@ Provider 请求和 ContextManager 都继续使用同一个 `allowed_tools`，因
 动态运行时块增加紧凑内容：
 
 ```text
-<mewcode_mcp>
+<julycode_mcp>
 MCP 工具按需加载；需要时先调用 search_mcp_tools。
 已连接 Server：github(45)
-</mewcode_mcp>
+</julycode_mcp>
 ```
 
 该块不列工具名和说明，并放在不可缓存运行时部分，保证 OAuth 状态变化能立即反映。当前激活工具已出现在允许工具摘要中，不重复列举。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 
 **职责：** 把同一个 MCP Manager 传入主 Agent、独立 Skill、子 Agent 和团队 Runner，并在状态快照中读取主 Runner 的当前激活集合。
 **对外接口：** 保持现有构造参数，扩展内部 Runner 创建参数。
 **依赖：** `McpManager`。
 
-### `mewcode.skills.execution`、`mewcode.subagents.manager`、`mewcode.subagents.runtime`、`mewcode.teams.runtime`
+### `julycode.skills.execution`、`julycode.subagents.manager`、`julycode.subagents.runtime`、`julycode.teams.runtime`
 
 **职责：** 为每个非主 Agent Runner 传入共享 MCP Manager，由 Runner 创建独立 `McpTurnState`。
 **对外接口：** 相应 Factory 增加可选 `mcp_manager` 参数。
@@ -385,7 +385,7 @@ MCP 工具按需加载；需要时先调用 search_mcp_tools。
 - Fork 子 Agent 仍受父 Agent 当时的工具白名单限制；即使检索到其他工具，策略也不会暴露。
 - 后台子 Agent 的激活工具只进入它自己的 Provider 请求，不会进入后续主用户轮次。
 
-### `mewcode.commands.models` 与 `mewcode.commands.builtin`
+### `julycode.commands.models` 与 `julycode.commands.builtin`
 
 **职责：** 区分 MCP 已发现工具数和主 Runner 当前暴露工具数。
 **对外接口：** `CommandStatusSnapshot` 增加 `mcp_active_tools: tuple[str, ...] = ()`。
@@ -439,24 +439,24 @@ OpenAI Provider、Anthropic Provider、`ChatRequest`、`ContextManager` 和 `Tok
 ## 文件组织
 
 ```text
-mewcode/
-├── src/mewcode/tools/base.py              — 增加 deferred 可见性
-├── src/mewcode/tools/scheduler.py         — 激活集合过滤与未加载调用拒绝
-├── src/mewcode/mcp/search.py              — 新建：Catalog、规范化、评分、结果结构
-├── src/mewcode/mcp/scope.py               — 新建：Runner 轮次激活状态
-├── src/mewcode/mcp/tools.py               — 检索工具、远端工具 deferred 标记
-├── src/mewcode/mcp/manager.py             — Catalog 同步、延迟注册、状态工厂和报告
-├── src/mewcode/mcp/__init__.py            — 导出新增公共类型
-├── src/mewcode/prompting/base.py           — RuntimePromptContext 增加 MCP 摘要
-├── src/mewcode/prompting/builder.py        — 生成紧凑 MCP 运行时提示
-├── src/mewcode/agent.py                    — 轮次状态接入、结果消费和 finally 清理
-├── src/mewcode/tui/app.py                  — 传递 Manager、状态读取
-├── src/mewcode/skills/execution.py         — 独立 Skill Runner 使用独立 MCP 状态
-├── src/mewcode/subagents/manager.py        — 向子 Agent Factory 传递 Manager
-├── src/mewcode/subagents/runtime.py        — 子 Agent Runner 使用独立 MCP 状态
-├── src/mewcode/teams/runtime.py            — 团队成员 Runner 使用独立 MCP 状态
-├── src/mewcode/commands/models.py          — 状态快照增加当前激活工具
-├── src/mewcode/commands/builtin.py         — /status 区分发现数和暴露数
+julycode/
+├── src/julycode/tools/base.py              — 增加 deferred 可见性
+├── src/julycode/tools/scheduler.py         — 激活集合过滤与未加载调用拒绝
+├── src/julycode/mcp/search.py              — 新建：Catalog、规范化、评分、结果结构
+├── src/julycode/mcp/scope.py               — 新建：Runner 轮次激活状态
+├── src/julycode/mcp/tools.py               — 检索工具、远端工具 deferred 标记
+├── src/julycode/mcp/manager.py             — Catalog 同步、延迟注册、状态工厂和报告
+├── src/julycode/mcp/__init__.py            — 导出新增公共类型
+├── src/julycode/prompting/base.py           — RuntimePromptContext 增加 MCP 摘要
+├── src/julycode/prompting/builder.py        — 生成紧凑 MCP 运行时提示
+├── src/julycode/agent.py                    — 轮次状态接入、结果消费和 finally 清理
+├── src/julycode/tui/app.py                  — 传递 Manager、状态读取
+├── src/julycode/skills/execution.py         — 独立 Skill Runner 使用独立 MCP 状态
+├── src/julycode/subagents/manager.py        — 向子 Agent Factory 传递 Manager
+├── src/julycode/subagents/runtime.py        — 子 Agent Runner 使用独立 MCP 状态
+├── src/julycode/teams/runtime.py            — 团队成员 Runner 使用独立 MCP 状态
+├── src/julycode/commands/models.py          — 状态快照增加当前激活工具
+├── src/julycode/commands/builtin.py         — /status 区分发现数和暴露数
 ├── tests/test_mcp_search.py                — 新建：检索、排序、边界、性能和占用
 ├── tests/test_mcp_tools.py                 — 检索 ToolSpec、紧凑结果、远端可见性
 ├── tests/test_mcp_manager.py               — 目录同步、注册、OAuth 和报告

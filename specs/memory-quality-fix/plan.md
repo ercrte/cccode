@@ -2,7 +2,7 @@
 
 ## 架构概览
 
-本次修复在现有 `mewcode.memory` 架构内进行，不引入新模块或新数据流。改动集中在四个文件：
+本次修复在现有 `julycode.memory` 架构内进行，不引入新模块或新数据流。改动集中在四个文件：
 
 ```text
 updater.py (提取 Prompt 重写)
@@ -209,11 +209,11 @@ index_max_bytes: int = 50_000
 
 | 文件 | 改动类型 | 说明 |
 |------|----------|------|
-| `src/mewcode/memory/updater.py` | 修改 | `_prompt()` 重写，增加分类指南 |
-| `src/mewcode/memory/extraction.py` | 修改 | Validator 两处规则放宽 |
-| `src/mewcode/memory/index.py` | 修改 | 索引格式微调（标记 + 标签） |
-| `src/mewcode/memory/models.py` | 修改 | index_max_lines/index_max_bytes 默认值 |
-| `src/mewcode/prompting/builder.py` | 修改 | 记忆注入引导语重写 |
+| `src/julycode/memory/updater.py` | 修改 | `_prompt()` 重写，增加分类指南 |
+| `src/julycode/memory/extraction.py` | 修改 | Validator 两处规则放宽 |
+| `src/julycode/memory/index.py` | 修改 | 索引格式微调（标记 + 标签） |
+| `src/julycode/memory/models.py` | 修改 | index_max_lines/index_max_bytes 默认值 |
+| `src/julycode/prompting/builder.py` | 修改 | 记忆注入引导语重写 |
 | `tests/test_memory_extraction.py` | 修改 | 新增 critical+project_knowledge 和 evidence 归一化测试 |
 | `tests/test_memory_index.py` | 修改 | 新索引格式断言 |
 | `tests/test_prompting.py` | 修改 | 新引导语断言 |

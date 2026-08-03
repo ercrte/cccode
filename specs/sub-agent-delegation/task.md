@@ -1,31 +1,31 @@
-# MewCode 子 Agent 委派 Tasks
+# JulyCode 子 Agent 委派 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/subagents/__init__.py` | 导出子 Agent 公共类型和工具 |
-| 新建 | `src/mewcode/subagents/models.py` | 子 Agent 配置、角色、委派、后台任务、结果和提示上下文数据结构 |
-| 新建 | `src/mewcode/subagents/loader.py` | Markdown + YAML frontmatter 角色加载、覆盖和校验 |
-| 新建 | `src/mewcode/subagents/cache.py` | 独立文件读取缓存 |
-| 新建 | `src/mewcode/subagents/tools.py` | `delegate_agent` 稳定工具 |
-| 新建 | `src/mewcode/subagents/runtime.py` | 子 Agent Runner 创建、隔离上下文和结果聚合 |
-| 新建 | `src/mewcode/subagents/manager.py` | 子 Agent 委派、后台任务、通知和生命周期管理 |
-| 新建 | `src/mewcode/subagents/builtin/__init__.py` | 内置角色包 |
-| 新建 | `src/mewcode/subagents/builtin/code-searcher.md` | 内置代码搜索角色 |
-| 新建 | `src/mewcode/subagents/builtin/reviewer.md` | 内置审查角色 |
-| 修改 | `src/mewcode/config.py` | 解析 `sub_agents` 配置 |
-| 修改 | `src/mewcode/tools/base.py` | `ToolContext` 增加可选读取缓存 |
-| 修改 | `src/mewcode/tools/builtin.py` | `read_file` 接入读取缓存 |
-| 修改 | `src/mewcode/tools/scheduler.py` | `ToolPolicy` 支持子 Agent 多层工具过滤 |
-| 修改 | `src/mewcode/prompting/base.py` | 运行时提示上下文增加子 Agent 字段 |
-| 修改 | `src/mewcode/prompting/builder.py` | 注入角色摘要、后台摘要和子 Agent 运行提示 |
-| 修改 | `src/mewcode/agent.py` | 父上下文绑定、子 Agent 工具过滤和独立缓存传递 |
-| 修改 | `src/mewcode/tui/app.py` | 创建管理器、注册工具、刷新角色、显示通知、手动切后台 |
-| 修改 | `src/mewcode/commands/models.py` | 命令上下文增加子 Agent 快照和后台动作 |
-| 修改 | `src/mewcode/commands/builtin.py` | `/status`、`/agents`、`/background` 支持子 Agent |
-| 修改 | `src/mewcode/skills/execution.py` | 提供独立 Skill 复用子 Agent 隔离运行的适配 |
-| 修改 | `src/mewcode/cli.py` | CLI 启动路径注入子 Agent 管理器 |
+| 新建 | `src/julycode/subagents/__init__.py` | 导出子 Agent 公共类型和工具 |
+| 新建 | `src/julycode/subagents/models.py` | 子 Agent 配置、角色、委派、后台任务、结果和提示上下文数据结构 |
+| 新建 | `src/julycode/subagents/loader.py` | Markdown + YAML frontmatter 角色加载、覆盖和校验 |
+| 新建 | `src/julycode/subagents/cache.py` | 独立文件读取缓存 |
+| 新建 | `src/julycode/subagents/tools.py` | `delegate_agent` 稳定工具 |
+| 新建 | `src/julycode/subagents/runtime.py` | 子 Agent Runner 创建、隔离上下文和结果聚合 |
+| 新建 | `src/julycode/subagents/manager.py` | 子 Agent 委派、后台任务、通知和生命周期管理 |
+| 新建 | `src/julycode/subagents/builtin/__init__.py` | 内置角色包 |
+| 新建 | `src/julycode/subagents/builtin/code-searcher.md` | 内置代码搜索角色 |
+| 新建 | `src/julycode/subagents/builtin/reviewer.md` | 内置审查角色 |
+| 修改 | `src/julycode/config.py` | 解析 `sub_agents` 配置 |
+| 修改 | `src/julycode/tools/base.py` | `ToolContext` 增加可选读取缓存 |
+| 修改 | `src/julycode/tools/builtin.py` | `read_file` 接入读取缓存 |
+| 修改 | `src/julycode/tools/scheduler.py` | `ToolPolicy` 支持子 Agent 多层工具过滤 |
+| 修改 | `src/julycode/prompting/base.py` | 运行时提示上下文增加子 Agent 字段 |
+| 修改 | `src/julycode/prompting/builder.py` | 注入角色摘要、后台摘要和子 Agent 运行提示 |
+| 修改 | `src/julycode/agent.py` | 父上下文绑定、子 Agent 工具过滤和独立缓存传递 |
+| 修改 | `src/julycode/tui/app.py` | 创建管理器、注册工具、刷新角色、显示通知、手动切后台 |
+| 修改 | `src/julycode/commands/models.py` | 命令上下文增加子 Agent 快照和后台动作 |
+| 修改 | `src/julycode/commands/builtin.py` | `/status`、`/agents`、`/background` 支持子 Agent |
+| 修改 | `src/julycode/skills/execution.py` | 提供独立 Skill 复用子 Agent 隔离运行的适配 |
+| 修改 | `src/julycode/cli.py` | CLI 启动路径注入子 Agent 管理器 |
 | 修改 | `pyproject.toml` | 打包内置角色 Markdown |
 | 修改 | `README.md` | 记录角色定义格式、配置和使用方式 |
 | 新建 | `tests/test_subagents_loader.py` | 角色加载、覆盖和解析测试 |
@@ -44,20 +44,20 @@
 
 ## T1: 创建子 Agent 数据模型和包骨架
 
-**文件：** `src/mewcode/subagents/__init__.py`、`src/mewcode/subagents/models.py`、`src/mewcode/subagents/builtin/__init__.py`、`src/mewcode/subagents/builtin/code-searcher.md`、`src/mewcode/subagents/builtin/reviewer.md`、`pyproject.toml`
+**文件：** `src/julycode/subagents/__init__.py`、`src/julycode/subagents/models.py`、`src/julycode/subagents/builtin/__init__.py`、`src/julycode/subagents/builtin/code-searcher.md`、`src/julycode/subagents/builtin/reviewer.md`、`pyproject.toml`
 **依赖：** 无
 **步骤：**
 1. 新建 `subagents` 包和内置角色包。
 2. 在 `models.py` 定义 `SubAgentConfig`、角色、委派、工具过滤、结果、后台记录、提示上下文和刷新报告 dataclass。
 3. 编写两个内置角色 Markdown，frontmatter 只允许读类核心工具。
-4. 更新 `pyproject.toml`，把 `mewcode.subagents.builtin` 的 `*.md` 纳入包数据。
+4. 更新 `pyproject.toml`，把 `julycode.subagents.builtin` 的 `*.md` 纳入包数据。
 5. 在 `__init__.py` 导出稳定公共类型。
 
-**验证：** 运行 `python -m pytest tests/test_prompting.py -q`，期望现有提示测试仍通过；运行 `python -c "from mewcode.subagents import SubAgentConfig; print(SubAgentConfig().foreground_timeout_seconds)"`，期望输出默认阈值。
+**验证：** 运行 `python -m pytest tests/test_prompting.py -q`，期望现有提示测试仍通过；运行 `python -c "from julycode.subagents import SubAgentConfig; print(SubAgentConfig().foreground_timeout_seconds)"`，期望输出默认阈值。
 
 ## T2: 实现角色加载和覆盖
 
-**文件：** `src/mewcode/subagents/loader.py`、`tests/test_subagents_loader.py`
+**文件：** `src/julycode/subagents/loader.py`、`tests/test_subagents_loader.py`
 **依赖：** T1
 **步骤：**
 1. 实现 `default_sub_agent_roots()` 和 `SubAgentRoleLoader.discover()`。
@@ -70,7 +70,7 @@
 
 ## T3: 接入 `sub_agents` 配置解析
 
-**文件：** `src/mewcode/config.py`、`tests/test_config.py`
+**文件：** `src/julycode/config.py`、`tests/test_config.py`
 **依赖：** T1
 **步骤：**
 1. 把 `SubAgentConfig` 挂到 `AppConfig`。
@@ -83,7 +83,7 @@
 
 ## T4: 实现独立文件读取缓存
 
-**文件：** `src/mewcode/subagents/cache.py`、`src/mewcode/tools/base.py`、`src/mewcode/tools/builtin.py`、`tests/test_tools.py`
+**文件：** `src/julycode/subagents/cache.py`、`src/julycode/tools/base.py`、`src/julycode/tools/builtin.py`、`tests/test_tools.py`
 **依赖：** T1
 **步骤：**
 1. 实现 `FileReadCache`，用真实路径、mtime 和 size 判断缓存是否有效。
@@ -95,7 +95,7 @@
 
 ## T5: 扩展工具过滤策略
 
-**文件：** `src/mewcode/tools/scheduler.py`、`tests/test_subagents_policy.py`、`tests/test_tool_scheduler.py`
+**文件：** `src/julycode/tools/scheduler.py`、`tests/test_subagents_policy.py`、`tests/test_tool_scheduler.py`
 **依赖：** T1
 **步骤：**
 1. 扩展 `ToolPolicy`，增加 `filter` 参数并保持默认行为兼容。
@@ -108,7 +108,7 @@
 
 ## T6: 渲染子 Agent 提示上下文
 
-**文件：** `src/mewcode/prompting/base.py`、`src/mewcode/prompting/builder.py`、`tests/test_prompting.py`
+**文件：** `src/julycode/prompting/base.py`、`src/julycode/prompting/builder.py`、`tests/test_prompting.py`
 **依赖：** T1
 **步骤：**
 1. 给 `RuntimePromptContext` 增加 `sub_agent_context` 字段。
@@ -121,7 +121,7 @@
 
 ## T7: 实现 `delegate_agent` 工具
 
-**文件：** `src/mewcode/subagents/tools.py`、`tests/test_subagents_tools.py`
+**文件：** `src/julycode/subagents/tools.py`、`tests/test_subagents_tools.py`
 **依赖：** T1、T3
 **步骤：**
 1. 定义 `DELEGATE_AGENT_TOOL_NAME = "delegate_agent"`。
@@ -134,7 +134,7 @@
 
 ## T8: 实现子 Agent 运行工厂的定义式路径
 
-**文件：** `src/mewcode/subagents/runtime.py`、`tests/test_subagents_manager.py`
+**文件：** `src/julycode/subagents/runtime.py`、`tests/test_subagents_manager.py`
 **依赖：** T2、T3、T4、T5、T6
 **步骤：**
 1. 实现 `SubAgentRunnerFactory.create_runner()` 的定义式分支。
@@ -147,7 +147,7 @@
 
 ## T9: 实现 Fork 路径和父历史快照
 
-**文件：** `src/mewcode/subagents/runtime.py`、`tests/test_subagents_manager.py`
+**文件：** `src/julycode/subagents/runtime.py`、`tests/test_subagents_manager.py`
 **依赖：** T8
 **步骤：**
 1. 实现 Fork 分支，复制父 `ChatSession.messages` 的安全快照。
@@ -160,7 +160,7 @@
 
 ## T10: 聚合子 Agent 结果和用量
 
-**文件：** `src/mewcode/subagents/runtime.py`、`tests/test_subagents_manager.py`
+**文件：** `src/julycode/subagents/runtime.py`、`tests/test_subagents_manager.py`
 **依赖：** T8
 **步骤：**
 1. 实现 `run_sub_agent_to_result()`，消费子 Runner 事件直到完成、失败或取消。
@@ -173,7 +173,7 @@
 
 ## T11: 实现子 Agent 管理器前台委派
 
-**文件：** `src/mewcode/subagents/manager.py`、`tests/test_subagents_manager.py`
+**文件：** `src/julycode/subagents/manager.py`、`tests/test_subagents_manager.py`
 **依赖：** T7、T10
 **步骤：**
 1. 实现 `SubAgentManager.refresh_if_changed()`、`prompt_context()`、`bind_parent_context()`。
@@ -186,7 +186,7 @@
 
 ## T12: 实现显式后台和完成通知
 
-**文件：** `src/mewcode/subagents/manager.py`、`tests/test_subagents_manager.py`
+**文件：** `src/julycode/subagents/manager.py`、`tests/test_subagents_manager.py`
 **依赖：** T11
 **步骤：**
 1. 实现显式后台委派，立即返回后台任务启动记录。
@@ -199,7 +199,7 @@
 
 ## T13: 实现超时自动后台和手动切后台
 
-**文件：** `src/mewcode/subagents/manager.py`、`tests/test_subagents_manager.py`
+**文件：** `src/julycode/subagents/manager.py`、`tests/test_subagents_manager.py`
 **依赖：** T12
 **步骤：**
 1. 前台等待子任务时同时等待完成、超时和 `force_background` 事件。
@@ -212,7 +212,7 @@
 
 ## T14: 实现取消策略和生命周期关闭
 
-**文件：** `src/mewcode/subagents/manager.py`、`src/mewcode/subagents/runtime.py`、`tests/test_subagents_manager.py`
+**文件：** `src/julycode/subagents/manager.py`、`src/julycode/subagents/runtime.py`、`tests/test_subagents_manager.py`
 **依赖：** T13
 **步骤：**
 1. 实现取消仍在前台等待的子任务。
@@ -225,7 +225,7 @@
 
 ## T15: 集成 AgentLoopRunner
 
-**文件：** `src/mewcode/agent.py`、`tests/test_agent.py`
+**文件：** `src/julycode/agent.py`、`tests/test_agent.py`
 **依赖：** T5、T6、T11
 **步骤：**
 1. 扩展 `AgentLoopRunner.__init__()`，接收 `sub_agent_manager`、`tool_filter`、`sub_agent_prompt`、`file_read_cache`。
@@ -239,10 +239,10 @@
 
 ## T16: 接入 TUI 应用生命周期
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`
 **依赖：** T7、T11、T15
 **步骤：**
-1. 在 `MewCodeApp` 初始化 `SubAgentManager`，允许测试注入。
+1. 在 `JulyCodeApp` 初始化 `SubAgentManager`，允许测试注入。
 2. 注册 `DelegateAgentTool`，避免重复注册。
 3. `on_mount` 和用户输入前刷新子 Agent 角色。
 4. 把 `sub_agent_manager` 传入主 `AgentLoopRunner`。
@@ -254,7 +254,7 @@
 
 ## T17: 增加 `/agents` 和 `/background` 命令
 
-**文件：** `src/mewcode/commands/models.py`、`src/mewcode/commands/builtin.py`、`src/mewcode/tui/app.py`、`tests/test_commands.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/commands/models.py`、`src/julycode/commands/builtin.py`、`src/julycode/tui/app.py`、`tests/test_commands.py`、`tests/test_tui_smoke.py`
 **依赖：** T13、T16
 **步骤：**
 1. 定义 `CommandSubAgentSnapshot` 和 `CommandContext` 协议方法。
@@ -268,7 +268,7 @@
 
 ## T18: 迁移独立 Skill 执行隔离
 
-**文件：** `src/mewcode/skills/execution.py`、`src/mewcode/tui/app.py`、`tests/test_skills.py`、`tests/test_tui_smoke.py`
+**文件：** `src/julycode/skills/execution.py`、`src/julycode/tui/app.py`、`tests/test_skills.py`、`tests/test_tui_smoke.py`
 **依赖：** T8、T10、T16
 **步骤：**
 1. 增加内部适配器，让 isolated Skill 使用子 Agent 隔离运行基础设施。
@@ -281,7 +281,7 @@
 
 ## T19: 接入 CLI 启动路径和文档
 
-**文件：** `src/mewcode/cli.py`、`README.md`
+**文件：** `src/julycode/cli.py`、`README.md`
 **依赖：** T16、T17
 **步骤：**
 1. 在 CLI 创建和传递 `SubAgentManager` 所需依赖。

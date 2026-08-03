@@ -1,9 +1,9 @@
-# MewCode Skill 系统 Plan
+# JulyCode Skill 系统 Plan
 
 ## 架构概览
-Skill 系统新增 `mewcode.skills` 子系统，作为本地能力包的发现、解析、激活和执行中心。它不替代现有工具、命令、提示和 Agent Loop，而是在这些模块之间提供一层明确的运行时状态：启动和热更新阶段生成 Skill 目录；模型请求阶段注入 Skill 摘要和已激活完整 SOP；工具策略阶段按 Skill 白名单收窄工具；命令阶段把 Skill 注册成斜杠短命令；执行阶段按共享或独立模式运行。
+Skill 系统新增 `julycode.skills` 子系统，作为本地能力包的发现、解析、激活和执行中心。它不替代现有工具、命令、提示和 Agent Loop，而是在这些模块之间提供一层明确的运行时状态：启动和热更新阶段生成 Skill 目录；模型请求阶段注入 Skill 摘要和已激活完整 SOP；工具策略阶段按 Skill 白名单收窄工具；命令阶段把 Skill 注册成斜杠短命令；执行阶段按共享或独立模式运行。
 
-Skill 发现分三层：项目级 `.mewcode/skills/`、用户级 `~/.mewcode/skills/`、内置级包资源。解析器同时支持单文件 Skill 和目录型 Skill。单文件 Skill 是一个 Markdown 文件；目录型 Skill 以 `skill.md` 作为入口，并可包含 `tools/` 下的专属工具描述和实现脚本。解析失败只生成警告并跳过该 Skill；同名 Skill 按项目级、用户级、内置级覆盖。
+Skill 发现分三层：项目级 `.julycode/skills/`、用户级 `~/.julycode/skills/`、内置级包资源。解析器同时支持单文件 Skill 和目录型 Skill。单文件 Skill 是一个 Markdown 文件；目录型 Skill 以 `skill.md` 作为入口，并可包含 `tools/` 下的专属工具描述和实现脚本。解析失败只生成警告并跳过该 Skill；同名 Skill 按项目级、用户级、内置级覆盖。
 
 两阶段加载由一个系统级内置工具 `load_skill` 完成。启动时 PromptBuilder 只注入 Skill 名字和一句说明；模型调用 `load_skill` 或用户输入 Skill 斜杠命令时，`SkillManager` 激活对应 Skill、渲染 SOP 参数、注册专属工具，并把完整 SOP 放入后续每轮运行时上下文。`load_skill` 是系统工具，始终对模型可见，不受 Skill 白名单和 Plan Mode 工具收窄影响。
 
@@ -291,15 +291,15 @@ class SkillScriptTool:
 
 ## 模块设计
 
-### `mewcode.skills.models`
+### `julycode.skills.models`
 **职责：** 定义 Skill frontmatter、来源、目录、激活状态、专属工具、刷新报告和提示上下文。  
 **对外接口：** `SkillDefinition`、`SkillActivation`、`SkillPromptContext`、`SkillRefreshReport` 等 dataclass。  
 **依赖：** 标准库、`Path`、`ToolSafety`。
 
-### `mewcode.skills.loader`
+### `julycode.skills.loader`
 **职责：** 扫描三层 Skill 根目录，解析单文件和目录型 Skill。  
 **对外接口：** `SkillLoader.discover()`。  
-**依赖：** `yaml.safe_load`、`importlib.resources`、`mewcode.skills.models`。
+**依赖：** `yaml.safe_load`、`importlib.resources`、`julycode.skills.models`。
 
 解析规则：
 - 单文件 Skill：根目录下 `*.md`。
@@ -329,7 +329,7 @@ parameters:
 ```
 `name` 必须匹配 `[A-Za-z][A-Za-z0-9_]*`；`parameters` 直接作为 JSON Schema 传给模型和现有参数校验器。
 
-### `mewcode.skills.manager`
+### `julycode.skills.manager`
 **职责：** 保存当前目录和激活状态，做热更新、白名单校验、动态命令注册、专属工具注册和模型冲突校验。  
 **对外接口：** `SkillManager`。  
 **依赖：** `SkillLoader`、`CommandRegistry`、`ToolRegistry`、`SkillScriptTool`。
@@ -340,14 +340,14 @@ parameters:
 - 任一可用 Skill 的白名单引用不存在工具时，生成 fatal `SkillError`。
 - 空白名单合法，表示激活后不暴露普通工具，只保留系统工具。
 
-### `mewcode.skills.tools`
+### `julycode.skills.tools`
 **职责：** 提供 `load_skill` 系统工具和目录型 Skill 专属脚本工具。  
 **对外接口：** `LoadSkillTool`、`SkillScriptTool`。  
 **依赖：** `ToolSpec`、`ToolExecutionError`、`SkillManager`、`asyncio.create_subprocess_exec`。
 
 `load_skill` 的工具描述明确告诉模型：启动时只看到摘要，需要某个 Skill 时先调用该工具；调用后后续上下文会持续包含完整 SOP 和专属工具。`load_skill` 使用 `safety="side_effect"` 和 `visibility="system"`，由调度器串行执行并跳过用户权限确认。`SkillScriptTool` 默认按描述文件的 `safety` 参与权限和 Plan Mode 策略，系统不额外提供 OS 级沙箱。
 
-### `mewcode.skills.commands`
+### `julycode.skills.commands`
 **职责：** 把可用 Skill 注册成斜杠短命令。  
 **对外接口：**
 ```python
@@ -358,7 +358,7 @@ def register_skill_commands(registry: CommandRegistry, manager: SkillManager) ->
 
 命令名为 `/{skill.name}`，别名第一版不从 Skill 定义读取。命令类型显示为 `prompt`；说明来自 `description`；参数提示为 `用户输入，会替换 {{input}} / {{args}}`。内置 `/review` 从静态内置命令迁移到内置 Skill，避免两套行为冲突。
 
-### `mewcode.skills.execution`
+### `julycode.skills.execution`
 **职责：** 处理共享模式和独立模式执行。  
 **对外接口：** `SkillExecutor`、`SkillExecutionSummary`。  
 **依赖：** `AgentLoopRunner`、`ChatSession`、`ProviderResolver`、`ContextManager`、`ToolExecutor`。
@@ -376,7 +376,7 @@ def register_skill_commands(registry: CommandRegistry, manager: SkillManager) ->
 5. 根据临时会话最终助手消息、工具结果和停止原因生成中文摘要。
 6. 摘要展示给用户，并作为 assistant 消息追加到主会话。
 
-### `mewcode.tools.registry`
+### `julycode.tools.registry`
 **职责：** 支持动态工具注册和注销。  
 **对外接口新增：**
 ```python
@@ -391,7 +391,7 @@ def names(self) -> frozenset[str]:
 ```
 **依赖：** 现有 Tool 协议。`origin` 用于热更新时移除旧的 Skill 专属工具。
 
-### `mewcode.tools.scheduler`
+### `julycode.tools.scheduler`
 **职责：** 在现有 Plan Mode 策略上叠加 Skill 白名单和系统工具例外。  
 **对外接口调整：**
 ```python
@@ -410,7 +410,7 @@ class ToolPolicy:
 
 调度时 `visibility="system"` 的工具按有副作用工具串行处理，但不进入权限确认流程；普通 Skill 专属工具仍按 `safety` 触发权限规则。
 
-### `mewcode.prompting.base`
+### `julycode.prompting.base`
 **职责：** 让运行时提示接收 Skill 上下文。  
 **对外接口调整：**
 ```python
@@ -423,36 +423,36 @@ class RuntimePromptContext:
     allowed_tools: Sequence[ToolSpec]
     skill_context: SkillPromptContext | None = None
 ```
-**依赖：** `mewcode.skills.models` 仅在类型检查中导入，避免循环依赖。
+**依赖：** `julycode.skills.models` 仅在类型检查中导入，避免循环依赖。
 
-### `mewcode.prompting.builder`
+### `julycode.prompting.builder`
 **职责：** 注入可用 Skill 摘要和已激活完整 SOP。  
 **对外接口：** `PromptBuilder.build_runtime_prompt(context)` 保持不变。  
 **依赖：** `RuntimePromptContext.skill_context`。
 
-生成顺序放在 `<mewcode_runtime_context>` 内、项目指令和记忆之前：
+生成顺序放在 `<julycode_runtime_context>` 内、项目指令和记忆之前：
 ```text
 可用 Skill：
 - commit：生成提交说明并辅助提交前检查
 - review：以代码审查视角检查变更
 
 已激活 Skill：
-<skill name="review" mode="shared" source="/repo/.mewcode/skills/review.md">
-参数：src/mewcode
+<skill name="review" mode="shared" source="/repo/.julycode/skills/review.md">
+参数：src/julycode
 可见工具：read_file, search_code
 完整 SOP：
 以代码审查视角检查指定范围，优先指出 bug、行为回归风险和缺失测试。
 </skill>
 ```
 
-### `mewcode.commands`
+### `julycode.commands`
 **职责：** 支持动态 Skill 命令，并让 `/clear` 清理激活 Skill。  
 **对外接口调整：** `CommandContext` 增加 `invoke_skill`、`clear_active_skills`、`skill_snapshot`。  
-**依赖：** `mewcode.skills` 只通过协议和 handler 闭包接入。
+**依赖：** `julycode.skills` 只通过协议和 handler 闭包接入。
 
 `create_builtin_command_registry()` 保留非 Skill 内置命令；`review` 由内置 Skill 提供。`/help` 和 Tab 补全继续从同一个 `CommandRegistry` 读取，因此 Skill 命令天然参与帮助和补全。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 每轮请求前刷新 Skill、计算工具策略、注入 Skill prompt、解析模型覆盖，并在 `load_skill` 触发独立模式时调度独立执行。  
 **对外接口调整：** `AgentLoopRunner` 构造函数增加 `skill_manager` 和 `provider_resolver` 可选参数。  
 **依赖：** `SkillManager`、`SkillExecutor`。
@@ -463,10 +463,10 @@ class RuntimePromptContext:
 - 每轮选择 Provider 时调用 `skill_manager.resolve_model_override(command.model_override)`。
 - 如果 `load_skill` 激活的是独立模式 Skill，本轮工具结果后调用 `SkillExecutor.run_isolated()`，把摘要追加到主对话并结束主轮次。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 创建并持有 SkillManager、SkillExecutor、ProviderResolver，实现 SkillCommandContext，展示启动和热更新警告。  
-**对外接口：** `MewCodeApp` 构造函数新增 `skill_manager`。  
-**依赖：** `mewcode.skills`、现有 TUI widgets。
+**对外接口：** `JulyCodeApp` 构造函数新增 `skill_manager`。  
+**依赖：** `julycode.skills`、现有 TUI widgets。
 
 启动顺序：
 1. CLI 创建默认工具注册表。
@@ -475,7 +475,7 @@ class RuntimePromptContext:
 4. TUI 调用 `skill_manager.refresh_if_changed()`，完成白名单校验、专属工具预校验和 Skill 命令注册。
 5. 如果有 fatal 错误，显示错误并禁用输入；否则显示警告并聚焦输入框。
 
-### `mewcode.providers.factory`
+### `julycode.providers.factory`
 **职责：** 支持模型覆盖创建 Provider。  
 **对外接口新增：**
 ```python
@@ -486,7 +486,7 @@ def create_provider(config: AppConfig, *, model_override: str | None = None) -> 
 
 ### 内置 Skill 包资源
 **职责：** 提供 commit、review、test 三个样板。  
-**文件：** `src/mewcode/skills/builtin/commit.md`、`review.md`、`test.md`。  
+**文件：** `src/julycode/skills/builtin/commit.md`、`review.md`、`test.md`。  
 **依赖：** `pyproject.toml` package data 配置。
 
 三个样板都使用中文 SOP：
@@ -507,14 +507,14 @@ def create_provider(config: AppConfig, *, model_override: str | None = None) -> 
 
 ### 模型通过工具加载共享 Skill
 1. 模型在普通对话中看到 Skill 摘要和 `load_skill`。
-2. 模型调用 `load_skill(name="review", arguments="src/mewcode")`。
+2. 模型调用 `load_skill(name="review", arguments="src/julycode")`。
 3. ToolExecutor 执行 LoadSkillTool，SkillManager 激活 `review`，渲染 SOP，注册专属工具。
 4. ToolPolicy 下一轮按激活 Skill 白名单收窄工具，并保留 `load_skill`。
-5. PromptBuilder 在 `<mewcode_runtime_context>` 内注入 `review` 完整 SOP。
+5. PromptBuilder 在 `<julycode_runtime_context>` 内注入 `review` 完整 SOP。
 6. Agent Loop 继续当前主会话，工具调用和最终回复都进入主历史。
 
 ### 用户通过斜杠命令触发共享 Skill
-1. 用户输入 `/review src/mewcode`。
+1. 用户输入 `/review src/julycode`。
 2. CommandDispatcher 命中动态 Skill 命令。
 3. TUI 的 `invoke_skill()` 调用 SkillExecutor。
 4. SkillExecutor 激活 Skill 并调用主对话 `send_prompt()`。
@@ -537,13 +537,13 @@ def create_provider(config: AppConfig, *, model_override: str | None = None) -> 
 
 ## 文件组织
 ```text
-mewcode/
+julycode/
 ├── specs/skill-system/
 │   ├── spec.md                         — 已批准需求
 │   ├── plan.md                         — 本技术设计
 │   ├── task.md                         — 后续任务拆解
 │   └── checklist.md                    — 后续验收清单
-├── src/mewcode/
+├── src/julycode/
 │   ├── skills/
 │   │   ├── __init__.py                 — Skill 子系统公共导出
 │   │   ├── models.py                   — Skill 数据结构、报告和上下文
@@ -590,7 +590,7 @@ mewcode/
 
 | 决策点 | 选择 | 理由 |
 |--------|------|------|
-| Skill 根目录 | 项目 `.mewcode/skills/`、用户 `~/.mewcode/skills/`、内置包资源 | 与现有项目/用户配置和本地自动产物目录保持一致，且不引入新配置项 |
+| Skill 根目录 | 项目 `.julycode/skills/`、用户 `~/.julycode/skills/`、内置包资源 | 与现有项目/用户配置和本地自动产物目录保持一致，且不引入新配置项 |
 | frontmatter 字段名 | `name`、`description`、`tools`、`mode`、`history`、`model` | 字段短且直观，能完整覆盖需求 |
 | 占位符 | 第一版只支持 `{{input}}` 和 `{{args}}` | 满足参数替换需求，避免提前设计复杂模板语言 |
 | 热更新 | 每次提交和每轮请求前做文件指纹检查 | 不增加 watchdog 依赖，行为确定且易测试 |
@@ -613,6 +613,6 @@ mewcode/
 | F13-F15 | `SkillExecutor` 共享/独立执行 |
 | F16 | `ProviderResolver`、`SkillManager.resolve_model_override()` |
 | F17-F20 | `ToolPolicy`、`ToolRegistry`、`SkillScriptTool` |
-| F21-F24 | `mewcode.skills.commands`、`CommandRegistry` 动态注册、热更新 |
+| F21-F24 | `julycode.skills.commands`、`CommandRegistry` 动态注册、热更新 |
 | F25 | `/clear` handler、`SkillManager.clear_active()` |
-| F26 | `src/mewcode/skills/builtin/*.md` |
+| F26 | `src/julycode/skills/builtin/*.md` |

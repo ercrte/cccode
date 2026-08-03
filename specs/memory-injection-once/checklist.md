@@ -3,8 +3,8 @@
 > 每一项通过运行代码或观察行为来验证。
 
 ## 实现完整性
-- [ ] `<mewcode_memory_index>` 块从 `_dynamic_knowledge_context_lines` 移到 `_runtime_cache_prefix_lines`（验证：grep 确认 builder.py 中记忆索引生成在 cacheable 分支）
-- [ ] `_dynamic_knowledge_context_lines` 不再输出 `<mewcode_memory_index>`（验证：grep 确认）
+- [ ] `<julycode_memory_index>` 块从 `_dynamic_knowledge_context_lines` 移到 `_runtime_cache_prefix_lines`（验证：grep 确认 builder.py 中记忆索引生成在 cacheable 分支）
+- [ ] `_dynamic_knowledge_context_lines` 不再输出 `<julycode_memory_index>`（验证：grep 确认）
 
 ## 测试
 - [ ] 修改后的 prompting 测试通过（验证：`pytest tests/test_prompting.py -v`）

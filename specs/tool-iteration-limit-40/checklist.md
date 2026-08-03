@@ -24,5 +24,5 @@
 
 ## 端到端场景
 
-- [x] 默认主 Agent 场景：在 tmux 中运行 `mewcode --new-session` 并提交真实读取请求（证据：界面显示 `normal 2/40 done`、`工具: read_file 完成`，最终回答最低 Python 版本为 3.11）
+- [x] 默认主 Agent 场景：在 tmux 中运行 `julycode --new-session` 并提交真实读取请求（证据：界面显示 `normal 2/40 done`、`工具: read_file 完成`，最终回答最低 Python 版本为 3.11）
 - [x] 显式小上限边界：自动化场景持续请求工具且配置上限为 1 时停止并显示原因（证据：`test_runner_stops_at_iteration_limit` 通过）

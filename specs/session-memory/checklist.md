@@ -1,4 +1,4 @@
-# MewCode 会话恢复与长期记忆 Checklist
+# JulyCode 会话恢复与长期记忆 Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
@@ -36,7 +36,7 @@
 - [ ] TUI 能显示恢复结果、坏行告警、指令告警和时间跨度提醒，并把 memory manager 传给 Agent Runner（验证：运行 `python -m pytest tests/test_tui_smoke.py::test_tui_displays_restore_report tests/test_tui_smoke.py::test_tui_passes_memory_manager_to_runner -q`，期望全部通过）
 - [ ] CLI 支持 `--new-session`，默认启动恢复会话，且不破坏 MCP 初始化和权限控制器接入（验证：运行 `python -m pytest tests/test_mcp_manager.py::test_cli_initializes_mcp_manager_and_closes_it tests/test_tui_smoke.py::test_tui_lifecycle_initializes_and_closes_mcp_manager -q`，期望全部通过）
 - [ ] `memory.enabled=false` 时不恢复、不落盘、不自动记忆，普通空会话行为保持可用（验证：运行 `python -m pytest tests/test_session_recovery.py::test_bootstrap_disabled_memory_starts_plain_session tests/test_agent.py::test_runner_works_without_memory_manager -q`，期望全部通过）
-- [ ] README 和 `.gitignore` 已说明并忽略 `.mewcode/sessions/`、`.mewcode/memory/`、`.mewcode/context/` 自动产物（验证：运行 `python -m pytest tests/test_config.py::test_readme_mentions_session_memory -q`，期望通过）
+- [ ] README 和 `.gitignore` 已说明并忽略 `.julycode/sessions/`、`.julycode/memory/`、`.julycode/context/` 自动产物（验证：运行 `python -m pytest tests/test_config.py::test_readme_mentions_session_memory -q`，期望通过）
 
 ## 编译与测试
 
@@ -47,9 +47,9 @@
 
 ## 端到端场景
 
-- [ ] 场景 1：在 tmux 中启动 MewCode，输入一段要求它记住项目约定并调用工具的真实请求，退出后重新启动同一项目；MewCode 默认恢复最近会话，下一轮请求前上下文包含该项目约定（验证：使用 `tmux new-session -d -s mewcode-memory 'mewcode'` 启动，`tmux send-keys -t mewcode-memory '请记住：本项目新增测试命名必须以 test_memory_ 开头，并查看 README' Enter` 输入，观察工具调用和最终回复；退出后再次 `tmux new-session -d -s mewcode-memory-2 'mewcode'`，输入 `继续刚才的约定，说明测试命名规则`，期望回复遵循约定并显示恢复信息）
-- [ ] 场景 2：在 tmux 中使用 `mewcode --new-session` 启动同一项目；旧会话不应自动污染当前对话（验证：运行 `tmux new-session -d -s mewcode-new 'mewcode --new-session'`，输入 `刚才的测试命名规则是什么？`，期望模型不能把旧会话当作当前用户刚刚说过的话，界面显示空会话启动状态）
-- [ ] 场景 3：在项目内准备 `.mewcode/AGENTS.md`、`AGENTS.md` 和用户级 `~/.mewcode/AGENTS.md`，并在项目指令中加入合法 include 和越界 include；启动 MewCode 后发送需要遵循规则的请求（验证：tmux 中观察模型请求后的行为遵循项目管理目录级优先规则；越界 include 产生中文告警但不阻止启动）
-- [ ] 场景 4：手工损坏最近会话 JSONL 的最后一行后在 tmux 中启动 MewCode；系统应跳过坏行并恢复其余历史（验证：向 `.mewcode/sessions/<latest>.jsonl` 追加半行非法 JSON，再运行 `tmux new-session -d -s mewcode-badline 'mewcode'`，期望界面出现坏行告警，继续提问时模型仍能基于坏行前历史回复）
-- [ ] 场景 5：构造超过 30 天未活动的会话文件和一个未过期会话文件后启动 MewCode；过期会话被清理，未过期会话正常恢复（验证：修改测试项目中会话记录时间，运行 `tmux new-session -d -s mewcode-cleanup 'mewcode'`，观察 `.mewcode/sessions/` 中过期文件被删除，未过期文件仍存在）
+- [ ] 场景 1：在 tmux 中启动 JulyCode，输入一段要求它记住项目约定并调用工具的真实请求，退出后重新启动同一项目；JulyCode 默认恢复最近会话，下一轮请求前上下文包含该项目约定（验证：使用 `tmux new-session -d -s julycode-memory 'julycode'` 启动，`tmux send-keys -t julycode-memory '请记住：本项目新增测试命名必须以 test_memory_ 开头，并查看 README' Enter` 输入，观察工具调用和最终回复；退出后再次 `tmux new-session -d -s julycode-memory-2 'julycode'`，输入 `继续刚才的约定，说明测试命名规则`，期望回复遵循约定并显示恢复信息）
+- [ ] 场景 2：在 tmux 中使用 `julycode --new-session` 启动同一项目；旧会话不应自动污染当前对话（验证：运行 `tmux new-session -d -s julycode-new 'julycode --new-session'`，输入 `刚才的测试命名规则是什么？`，期望模型不能把旧会话当作当前用户刚刚说过的话，界面显示空会话启动状态）
+- [ ] 场景 3：在项目内准备 `.julycode/AGENTS.md`、`AGENTS.md` 和用户级 `~/.julycode/AGENTS.md`，并在项目指令中加入合法 include 和越界 include；启动 JulyCode 后发送需要遵循规则的请求（验证：tmux 中观察模型请求后的行为遵循项目管理目录级优先规则；越界 include 产生中文告警但不阻止启动）
+- [ ] 场景 4：手工损坏最近会话 JSONL 的最后一行后在 tmux 中启动 JulyCode；系统应跳过坏行并恢复其余历史（验证：向 `.julycode/sessions/<latest>.jsonl` 追加半行非法 JSON，再运行 `tmux new-session -d -s julycode-badline 'julycode'`，期望界面出现坏行告警，继续提问时模型仍能基于坏行前历史回复）
+- [ ] 场景 5：构造超过 30 天未活动的会话文件和一个未过期会话文件后启动 JulyCode；过期会话被清理，未过期会话正常恢复（验证：修改测试项目中会话记录时间，运行 `tmux new-session -d -s julycode-cleanup 'julycode'`，观察 `.julycode/sessions/` 中过期文件被删除，未过期文件仍存在）
 - [ ] 场景 6：让模型最终回复自然结束后，等待后台自动笔记完成，再发起下一轮请求；记忆索引应已经注入上下文（验证：tmux 中输入 `以后回答我默认用中文，记住这个偏好`，等待最终回复和后台更新，再输入 `用一句话回答你应该用什么语言`，期望回复基于偏好；同时检查用户级或项目级 `memory/index.md` 满足 200 行和 25KB 上限）

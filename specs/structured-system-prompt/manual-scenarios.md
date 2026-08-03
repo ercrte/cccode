@@ -1,9 +1,9 @@
-# MewCode Structured System Prompt Manual Scenarios
+# JulyCode Structured System Prompt Manual Scenarios
 
 ## 使用方式
 1. 在 tmux 中启动 mock 服务：`python tests/e2e_mock_openai_server.py 18765`。
-2. 配置 MewCode 使用 OpenAI 协议并指向 mock 服务。
-3. 在另一个 tmux pane 中启动 `mewcode`。
+2. 配置 JulyCode 使用 OpenAI 协议并指向 mock 服务。
+3. 在另一个 tmux pane 中启动 `julycode`。
 4. 按下面场景输入请求，观察工具状态、请求 payload、状态栏和最终回复。
 
 ## 场景 1：工具选择
@@ -23,7 +23,7 @@
 
 ## 场景 4：动态环境注入
 **操作：** 触发普通请求、`/plan` 请求和 `/do` 请求后，查看 mock 服务收到的请求 payload。  
-**观察：** payload 中存在 `<mewcode_runtime_context>`，包含 cwd、模式状态和轮次信息。  
+**观察：** payload 中存在 `<julycode_runtime_context>`，包含 cwd、模式状态和轮次信息。  
 **通过标准：** 运行时标签在系统级补充消息中可见；普通 user 消息只包含用户请求，不包含 cwd、模式规则或待执行计划正文。
 
 ## 场景 5：缓存观测

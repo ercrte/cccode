@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from memory_quality.models import ExtractionMetrics, MemoryQualityReport
-from mewcode.errors import redact_secret
+from julycode.errors import redact_secret
 
 
 _BEARER_RE = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{8,}")
@@ -55,7 +55,7 @@ def write_markdown_report(report: MemoryQualityReport, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     metrics = report.extraction_metrics
     lines = [
-        "# MewCode 跨会话记忆质量报告",
+        "# JulyCode 跨会话记忆质量报告",
         "",
         "## 运行信息",
         "",

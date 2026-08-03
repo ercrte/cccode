@@ -1,7 +1,7 @@
-# MewCode 工具系统 Plan
+# JulyCode 工具系统 Plan
 
 ## 架构概览
-MewCode 工具系统采用四层结构：工具层负责定义、登记、校验和执行本地工具；Provider 层负责把统一工具描述和工具消息转换成 OpenAI / Anthropic 各自协议，并把流式工具调用解析回统一消息；编排层负责一次用户请求内的“模型请求 → 工具执行 → 工具结果回灌 → 最终模型回复”；TUI 层只消费统一 turn 事件并更新界面。
+JulyCode 工具系统采用四层结构：工具层负责定义、登记、校验和执行本地工具；Provider 层负责把统一工具描述和工具消息转换成 OpenAI / Anthropic 各自协议，并把流式工具调用解析回统一消息；编排层负责一次用户请求内的“模型请求 → 工具执行 → 工具结果回灌 → 最终模型回复”；TUI 层只消费统一 turn 事件并更新界面。
 
 工具层不依赖任何供应商协议。每个工具以统一 `Tool` 接口暴露名称、描述、参数 JSON Schema 和异步执行方法。工具执行统一由 `ToolExecutor` 包裹，负责参数校验、超时、异常捕获和结构化结果生成。六个内置工具集中注册到 `ToolRegistry`，调用方按名称查找，不直接实例化具体工具。
 
@@ -290,12 +290,12 @@ class ToolAwareTurnRunner:
 
 ## 模块设计
 
-### `mewcode.tools.base`
+### `julycode.tools.base`
 **职责：** 定义 `ToolSpec`、`ToolContext`、`ToolResult`、`ToolCall`、`Tool` 协议和工具异常类型。  
 **对外接口：** 上述数据结构和 `ToolExecutionError`。  
 **依赖：** 标准库类型系统、`pathlib`。
 
-### `mewcode.tools.validation`
+### `julycode.tools.validation`
 **职责：** 对内置工具需要的 JSON Schema 子集做运行时校验。  
 **对外接口：**
 ```python
@@ -304,27 +304,27 @@ def validate_arguments(schema: Mapping[str, Any], arguments: Mapping[str, Any]) 
 **依赖：** 标准库。  
 **说明：** 第一版支持 `object`、`properties`、`required`、`additionalProperties`、基础类型和 `enum`，不引入完整 JSON Schema 依赖。
 
-### `mewcode.tools.registry`
+### `julycode.tools.registry`
 **职责：** 注册、查询和列出工具。  
 **对外接口：** `ToolRegistry`、`create_default_registry()`。  
-**依赖：** `mewcode.tools.base`、`mewcode.tools.builtin`。
+**依赖：** `julycode.tools.base`、`julycode.tools.builtin`。
 
-### `mewcode.tools.executor`
+### `julycode.tools.executor`
 **职责：** 执行工具调用并统一处理超时、未知工具、参数错误和异常，把工具返回数据或工具异常包装成 `ToolResult`。  
 **对外接口：** `ToolExecutor.execute(call)`。  
-**依赖：** `asyncio`、`time`、`mewcode.tools.base`、`mewcode.tools.registry`、`mewcode.tools.validation`、`mewcode.errors`。
+**依赖：** `asyncio`、`time`、`julycode.tools.base`、`julycode.tools.registry`、`julycode.tools.validation`、`julycode.errors`。
 
-### `mewcode.tools.builtin`
+### `julycode.tools.builtin`
 **职责：** 实现六个核心工具。  
 **对外接口：** `ReadFileTool`、`WriteFileTool`、`EditFileTool`、`RunCommandTool`、`FindFilesTool`、`SearchCodeTool`。  
-**依赖：** `asyncio`、`pathlib`、`subprocess`、`shutil`、`re`、`mewcode.tools.base`。
+**依赖：** `asyncio`、`pathlib`、`subprocess`、`shutil`、`re`、`julycode.tools.base`。
 
-### `mewcode.providers.base`
+### `julycode.providers.base`
 **职责：** 扩展统一 Provider 模型，支持工具请求和工具调用事件。  
 **对外接口：** `ChatMessage`、`ChatRequest`、`StreamEvent`、`LLMProvider`、`ToolCall` 的导入或重导出。  
-**依赖：** `mewcode.tools.base`。
+**依赖：** `julycode.tools.base`。
 
-### `mewcode.providers.openai`
+### `julycode.providers.openai`
 **职责：** 将统一工具描述、消息历史和工具结果转换为 OpenAI Chat Completions 协议，并解析流式工具调用。  
 **对外接口：** `OpenAIProvider.stream_chat(request)`。  
 **关键行为：**
@@ -332,9 +332,9 @@ def validate_arguments(schema: Mapping[str, Any], arguments: Mapping[str, Any]) 
 - 助手工具调用消息输出为 `role: assistant` 且包含 `tool_calls`。
 - 工具结果消息输出为 `role: tool`、`tool_call_id` 和 JSON 字符串 `content`。
 - 流式解析时按 `delta.tool_calls[*].index` 聚合 `id`、`function.name` 和 `function.arguments`。
-**依赖：** `httpx`、`json`、`mewcode.providers.sse`、`mewcode.tools.base`。
+**依赖：** `httpx`、`json`、`julycode.providers.sse`、`julycode.tools.base`。
 
-### `mewcode.providers.anthropic`
+### `julycode.providers.anthropic`
 **职责：** 将统一工具描述、消息历史和工具结果转换为 Anthropic Messages 协议，并解析流式工具调用。  
 **对外接口：** `AnthropicProvider.stream_chat(request)`。  
 **关键行为：**
@@ -342,14 +342,14 @@ def validate_arguments(schema: Mapping[str, Any], arguments: Mapping[str, Any]) 
 - 助手工具调用消息输出为 `role: assistant` 且 content 包含 `text` 和 `tool_use` 块。
 - 内部 `tool` 消息输出为 `role: user` 且 content 首项为 `tool_result` 块；失败结果设置 `is_error: true`。
 - 流式解析时在 `content_block_start` 捕获 `tool_use` 的 `id` 和 `name`，在 `input_json_delta` 中拼接 `partial_json`，在 `content_block_stop` 后生成统一 `ToolCall`。
-**依赖：** `httpx`、`json`、`mewcode.providers.sse`、`mewcode.tools.base`。
+**依赖：** `httpx`、`json`、`julycode.providers.sse`、`julycode.tools.base`。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 编排一次用户请求内的模型调用、工具执行和结果回灌。  
 **对外接口：** `ToolAwareTurnRunner`、`TurnEvent`。  
-**依赖：** `mewcode.session`、`mewcode.providers.base`、`mewcode.tools.registry`、`mewcode.tools.executor`。
+**依赖：** `julycode.session`、`julycode.providers.base`、`julycode.tools.registry`、`julycode.tools.executor`。
 
-### `mewcode.session`
+### `julycode.session`
 **职责：** 支持工具消息进入当前运行期历史。  
 **对外接口：**
 ```python
@@ -359,18 +359,18 @@ class ChatSession:
     def append_tool_result(self, result: ToolResult) -> ChatMessage: ...
     def build_request(self, tools: Sequence[ToolSpec] = ()) -> ChatRequest: ...
 ```
-**依赖：** `mewcode.providers.base`、`mewcode.tools.base`。
+**依赖：** `julycode.providers.base`、`julycode.tools.base`。
 
-### `mewcode.tui.widgets`
+### `julycode.tui.widgets`
 **职责：** 展示工具调用状态。  
 **对外接口：** 在现有组件基础上新增或扩展 `ToolStatusView`，用于展示工具名称、成功/失败和简短结果。  
-**依赖：** `textual`、`mewcode.tools.base`。
+**依赖：** `textual`、`julycode.tools.base`。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 用 `ToolAwareTurnRunner` 替代直接调用 Provider，并把 turn 事件映射到界面。  
 **对外接口：**
 ```python
-class MewCodeApp(App[None]):
+class JulyCodeApp(App[None]):
     def __init__(
         self,
         session: ChatSession,
@@ -380,16 +380,16 @@ class MewCodeApp(App[None]):
         executor: ToolExecutor,
     ) -> None: ...
 ```
-**依赖：** `textual`、`mewcode.agent`、`mewcode.tools`。
+**依赖：** `textual`、`julycode.agent`、`julycode.tools`。
 
-### `mewcode.cli`
+### `julycode.cli`
 **职责：** 启动时创建默认工具注册中心和执行器，并传入 TUI。  
 **对外接口：** `main(argv=None) -> int`。  
-**依赖：** `mewcode.tools.registry`、`mewcode.tools.executor`。
+**依赖：** `julycode.tools.registry`、`julycode.tools.executor`。
 
 ## 模块交互
-1. 用户运行 `mewcode`。
-2. `mewcode.cli` 加载配置，创建 Provider、`ChatSession`、默认 `ToolRegistry`、`ToolExecutor` 和 `MewCodeApp`。
+1. 用户运行 `julycode`。
+2. `julycode.cli` 加载配置，创建 Provider、`ChatSession`、默认 `ToolRegistry`、`ToolExecutor` 和 `JulyCodeApp`。
 3. 用户在 TUI 提交文本。
 4. TUI 展示用户消息，并调用 `ToolAwareTurnRunner.run(user_text)`。
 5. Runner 将用户消息写入 `ChatSession`，调用 `build_request(tools=registry.specs())`。
@@ -406,10 +406,10 @@ class MewCodeApp(App[None]):
 
 ## 文件组织
 ```text
-mewcode/
+julycode/
 ├── README.md                              — 更新范围说明，描述工具系统基本能力
 ├── src/
-│   └── mewcode/
+│   └── julycode/
 │       ├── agent.py                       — 一次工具调用链路编排与 TurnEvent
 │       ├── cli.py                         — 创建工具注册中心和执行器
 │       ├── session.py                     — 会话历史支持工具调用和工具结果
@@ -447,8 +447,8 @@ mewcode/
 ## 需求覆盖
 | 需求 | 架构归属 |
 |------|----------|
-| F1 | `mewcode.tools.base` 定义统一 `Tool`、`ToolSpec` 和参数 Schema。 |
-| F2 | `mewcode.tools.builtin` 实现六个核心工具，`create_default_registry()` 默认注册。 |
+| F1 | `julycode.tools.base` 定义统一 `Tool`、`ToolSpec` 和参数 Schema。 |
+| F2 | `julycode.tools.builtin` 实现六个核心工具，`create_default_registry()` 默认注册。 |
 | F3 | `ToolRegistry` 集中登记；OpenAI / Anthropic Provider 分别把 `ToolSpec` 转成供应商工具描述。 |
 | F4 | Provider 流式解析 `delta.tool_calls` 和 `input_json_delta`，聚合成 `ToolCall`。 |
 | F5 | `ToolAwareTurnRunner` 执行工具、追加工具结果，并发起第二次模型请求。 |
@@ -474,7 +474,7 @@ mewcode/
 | 工具调用数量 | 第一版每次用户请求最多执行一个工具调用 | 符合 spec 的一次工具调用链路边界，避免提前实现并行工具和复杂结果聚合。 |
 | 第二轮工具调用 | 第二次模型响应仍允许暴露工具，但检测到工具调用后立即停止执行 | 可验证“模型再次请求工具时不继续执行”的需求，而不是简单禁用工具让情况不可观测。 |
 | 参数校验 | 实现内置工具所需 JSON Schema 子集校验 | 避免新增依赖，同时覆盖六个核心工具的参数约束。 |
-| 文件内容 | 第一版按 UTF-8 文本处理 | MewCode 当前目标是代码助手，二进制文件处理不在 spec 范围内。 |
+| 文件内容 | 第一版按 UTF-8 文本处理 | JulyCode 当前目标是代码助手，二进制文件处理不在 spec 范围内。 |
 | 文件修改 | `old_text` 精确计数为 1 时才写回 | 满足唯一匹配要求，避免模型提供模糊上下文时误改多处。 |
 | 命令执行 | 使用异步 subprocess，捕获 stdout/stderr，执行目录为启动目录 | 与 TUI 异步模型一致，避免阻塞界面。 |
 | 搜索实现 | `search_code` 优先调用 `rg`，缺失时 Python 兜底 | 常见代码库搜索速度更好，同时保证没有 `rg` 时功能仍可用。 |

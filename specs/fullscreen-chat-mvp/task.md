@@ -1,4 +1,4 @@
-# MewCode 全屏对话 MVP Tasks
+# JulyCode 全屏对话 MVP Tasks
 
 ## 文件清单
 
@@ -6,20 +6,20 @@
 |------|------|------|
 | 新建 | `pyproject.toml` | 包元数据、依赖、命令入口、pytest 配置 |
 | 新建 | `README.md` | 安装、配置、启动和最小使用说明 |
-| 新建 | `src/mewcode/__init__.py` | 包版本 |
-| 新建 | `src/mewcode/cli.py` | `mewcode` 命令入口 |
-| 新建 | `src/mewcode/config.py` | YAML 配置加载、合并、校验和环境变量解析 |
-| 新建 | `src/mewcode/errors.py` | 统一错误类型和密钥脱敏 |
-| 新建 | `src/mewcode/session.py` | 当前进程内对话状态 |
-| 新建 | `src/mewcode/providers/__init__.py` | Provider 包导出 |
-| 新建 | `src/mewcode/providers/base.py` | Provider 接口、消息模型和统一流事件 |
-| 新建 | `src/mewcode/providers/factory.py` | 根据协议创建 Provider |
-| 新建 | `src/mewcode/providers/sse.py` | SSE 事件解析 |
-| 新建 | `src/mewcode/providers/openai.py` | OpenAI Chat Completions 协议适配 |
-| 新建 | `src/mewcode/providers/anthropic.py` | Anthropic Messages 协议适配 |
-| 新建 | `src/mewcode/tui/__init__.py` | TUI 包导出 |
-| 新建 | `src/mewcode/tui/app.py` | Textual 应用主体 |
-| 新建 | `src/mewcode/tui/widgets.py` | 消息、思考区、输入区和状态栏组件 |
+| 新建 | `src/julycode/__init__.py` | 包版本 |
+| 新建 | `src/julycode/cli.py` | `julycode` 命令入口 |
+| 新建 | `src/julycode/config.py` | YAML 配置加载、合并、校验和环境变量解析 |
+| 新建 | `src/julycode/errors.py` | 统一错误类型和密钥脱敏 |
+| 新建 | `src/julycode/session.py` | 当前进程内对话状态 |
+| 新建 | `src/julycode/providers/__init__.py` | Provider 包导出 |
+| 新建 | `src/julycode/providers/base.py` | Provider 接口、消息模型和统一流事件 |
+| 新建 | `src/julycode/providers/factory.py` | 根据协议创建 Provider |
+| 新建 | `src/julycode/providers/sse.py` | SSE 事件解析 |
+| 新建 | `src/julycode/providers/openai.py` | OpenAI Chat Completions 协议适配 |
+| 新建 | `src/julycode/providers/anthropic.py` | Anthropic Messages 协议适配 |
+| 新建 | `src/julycode/tui/__init__.py` | TUI 包导出 |
+| 新建 | `src/julycode/tui/app.py` | Textual 应用主体 |
+| 新建 | `src/julycode/tui/widgets.py` | 消息、思考区、输入区和状态栏组件 |
 | 新建 | `tests/test_config.py` | 配置、环境变量和脱敏测试 |
 | 新建 | `tests/test_sse.py` | SSE 解析测试 |
 | 新建 | `tests/test_openai_provider.py` | OpenAI Provider 请求和流事件测试 |
@@ -29,22 +29,22 @@
 
 ## T1: 项目骨架与依赖
 
-**文件：** `pyproject.toml`, `README.md`, `src/mewcode/__init__.py`, `src/mewcode/providers/__init__.py`, `src/mewcode/tui/__init__.py`  
+**文件：** `pyproject.toml`, `README.md`, `src/julycode/__init__.py`, `src/julycode/providers/__init__.py`, `src/julycode/tui/__init__.py`  
 **依赖：** 无  
 **步骤：**
 1. 创建 `src/` 布局和包目录。
-2. 在 `pyproject.toml` 中配置包名、Python 版本、`mewcode` 命令入口、运行依赖 `textual`、`httpx`、`PyYAML` 和开发测试依赖。
-3. 在 `src/mewcode/__init__.py` 中定义包版本。
+2. 在 `pyproject.toml` 中配置包名、Python 版本、`julycode` 命令入口、运行依赖 `textual`、`httpx`、`PyYAML` 和开发测试依赖。
+3. 在 `src/julycode/__init__.py` 中定义包版本。
 4. 在 `README.md` 中写入安装、配置、启动和范围说明章节标题，内容只包含当前已确定的项目目标。
 
-**验证：** 运行 `python -m pip install -e ".[dev]"`，期望本地包安装成功；运行 `python -c "import mewcode; print(mewcode.__version__)"`，期望打印版本号。
+**验证：** 运行 `python -m pip install -e ".[dev]"`，期望本地包安装成功；运行 `python -c "import julycode; print(julycode.__version__)"`，期望打印版本号。
 
 ## T2: 错误类型与基础模型
 
-**文件：** `src/mewcode/errors.py`, `src/mewcode/providers/base.py`, `tests/test_config.py`  
+**文件：** `src/julycode/errors.py`, `src/julycode/providers/base.py`, `tests/test_config.py`  
 **依赖：** T1  
 **步骤：**
-1. 定义 `MewCodeError`、`ConfigError`、`ProviderError`。
+1. 定义 `JulyCodeError`、`ConfigError`、`ProviderError`。
 2. 实现 `redact_secret(text, secret)`，确保完整密钥不会出现在错误文本中。
 3. 定义 `ChatMessage`、`ChatRequest`、`StreamEvent` 和 `LLMProvider`。
 4. 添加脱敏测试，覆盖传入明确密钥和无密钥两种情况。
@@ -53,7 +53,7 @@
 
 ## T3: 配置基础加载与校验
 
-**文件：** `src/mewcode/config.py`, `tests/test_config.py`  
+**文件：** `src/julycode/config.py`, `tests/test_config.py`  
 **依赖：** T2  
 **步骤：**
 1. 定义 `AppConfig` 和 `ThinkingConfig`。
@@ -66,11 +66,11 @@
 
 ## T4: 配置发现、覆盖与环境变量密钥
 
-**文件：** `src/mewcode/config.py`, `tests/test_config.py`  
+**文件：** `src/julycode/config.py`, `tests/test_config.py`  
 **依赖：** T3  
 **步骤：**
-1. 实现用户级配置路径 `~/.mewcode/config.yaml`。
-2. 实现从当前目录向上查找首个 `.mewcode.yaml`。
+1. 实现用户级配置路径 `~/.julycode/config.yaml`。
+2. 实现从当前目录向上查找首个 `.julycode.yaml`。
 3. 实现用户级配置和项目级配置按字段浅合并，项目级覆盖同名字段。
 4. 实现 `${ENV_VAR}` 形式的 `api_key` 解析。
 5. 添加项目覆盖、环境变量存在、环境变量缺失和错误脱敏测试。
@@ -79,7 +79,7 @@
 
 ## T5: SSE 解析器
 
-**文件：** `src/mewcode/providers/sse.py`, `tests/test_sse.py`  
+**文件：** `src/julycode/providers/sse.py`, `tests/test_sse.py`  
 **依赖：** T2  
 **步骤：**
 1. 定义 `SSEEvent`。
@@ -91,7 +91,7 @@
 
 ## T6: OpenAI Provider 请求构造
 
-**文件：** `src/mewcode/providers/openai.py`, `tests/test_openai_provider.py`  
+**文件：** `src/julycode/providers/openai.py`, `tests/test_openai_provider.py`  
 **依赖：** T3, T5  
 **步骤：**
 1. 实现 `OpenAIProvider` 初始化和 URL 拼接。
@@ -105,7 +105,7 @@
 
 ## T7: OpenAI Provider 流事件与错误处理
 
-**文件：** `src/mewcode/providers/openai.py`, `tests/test_openai_provider.py`  
+**文件：** `src/julycode/providers/openai.py`, `tests/test_openai_provider.py`  
 **依赖：** T6  
 **步骤：**
 1. 解析 OpenAI data-only SSE JSON chunk。
@@ -118,7 +118,7 @@
 
 ## T8: Anthropic Provider 请求构造
 
-**文件：** `src/mewcode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
 **依赖：** T3, T5  
 **步骤：**
 1. 实现 `AnthropicProvider` 初始化和 URL 拼接。
@@ -133,7 +133,7 @@
 
 ## T9: Anthropic Provider 文本、思考与错误流
 
-**文件：** `src/mewcode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/anthropic.py`, `tests/test_anthropic_provider.py`  
 **依赖：** T8  
 **步骤：**
 1. 解析 Anthropic 命名 SSE 事件。
@@ -148,7 +148,7 @@
 
 ## T10: Provider 工厂
 
-**文件：** `src/mewcode/providers/factory.py`, `src/mewcode/providers/__init__.py`, `tests/test_openai_provider.py`, `tests/test_anthropic_provider.py`  
+**文件：** `src/julycode/providers/factory.py`, `src/julycode/providers/__init__.py`, `tests/test_openai_provider.py`, `tests/test_anthropic_provider.py`  
 **依赖：** T7, T9  
 **步骤：**
 1. 实现 `create_provider(config)`。
@@ -161,7 +161,7 @@
 
 ## T11: 会话状态
 
-**文件：** `src/mewcode/session.py`, `tests/test_session.py`  
+**文件：** `src/julycode/session.py`, `tests/test_session.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `ChatSession`。
@@ -174,7 +174,7 @@
 
 ## T12: TUI 基础组件
 
-**文件：** `src/mewcode/tui/widgets.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/widgets.py`, `tests/test_tui_smoke.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `StatusBar`，显示当前协议、模型和生成状态。
@@ -188,10 +188,10 @@
 
 ## T13: TUI 应用启动、布局与退出
 
-**文件：** `src/mewcode/tui/app.py`, `src/mewcode/tui/__init__.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`, `src/julycode/tui/__init__.py`, `tests/test_tui_smoke.py`  
 **依赖：** T11, T12  
 **步骤：**
-1. 实现 `MewCodeApp(session, provider, config)`。
+1. 实现 `JulyCodeApp(session, provider, config)`。
 2. 组合顶部状态栏、消息滚动区、思考区、输入区和底部退出提示。
 3. 绑定明确退出操作。
 4. 启动时让输入区获得焦点。
@@ -201,7 +201,7 @@
 
 ## T14: TUI 提交输入与流式更新
 
-**文件：** `src/mewcode/tui/app.py`, `src/mewcode/tui/widgets.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`, `src/julycode/tui/widgets.py`, `tests/test_tui_smoke.py`  
 **依赖：** T13  
 **步骤：**
 1. 提交输入后追加用户消息并清空输入区。
@@ -216,10 +216,10 @@
 
 ## T15: TUI 错误恢复
 
-**文件：** `src/mewcode/tui/app.py`, `src/mewcode/tui/widgets.py`, `tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`, `src/julycode/tui/widgets.py`, `tests/test_tui_smoke.py`  
 **依赖：** T14  
 **步骤：**
-1. 捕获 `MewCodeError` 和未预期异常。
+1. 捕获 `JulyCodeError` 和未预期异常。
 2. 在消息区和状态栏展示可理解错误。
 3. 确保错误文本经过脱敏。
 4. 错误后恢复输入区，允许继续提交下一条消息。
@@ -229,13 +229,13 @@
 
 ## T16: CLI 集成
 
-**文件：** `src/mewcode/cli.py`, `tests/test_tui_smoke.py`, `tests/test_config.py`  
+**文件：** `src/julycode/cli.py`, `tests/test_tui_smoke.py`, `tests/test_config.py`  
 **依赖：** T10, T13  
 **步骤：**
 1. 实现 `main(argv=None) -> int`。
 2. 调用 `load_config()` 加载配置。
 3. 调用 `create_provider()` 创建 Provider。
-4. 创建 `ChatSession` 和 `MewCodeApp`。
+4. 创建 `ChatSession` 和 `JulyCodeApp`。
 5. 配置错误时在终端输出脱敏错误并返回非零退出码。
 6. 添加 CLI 配置错误测试和入口点可导入测试。
 
@@ -247,8 +247,8 @@
 **依赖：** T16  
 **步骤：**
 1. 写入安装命令。
-2. 写入用户级配置 `~/.mewcode/config.yaml` 示例。
-3. 写入项目级 `.mewcode.yaml` 覆盖示例。
+2. 写入用户级配置 `~/.julycode/config.yaml` 示例。
+3. 写入项目级 `.julycode.yaml` 覆盖示例。
 4. 写入 OpenAI 和 Anthropic 两种 `protocol` 示例。
 5. 写入明文 `api_key` 和 `${ENV_VAR}` 示例。
 6. 写入启动、退出和纯对话范围说明。
@@ -257,7 +257,7 @@
 
 ## T18: 全量回归检查
 
-**文件：** `pyproject.toml`, `src/mewcode/**/*.py`, `tests/*.py`, `README.md`  
+**文件：** `pyproject.toml`, `src/julycode/**/*.py`, `tests/*.py`, `README.md`  
 **依赖：** T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17  
 **步骤：**
 1. 运行完整单元测试。
@@ -265,7 +265,7 @@
 3. 运行命令入口导入检查。
 4. 修复发现的问题并重复执行检查。
 
-**验证：** 运行 `python -m pytest -q`，期望全部通过；运行 `python -m compileall src tests`，期望无编译错误；运行 `python -c "from mewcode.cli import main; print(callable(main))"`，期望输出 `True`。
+**验证：** 运行 `python -m pytest -q`，期望全部通过；运行 `python -m compileall src tests`，期望无编译错误；运行 `python -c "from julycode.cli import main; print(callable(main))"`，期望输出 `True`。
 
 ## 执行顺序
 

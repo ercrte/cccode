@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from mewcode.memory.models import SessionMemoryConfig
-from mewcode.session_id import is_valid_session_id, new_session_id
+from julycode.memory.models import SessionMemoryConfig
+from julycode.session_id import is_valid_session_id, new_session_id
 
 
 def test_new_session_id_uses_timestamp_and_suffix() -> None:

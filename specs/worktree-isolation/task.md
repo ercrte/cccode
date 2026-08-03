@@ -1,30 +1,30 @@
-# MewCode Worktree 隔离 Tasks
+# JulyCode Worktree 隔离 Tasks
 
 ## 文件清单
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 新建 | `src/mewcode/worktrees/__init__.py` | 导出 Worktree 稳定接口 |
-| 新建 | `src/mewcode/worktrees/models.py` | 配置、布局、元数据、lease、状态、处置、清理报告和错误模型 |
-| 新建 | `src/mewcode/worktrees/paths.py` | 安全名称、配置路径、仓库布局和边界解析 |
-| 新建 | `src/mewcode/worktrees/git.py` | Git 子进程、Worktree、hooks、状态和提交保护 |
-| 新建 | `src/mewcode/worktrees/environment.py` | 复制、ignored 文件、软链和失败回滚 |
-| 新建 | `src/mewcode/worktrees/manager.py` | 创建、恢复、退出、删除、锁和过期候选处理 |
-| 新建 | `src/mewcode/worktrees/janitor.py` | 启动即运行和周期清理任务 |
+| 新建 | `src/julycode/worktrees/__init__.py` | 导出 Worktree 稳定接口 |
+| 新建 | `src/julycode/worktrees/models.py` | 配置、布局、元数据、lease、状态、处置、清理报告和错误模型 |
+| 新建 | `src/julycode/worktrees/paths.py` | 安全名称、配置路径、仓库布局和边界解析 |
+| 新建 | `src/julycode/worktrees/git.py` | Git 子进程、Worktree、hooks、状态和提交保护 |
+| 新建 | `src/julycode/worktrees/environment.py` | 复制、ignored 文件、软链和失败回滚 |
+| 新建 | `src/julycode/worktrees/manager.py` | 创建、恢复、退出、删除、锁和过期候选处理 |
+| 新建 | `src/julycode/worktrees/janitor.py` | 启动即运行和周期清理任务 |
 | 新建 | `tests/test_worktrees.py` | 临时 Git 仓库中的 Worktree 全生命周期测试 |
-| 修改 | `src/mewcode/config.py` | 解析并校验 `sub_agents.worktree` |
-| 修改 | `src/mewcode/tools/base.py` | 规范化 `ToolContext.cwd` |
-| 修改 | `src/mewcode/context/manager.py` | 保存并传播绝对 cwd |
-| 修改 | `src/mewcode/memory/recovery.py` | 暴露不恢复会话的项目知识读取入口 |
-| 修改 | `src/mewcode/memory/manager.py` | 加载独立 cwd 的运行时知识上下文 |
-| 修改 | `src/mewcode/prompting/builder.py` | 注入隔离目录、主目录、分支和越界约束 |
-| 修改 | `src/mewcode/subagents/__init__.py` | 导出新增子 Agent 数据结构 |
-| 修改 | `src/mewcode/subagents/loader.py` | 解析角色 `isolation` |
-| 修改 | `src/mewcode/subagents/models.py` | 扩展角色、工作上下文、提示和结果模型 |
-| 修改 | `src/mewcode/subagents/runtime.py` | 从显式工作上下文创建全部 cwd 相关组件 |
-| 修改 | `src/mewcode/subagents/manager.py` | 接入 Worktree lease、退出处置和 janitor |
-| 修改 | `src/mewcode/subagents/tools.py` | 在委派结果中输出 Worktree 处置信息 |
-| 修改 | `src/mewcode/tui/app.py` | 启停 janitor 并报告清理错误 |
+| 修改 | `src/julycode/config.py` | 解析并校验 `sub_agents.worktree` |
+| 修改 | `src/julycode/tools/base.py` | 规范化 `ToolContext.cwd` |
+| 修改 | `src/julycode/context/manager.py` | 保存并传播绝对 cwd |
+| 修改 | `src/julycode/memory/recovery.py` | 暴露不恢复会话的项目知识读取入口 |
+| 修改 | `src/julycode/memory/manager.py` | 加载独立 cwd 的运行时知识上下文 |
+| 修改 | `src/julycode/prompting/builder.py` | 注入隔离目录、主目录、分支和越界约束 |
+| 修改 | `src/julycode/subagents/__init__.py` | 导出新增子 Agent 数据结构 |
+| 修改 | `src/julycode/subagents/loader.py` | 解析角色 `isolation` |
+| 修改 | `src/julycode/subagents/models.py` | 扩展角色、工作上下文、提示和结果模型 |
+| 修改 | `src/julycode/subagents/runtime.py` | 从显式工作上下文创建全部 cwd 相关组件 |
+| 修改 | `src/julycode/subagents/manager.py` | 接入 Worktree lease、退出处置和 janitor |
+| 修改 | `src/julycode/subagents/tools.py` | 在委派结果中输出 Worktree 处置信息 |
+| 修改 | `src/julycode/tui/app.py` | 启停 janitor 并报告清理错误 |
 | 修改 | `tests/test_config.py` | Worktree 配置解析和错误测试 |
 | 修改 | `tests/test_tools.py` | ToolContext 绝对 cwd 测试 |
 | 修改 | `tests/test_memory_instructions.py` | 不同 Worktree 项目指令隔离测试 |
@@ -36,18 +36,18 @@
 
 ## T1: 建立 Worktree 领域数据模型
 
-**文件：** `src/mewcode/worktrees/models.py`、`src/mewcode/worktrees/__init__.py`  
+**文件：** `src/julycode/worktrees/models.py`、`src/julycode/worktrees/__init__.py`  
 **依赖：** 无  
 **步骤：**
 1. 定义 `WorktreeConfig`、`RepositoryLayout`、`WorktreeMetadata`、`WorktreeLease`。
 2. 定义 `WorktreeChangeState`、`WorktreeDisposition`、`CleanupItemResult`、`CleanupReport`。
 3. 定义带 `stage` 的 `WorktreeError`，并从包入口导出稳定类型。
 
-**验证：** 运行 `python -c "from mewcode.worktrees import WorktreeConfig, WorktreeLease, WorktreeDisposition; assert WorktreeConfig().retention_days == 7.0"`，期望退出码为 0。
+**验证：** 运行 `python -c "from julycode.worktrees import WorktreeConfig, WorktreeLease, WorktreeDisposition; assert WorktreeConfig().retention_days == 7.0"`，期望退出码为 0。
 
 ## T2: 实现严格安全名称校验
 
-**文件：** `src/mewcode/worktrees/paths.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/paths.py`、`tests/test_worktrees.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现 `validate_relative_name()` 的总长度、分段长度、ASCII 字符和首字符规则。
@@ -58,19 +58,19 @@
 
 ## T3: 实现仓库布局与规范化边界
 
-**文件：** `src/mewcode/worktrees/paths.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/paths.py`、`tests/test_worktrees.py`  
 **依赖：** T2  
 **步骤：**
 1. 实现 `validate_config_path()` 和 `resolve_inside()`，统一使用 `resolve()` + `relative_to()` 判断归属。
 2. 实现只读文件系统的 `discover_repository_layout()`，支持从仓库子目录启动。
-3. 实现确定性 `<role>/<task_id>` 目录名与 `mewcode/<role>/<task_id>` 分支名。
+3. 实现确定性 `<role>/<task_id>` 目录名与 `julycode/<role>/<task_id>` 分支名。
 4. 测试普通路径、子目录启动、符号链接越界和没有 `.git` 边界的错误。
 
 **验证：** 运行 `python -m pytest tests/test_worktrees.py -q -k 'repository_layout or config_path or resolve_inside'`，期望全部通过。
 
 ## T4: 解析 Worktree 项目配置
 
-**文件：** `src/mewcode/config.py`、`src/mewcode/subagents/models.py`、`tests/test_config.py`  
+**文件：** `src/julycode/config.py`、`src/julycode/subagents/models.py`、`tests/test_config.py`  
 **依赖：** T1、T3  
 **步骤：**
 1. 在 `SubAgentConfig` 增加默认 `WorktreeConfig`。
@@ -82,7 +82,7 @@
 
 ## T5: 扩展角色 isolation 解析
 
-**文件：** `src/mewcode/subagents/models.py`、`src/mewcode/subagents/loader.py`、`tests/test_subagents.py`  
+**文件：** `src/julycode/subagents/models.py`、`src/julycode/subagents/loader.py`、`tests/test_subagents.py`  
 **依赖：** T1  
 **步骤：**
 1. 定义内部 `SubAgentIsolation`，角色未声明时设为 `shared`。
@@ -94,7 +94,7 @@
 
 ## T6: 实现无 shell 的 Git 执行基础
 
-**文件：** `src/mewcode/worktrees/git.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/git.py`、`tests/test_worktrees.py`  
 **依赖：** T1  
 **步骤：**
 1. 实现异步 `GitClient.run()`，使用 argv、显式绝对 cwd、stdout/stderr 捕获和固定超时。
@@ -106,7 +106,7 @@
 
 ## T7: 实现 Worktree 创建与本地 exclude
 
-**文件：** `src/mewcode/worktrees/git.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/git.py`、`tests/test_worktrees.py`  
 **依赖：** T6  
 **步骤：**
 1. 实现仓库本地 exclude 的幂等写入，忽略 storage root 和元数据标记。
@@ -118,7 +118,7 @@
 
 ## T8: 配置 Worktree Git hooks
 
-**文件：** `src/mewcode/worktrees/git.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/git.py`、`tests/test_worktrees.py`  
 **依赖：** T6、T7  
 **步骤：**
 1. 读取主工作树当前有效 `core.hooksPath`。
@@ -130,7 +130,7 @@
 
 ## T9: 实现变更与未推送提交判定
 
-**文件：** `src/mewcode/worktrees/git.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/git.py`、`tests/test_worktrees.py`  
 **依赖：** T6、T7  
 **步骤：**
 1. 解析 porcelain 状态，分别记录受追踪修改和未跟踪路径。
@@ -142,7 +142,7 @@
 
 ## T10: 实现环境初始化预检
 
-**文件：** `src/mewcode/worktrees/environment.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/environment.py`、`tests/test_worktrees.py`  
 **依赖：** T3、T6  
 **步骤：**
 1. 在写入前解析三类规则的主目录源和 Worktree 目标。
@@ -154,7 +154,7 @@
 
 ## T11: 实现独立复制与 ignored 文件补齐
 
-**文件：** `src/mewcode/worktrees/environment.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/environment.py`、`tests/test_worktrees.py`  
 **依赖：** T10  
 **步骤：**
 1. 为 `copy_paths` 实现文件 `copy2` 和目录 `copytree`。
@@ -166,7 +166,7 @@
 
 ## T12: 实现大型目录软链与失败回滚
 
-**文件：** `src/mewcode/worktrees/environment.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/environment.py`、`tests/test_worktrees.py`  
 **依赖：** T11  
 **步骤：**
 1. 为 `symlink_paths` 创建指向主工作目录同路径的绝对目录软链。
@@ -178,7 +178,7 @@
 
 ## T13: 实现恢复元数据读写与校验
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`  
 **依赖：** T1、T3  
 **步骤：**
 1. 定义固定元数据文件名和版本化 JSON 编解码。
@@ -190,7 +190,7 @@
 
 ## T14: 实现首次 acquire 创建流程
 
-**文件：** `src/mewcode/worktrees/manager.py`、`src/mewcode/worktrees/__init__.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/manager.py`、`src/julycode/worktrees/__init__.py`、`tests/test_worktrees.py`  
 **依赖：** T7、T8、T12、T13  
 **步骤：**
 1. 实现目标级锁和 active lease 登记。
@@ -202,7 +202,7 @@
 
 ## T15: 实现目录已存在的零 Git 快速恢复
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`  
 **依赖：** T13、T14  
 **步骤：**
 1. 在任何 Git 或初始化调用前检查确定性目标目录是否存在。
@@ -214,7 +214,7 @@
 
 ## T16: 实现退出状态检查与无变更清理
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`  
 **依赖：** T9、T14  
 **步骤：**
 1. 实现 `finish()` 在目标锁内保持 active，检查状态后再取消登记。
@@ -226,7 +226,7 @@
 
 ## T17: 实现保护删除与已推送提交判定
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`  
 **依赖：** T9、T16  
 **步骤：**
 1. 实现 `delete()` 的路径、元数据、active 和 Git 四项检查，共享不重入的锁内删除逻辑。
@@ -238,7 +238,7 @@
 
 ## T18: 实现过期候选扫描与三层过滤
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`  
 **依赖：** T17  
 **步骤：**
 1. 只扫描固定 storage root 下的元数据标记父目录。
@@ -250,7 +250,7 @@
 
 ## T19: 实现启动与周期 janitor
 
-**文件：** `src/mewcode/worktrees/janitor.py`、`src/mewcode/worktrees/__init__.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/janitor.py`、`src/julycode/worktrees/__init__.py`、`tests/test_worktrees.py`  
 **依赖：** T18  
 **步骤：**
 1. 实现幂等 `start()`，创建后台任务后立即返回。
@@ -262,7 +262,7 @@
 
 ## T20: 统一绝对 cwd 构造边界
 
-**文件：** `src/mewcode/tools/base.py`、`src/mewcode/context/manager.py`、`tests/test_tools.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/tools/base.py`、`src/julycode/context/manager.py`、`tests/test_tools.py`、`tests/test_worktrees.py`  
 **依赖：** 无  
 **步骤：**
 1. 在 `ToolContext.__post_init__()` 将 cwd 规范化为绝对路径。
@@ -274,7 +274,7 @@
 
 ## T21: 提供不恢复历史的项目知识加载
 
-**文件：** `src/mewcode/memory/recovery.py`、`src/mewcode/memory/manager.py`、`tests/test_memory_instructions.py`  
+**文件：** `src/julycode/memory/recovery.py`、`src/julycode/memory/manager.py`、`tests/test_memory_instructions.py`  
 **依赖：** T20  
 **步骤：**
 1. 将现有项目知识读取整理为 `SessionBootstrapper.load_knowledge()`。
@@ -286,7 +286,7 @@
 
 ## T22: 扩展子 Agent 工作上下文和结果模型
 
-**文件：** `src/mewcode/subagents/models.py`、`src/mewcode/subagents/__init__.py`、`tests/test_subagents.py`  
+**文件：** `src/julycode/subagents/models.py`、`src/julycode/subagents/__init__.py`、`tests/test_subagents.py`  
 **依赖：** T1、T5  
 **步骤：**
 1. 定义 `SubAgentWorkingContext` 和 `SubAgentWorktreeInfo`。
@@ -298,7 +298,7 @@
 
 ## T23: 让 runner 使用显式工作上下文
 
-**文件：** `src/mewcode/subagents/runtime.py`、`tests/test_subagents.py`  
+**文件：** `src/julycode/subagents/runtime.py`、`tests/test_subagents.py`  
 **依赖：** T20、T21、T22  
 **步骤：**
 1. 为 `create_runner()` 增加必需 `working_context` 参数。
@@ -310,7 +310,7 @@
 
 ## T24: 注入 Worktree 运行时提示
 
-**文件：** `src/mewcode/prompting/builder.py`、`tests/test_prompting.py`  
+**文件：** `src/julycode/prompting/builder.py`、`tests/test_prompting.py`  
 **依赖：** T22  
 **步骤：**
 1. 在 active 子 Agent 块输出 isolation 状态。
@@ -322,7 +322,7 @@
 
 ## T25: 在 SubAgentManager 接入 lease 生命周期
 
-**文件：** `src/mewcode/subagents/manager.py`、`tests/test_subagents.py`  
+**文件：** `src/julycode/subagents/manager.py`、`tests/test_subagents.py`  
 **依赖：** T14、T16、T19、T23  
 **步骤：**
 1. 构造器支持注入或默认创建 `WorktreeManager` 与 `WorktreeJanitor`。
@@ -334,7 +334,7 @@
 
 ## T26: 输出 Worktree 结果与后台通知
 
-**文件：** `src/mewcode/subagents/tools.py`、`src/mewcode/subagents/manager.py`、`tests/test_subagents.py`  
+**文件：** `src/julycode/subagents/tools.py`、`src/julycode/subagents/manager.py`、`tests/test_subagents.py`  
 **依赖：** T22、T25  
 **步骤：**
 1. 在前台 `delegate_agent` 结果 payload 中增加可选 Worktree 字段。
@@ -346,7 +346,7 @@
 
 ## T27: 接入 TUI 启停与错误报告
 
-**文件：** `src/mewcode/tui/app.py`、`tests/test_tui_smoke.py`  
+**文件：** `src/julycode/tui/app.py`、`tests/test_tui_smoke.py`  
 **依赖：** T19、T25  
 **步骤：**
 1. `on_mount()` 在角色刷新后调用 `SubAgentManager.start()`，不等待首次清理完成。
@@ -358,7 +358,7 @@
 
 ## T28: 验证同目标并发串行化
 
-**文件：** `src/mewcode/worktrees/manager.py`、`tests/test_worktrees.py`  
+**文件：** `src/julycode/worktrees/manager.py`、`tests/test_worktrees.py`  
 **依赖：** T15、T17、T18  
 **步骤：**
 1. 确认 acquire、finish、delete 和 cleanup 对相同确定性目标复用同一锁。
@@ -413,7 +413,7 @@
 2. 运行 `compileall` 检查全部源码语法和导入。
 3. 修复失败并重复执行，直到全部通过。
 
-**验证：** 运行 `python -m pytest tests/test_worktrees.py tests/test_subagents.py tests/test_config.py tests/test_prompting.py tests/test_memory_instructions.py tests/test_tools.py tests/test_tui_smoke.py -q && python -m compileall -q src/mewcode tests/e2e_mock_openai_server.py`，期望退出码为 0。
+**验证：** 运行 `python -m pytest tests/test_worktrees.py tests/test_subagents.py tests/test_config.py tests/test_prompting.py tests/test_memory_instructions.py tests/test_tools.py tests/test_tui_smoke.py -q && python -m compileall -q src/julycode tests/e2e_mock_openai_server.py`，期望退出码为 0。
 
 ## T33: 运行全量回归测试
 
@@ -428,11 +428,11 @@
 
 ## T34: 在 tmux 中完成端到端验收
 
-**文件：** `tests/e2e_mock_openai_server.py`、临时 Git 仓库与临时 MewCode 配置  
+**文件：** `tests/e2e_mock_openai_server.py`、临时 Git 仓库与临时 JulyCode 配置  
 **依赖：** T31、T33  
 **步骤：**
 1. 在 `/tmp` 创建临时 Git 仓库、初始提交、`isolation: worktree` 可写角色和指向 mock provider 的项目配置。
-2. 在 tmux 中启动 mock provider 和 MewCode，从临时仓库输入真实请求：“请派一个 Worktree 隔离子 Agent 创建 isolated.txt，并告诉我隔离目录和分支。”
+2. 在 tmux 中启动 mock provider 和 JulyCode，从临时仓库输入真实请求：“请派一个 Worktree 隔离子 Agent 创建 isolated.txt，并告诉我隔离目录和分支。”
 3. 捕获 pane 输出，确认主 Agent 调用 `delegate_agent`，子 Agent 调用 `write_file`，最终报告 retained 路径和分支。
 4. 在 tmux 外检查主仓库没有 `isolated.txt`、保留 Worktree 中存在该文件、主分支与进程 cwd 未改变。
 5. 对照已批准 `checklist.md` 逐项记录证据。

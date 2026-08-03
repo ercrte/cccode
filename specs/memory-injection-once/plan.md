@@ -13,7 +13,7 @@
 build_runtime_prompt()
   ├─ _runtime_cache_prefix_lines()    → PromptBlock(name="runtime_cache_prefix", cacheable=True)
   └─ _dynamic_knowledge_context_lines()  → 混在 runtime_context 中, cacheable=False
-         └─ <mewcode_memory_index> ... </mewcode_memory_index>
+         └─ <julycode_memory_index> ... </julycode_memory_index>
 ```
 
 改为：
@@ -21,7 +21,7 @@ build_runtime_prompt()
 ```
 build_runtime_prompt()
   ├─ _runtime_cache_prefix_lines()    → PromptBlock(name="runtime_cache_prefix", cacheable=True)
-  │     └─ <mewcode_memory_index> ... </mewcode_memory_index>   ← 移到这里
+  │     └─ <julycode_memory_index> ... </julycode_memory_index>   ← 移到这里
   ├─ _dynamic_knowledge_context_lines() → 仅保留 restore notice
   └─ ...
 ```
@@ -34,7 +34,7 @@ build_runtime_prompt()
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/mewcode/prompting/builder.py` | 修改 | 记忆索引生成从 `_dynamic_knowledge_context_lines` 移到 `_runtime_cache_prefix_lines` |
+| `src/julycode/prompting/builder.py` | 修改 | 记忆索引生成从 `_dynamic_knowledge_context_lines` 移到 `_runtime_cache_prefix_lines` |
 | `tests/test_prompting.py` | 修改 | 断言适配新位置 |
 
 ## 技术决策

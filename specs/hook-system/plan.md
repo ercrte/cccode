@@ -1,9 +1,9 @@
-# MewCode Hook System Plan
+# JulyCode Hook System Plan
 
 ## 架构概览
-本阶段新增 `mewcode.hooks` 包，集中负责 Hook 配置模型、解析校验、条件匹配、动作执行、运行期状态和生命周期事件分发。Agent Loop、工具调度器和 TUI 只依赖 `HookManager` 的小接口，不直接理解 YAML 结构或动作细节。
+本阶段新增 `julycode.hooks` 包，集中负责 Hook 配置模型、解析校验、条件匹配、动作执行、运行期状态和生命周期事件分发。Agent Loop、工具调度器和 TUI 只依赖 `HookManager` 的小接口，不直接理解 YAML 结构或动作细节。
 
-配置层在现有主配置中新增 `hooks` 字段，沿用当前用户级配置和项目级配置的浅合并规则：项目级 `.mewcode.yaml` 中的 `hooks` 整体覆盖用户级 `~/.mewcode/config.yaml` 中的 `hooks`。未声明时生成空 Hook 配置。配置解析阶段完成集中校验，启动前暴露清晰 `ConfigError`。
+配置层在现有主配置中新增 `hooks` 字段，沿用当前用户级配置和项目级配置的浅合并规则：项目级 `.julycode.yaml` 中的 `hooks` 整体覆盖用户级 `~/.julycode/config.yaml` 中的 `hooks`。未声明时生成空 Hook 配置。配置解析阶段完成集中校验，启动前暴露清晰 `ConfigError`。
 
 匹配层新增通用匹配模块，权限规则和 Hook 条件都调用同一套解析与匹配函数。现有权限规则的精确和 glob 行为保持兼容，同时补齐反向匹配和正则匹配能力；Hook 条件使用字段路径读取事件上下文，字段不存在时按未匹配处理。
 
@@ -282,11 +282,11 @@ class RuntimePromptContext:
     hook_injections: Sequence[HookPromptInjection] = ()
 ```
 
-提示构造层读取该字段，生成独立 `<mewcode_hook_instructions>` 运行时补充块。
+提示构造层读取该字段，生成独立 `<julycode_hook_instructions>` 运行时补充块。
 
 ## 模块设计
 
-### `mewcode.matching`
+### `julycode.matching`
 **职责：** 提供权限规则和 Hook 条件共用的匹配表达式解析与执行。  
 **对外接口：**
 ```python
@@ -296,23 +296,23 @@ def get_field_value(data: Mapping[str, object], field_path: str) -> object | Non
 ```
 **依赖：** `fnmatch`、`re`、`ConfigError`。
 
-### `mewcode.permissions.rules`
+### `julycode.permissions.rules`
 **职责：** 迁移到通用匹配模块，保持现有规则加载、优先级和冲突决策。  
 **对外接口：** 保持 `PermissionRuleParser`、`PermissionRuleSet`、`PermissionRuleStore` 不变。  
-**依赖：** `mewcode.matching`。
+**依赖：** `julycode.matching`。
 
-### `mewcode.hooks.models`
+### `julycode.hooks.models`
 **职责：** 定义 Hook 配置、事件、动作、执行结果和运行期状态数据结构。  
 **对外接口：** 暴露上述 dataclass 和 Literal 类型。  
 **依赖：** `dataclasses`、`pathlib`、现有 `ToolCall`、`ToolResult`。
 
-### `mewcode.hooks.config`
+### `julycode.hooks.config`
 **职责：** 从主配置的 `hooks` YAML 节点解析并集中校验 Hook 规则。  
 **对外接口：**
 ```python
 def parse_hook_config(raw: object) -> HookConfig
 ```
-**依赖：** `mewcode.matching`、`mewcode.hooks.models`、`ConfigError`。  
+**依赖：** `julycode.matching`、`julycode.hooks.models`、`ConfigError`。  
 **校验规则：**
 - `hooks` 缺失或为 `null` 时返回空配置。
 - `hooks` 必须是列表。
@@ -325,15 +325,15 @@ def parse_hook_config(raw: object) -> HookConfig
 - `once`、`background` 必须是布尔值。
 - timeout 必须大于 0。
 
-### `mewcode.hooks.conditions`
+### `julycode.hooks.conditions`
 **职责：** 对 HookEvent 执行条件判断。  
 **对外接口：**
 ```python
 def rule_matches(rule: HookRule, event: HookEvent) -> bool
 ```
-**依赖：** `mewcode.matching`。
+**依赖：** `julycode.matching`。
 
-### `mewcode.hooks.actions`
+### `julycode.hooks.actions`
 **职责：** 执行四类动作，并把异常、超时和失败归一成 `HookExecutionResult`。  
 **对外接口：**
 ```python
@@ -348,12 +348,12 @@ class HookActionRunner:
 ```
 **依赖：** `asyncio`、`httpx`、`ToolPolicy`、`PermissionController`、`ToolExecutor`、`redact_secret`。
 
-### `mewcode.hooks.manager`
+### `julycode.hooks.manager`
 **职责：** 规则筛选、声明顺序执行、once 状态、后台任务、提示词注入队列和工具拦截决策。  
 **对外接口：** `HookManager`、`create_hook_manager(config: HookConfig) -> HookManager`。  
-**依赖：** `mewcode.hooks.actions`、`mewcode.hooks.conditions`、`mewcode.hooks.models`。
+**依赖：** `julycode.hooks.actions`、`julycode.hooks.conditions`、`julycode.hooks.models`。
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 在 `AppConfig` 增加 `hooks: HookConfig`，并调用 `parse_hook_config()`。  
 **对外接口调整：**
 ```python
@@ -362,38 +362,38 @@ class AppConfig:
     # 现有字段保持不变
     hooks: HookConfig = field(default_factory=HookConfig)
 ```
-**依赖：** `mewcode.hooks.config`。
+**依赖：** `julycode.hooks.config`。
 
-### `mewcode.prompting`
+### `julycode.prompting`
 **职责：** 在运行时补充中追加 Hook 提示词注入块。  
-**对外接口调整：** `RuntimePromptContext` 增加 `hook_injections` 字段；`PromptBuilder.build_runtime_prompt()` 追加 `<mewcode_hook_instructions>`。  
-**依赖：** `mewcode.hooks.models` 的轻量提示注入类型。
+**对外接口调整：** `RuntimePromptContext` 增加 `hook_injections` 字段；`PromptBuilder.build_runtime_prompt()` 追加 `<julycode_hook_instructions>`。  
+**依赖：** `julycode.hooks.models` 的轻量提示注入类型。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 触发轮次、消息和系统级 Hook；把 Hook 提示注入传给 `PromptBuilder`；把 Hook 状态转成 `TurnEvent`。  
 **对外接口调整：** `AgentLoopRunner` 构造函数新增可选参数 `hook_manager: HookManager | None = None`。  
 **依赖：** `HookManager`、`HookRuntimeContext`、`HookEvent`。
 
-### `mewcode.tools.scheduler`
+### `julycode.tools.scheduler`
 **职责：** 在工具调度中接入 `tool.before` 和 `tool.after`。  
 **对外接口调整：** `ToolCallScheduler` 构造函数新增可选参数 `hook_manager: HookManager | None = None` 和 `hook_context: HookRuntimeContext | None = None`。  
 **依赖：** `HookManager`。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 创建和持有 HookManager；触发会话开始、会话结束事件；传入 AgentLoopRunner；消费 Hook 状态事件。  
-**对外接口调整：** `MewCodeApp.__init__()` 增加可选 `hook_manager`，便于测试注入。  
+**对外接口调整：** `JulyCodeApp.__init__()` 增加可选 `hook_manager`，便于测试注入。  
 **依赖：** `create_hook_manager`。
 
-### `mewcode.cli`
+### `julycode.cli`
 **职责：** 用 `config.hooks` 创建 HookManager 并传给 TUI。  
 **对外接口：** `main()` 无用户可见参数变化。  
-**依赖：** `mewcode.hooks.manager`。
+**依赖：** `julycode.hooks.manager`。
 
 ## 模块交互
 普通任务执行链路：
 
 ```text
-MewCodeApp
+JulyCodeApp
   → HookManager.emit(session.start)
   → 用户输入
   → AgentLoopRunner.run(command)
@@ -416,7 +416,7 @@ MewCodeApp
     → 下一轮模型请求或最终完成
     → HookManager.emit(system.stopped) 或 HookManager.emit(system.error)
     → HookManager.emit(turn.end)
-  → MewCodeApp.on_unmount()
+  → JulyCodeApp.on_unmount()
   → HookManager.emit(session.end)
   → HookManager.close()
 ```
@@ -442,7 +442,7 @@ Hook prompt action
   → AgentLoopRunner.prompt_factory()
   → HookManager.consume_prompt_injections()
   → RuntimePromptContext(包含 hook_injections)
-  → PromptBuilder 生成 <mewcode_hook_instructions>
+  → PromptBuilder 生成 <julycode_hook_instructions>
   → Provider 请求
 ```
 
@@ -459,12 +459,12 @@ HookManager.emit(event)
 
 ## 文件组织
 ```text
-src/mewcode/
+src/julycode/
 ├── matching.py                       — 权限和 Hook 共用匹配表达式
 ├── config.py                         — AppConfig 增加 hooks 字段并解析主配置
 ├── permissions/
 │   ├── models.py                     — MatchKind 扩展为 exact/glob/regex，PermissionRule 增加 negated 或 expression
-│   └── rules.py                      — 权限规则匹配迁移到 mewcode.matching
+│   └── rules.py                      — 权限规则匹配迁移到 julycode.matching
 ├── hooks/
 │   ├── __init__.py                   — Hook 公共导出
 │   ├── models.py                     — Hook dataclass、Literal、事件与结果模型
@@ -499,7 +499,7 @@ tests/
 | 配置入口 | `hooks` 放在主配置 | 符合已确认范围，复用现有配置发现、加载和项目级覆盖行为。 |
 | 多来源合并 | 沿用主配置浅合并，项目级 `hooks` 整体覆盖用户级 | 不引入独立 Hook 来源优先级，避免和“不做显式优先级”冲突。 |
 | 规则顺序 | 按 YAML 列表声明顺序执行 | 满足稳定顺序要求，避免本阶段引入 priority。 |
-| 匹配语法 | 新增 `mewcode.matching`，权限与 Hook 共用 | 真正复用权限匹配语义，并补齐反向和正则能力。 |
+| 匹配语法 | 新增 `julycode.matching`，权限与 Hook 共用 | 真正复用权限匹配语义，并补齐反向和正则能力。 |
 | 反向匹配表示 | `!` 前缀 | 表达简洁，可组合 `!regex:` 和 `!glob:`，也不破坏现有精确/glob 规则。 |
 | Hook 拦截 | `tool.before` 动作内声明 `tool_block`，不是新 action type | 保持四种动作类型不变，同时给工具前事件提供拒绝结果。 |
 | Hook 失败策略 | 失败只产出 `HookExecutionResult(failed)` 并记录 | 满足 Hook 自身失败不影响主流程。 |
@@ -516,14 +516,14 @@ tests/
 |------|----------|
 | F1 | `HookRule` 固定 `event`、`condition`、`action`，条件可为 `None`。 |
 | F2 | `AppConfig.hooks` 和 `parse_hook_config()` 从主配置加载，缺省为空。 |
-| F3 | `mewcode.hooks.config` 集中校验所有结构、事件、动作、条件和控制冲突。 |
-| F4 | `MewCodeApp` 触发 `session.start`、`session.end`。 |
+| F3 | `julycode.hooks.config` 集中校验所有结构、事件、动作、条件和控制冲突。 |
+| F4 | `JulyCodeApp` 触发 `session.start`、`session.end`。 |
 | F5 | `AgentLoopRunner` 触发 `turn.start`、`turn.end`。 |
 | F6 | `AgentLoopRunner` 触发 `message.user`、`message.assistant`。 |
 | F7 | `ToolCallScheduler` 在策略、权限和真实执行前调用 `HookManager.before_tool()`，执行后调用 `after_tool()`。 |
 | F8 | `AgentLoopRunner` 在上下文压缩、停止和错误路径触发系统事件。 |
 | F9 | `HookEvent.data` 定义各事件稳定字段，条件按字段路径读取。 |
-| F10 | `mewcode.matching` 提供精确、反向、正则和 glob，并迁移权限规则共用。 |
+| F10 | `julycode.matching` 提供精确、反向、正则和 glob，并迁移权限规则共用。 |
 | F11 | `HookConditionGroup.logic` 只允许 `all` 或 `any`。 |
 | F12 | `get_field_value()` 字段不存在返回未匹配。 |
 | F13 | `tool.before` 事件包含 `tool.name` 和完整 `tool.arguments`。 |

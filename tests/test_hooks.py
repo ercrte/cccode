@@ -8,16 +8,16 @@ from typing import Any
 import httpx
 import pytest
 
-from mewcode.hooks import HookConfig, HookEvent, create_hook_manager, parse_hook_config
-from mewcode.hooks.actions import HookActionRunner
-from mewcode.hooks.conditions import rule_matches
-from mewcode.hooks.manager import HookManager
-from mewcode.hooks.models import HookRuntimeContext
-from mewcode.permissions import PermissionConfig
-from mewcode.permissions.controller import create_permission_controller
-from mewcode.tools.base import ToolCall, ToolContext, ToolExecutionError, ToolResult, ToolSpec
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import ToolRegistry, create_default_registry
+from julycode.hooks import HookConfig, HookEvent, create_hook_manager, parse_hook_config
+from julycode.hooks.actions import HookActionRunner
+from julycode.hooks.conditions import rule_matches
+from julycode.hooks.manager import HookManager
+from julycode.hooks.models import HookRuntimeContext
+from julycode.permissions import PermissionConfig
+from julycode.permissions.controller import create_permission_controller
+from julycode.tools.base import ToolCall, ToolContext, ToolExecutionError, ToolResult, ToolSpec
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import ToolRegistry, create_default_registry
 
 
 class FakeTool:

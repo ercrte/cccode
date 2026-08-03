@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import hashlib
 
-from mewcode.repo_map import FileFingerprint, ScannedFile
-from mewcode.repo_map.parser import PythonSymbolParser
+from julycode.repo_map import FileFingerprint, ScannedFile
+from julycode.repo_map.parser import PythonSymbolParser
 
 
 def _source(path: str, content: bytes) -> ScannedFile:

@@ -22,6 +22,6 @@
 - [ ] 缓存 usage 解析保持兼容：OpenAI `cached_tokens`、Anthropic `cache_read_input_tokens` 和 `cache_creation_input_tokens` 能映射为已有缓存状态（验证：运行 `python -m pytest tests/test_openai_provider.py::test_openai_streams_cache_hit_usage tests/test_openai_provider.py::test_openai_streams_cache_miss_usage tests/test_openai_provider.py::test_openai_usage_without_cache_fields_is_unknown tests/test_anthropic_provider.py::test_anthropic_streams_cache_read_usage tests/test_anthropic_provider.py::test_anthropic_streams_cache_creation_usage tests/test_anthropic_provider.py::test_anthropic_usage_without_cache_fields_is_unknown -q`，期望通过）
 
 ## 端到端场景
-- [ ] 场景 1：在 tmux 中启动 MewCode，输入“请查看 README 里关于缓存的说明，并告诉我当前项目如何观测缓存命中” → MewCode 调用读取或搜索工具并生成中文回复（验证：观察 tmux 输出，期望出现工具执行过程和最终回复）
-- [ ] 场景 2：同一 tmux 会话内继续输入“再检查一下 Provider 里缓存字段是怎么解析的” → MewCode 继续调用读取或搜索工具，状态栏或 usage 事件显示 Cache 状态为 hit、write、miss、unknown 或 unsupported 中的一个（验证：观察 tmux 输出和状态栏，真实供应商不要求必然 hit）
+- [ ] 场景 1：在 tmux 中启动 JulyCode，输入“请查看 README 里关于缓存的说明，并告诉我当前项目如何观测缓存命中” → JulyCode 调用读取或搜索工具并生成中文回复（验证：观察 tmux 输出，期望出现工具执行过程和最终回复）
+- [ ] 场景 2：同一 tmux 会话内继续输入“再检查一下 Provider 里缓存字段是怎么解析的” → JulyCode 继续调用读取或搜索工具，状态栏或 usage 事件显示 Cache 状态为 hit、write、miss、unknown 或 unsupported 中的一个（验证：观察 tmux 输出和状态栏，真实供应商不要求必然 hit）
 - [ ] 场景 3：对照本 checklist 逐项验收 → 所有单元测试项有命令证据，tmux 场景有观察记录；若真实供应商返回 miss 或 unknown，记录为缓存观测正常而非命中保证失败（验证：生成验收报告，期望每项有通过或失败证据）

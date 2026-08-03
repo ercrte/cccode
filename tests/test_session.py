@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mewcode.context.models import ContextSummary
-from mewcode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
-from mewcode.providers.base import ChatMessage
-from mewcode.session import ChatSession, PendingPlan
-from mewcode.tools.base import ToolResult, ToolSpec
-from mewcode.session_id import is_valid_session_id
+from julycode.context.models import ContextSummary
+from julycode.prompting.base import GeneratedContextBlock, PromptBlock, PromptBundle
+from julycode.providers.base import ChatMessage
+from julycode.session import ChatSession, PendingPlan
+from julycode.tools.base import ToolResult, ToolSpec
+from julycode.session_id import is_valid_session_id
 
 
 def test_empty_session_builds_empty_request() -> None:
@@ -91,7 +91,7 @@ def test_repo_map_generated_context_is_request_only() -> None:
     repo_map = GeneratedContextBlock(
         name="repo_map",
         title="仓库地图",
-        text='<mewcode_repo_map revision="abc123">\ntarget.py:1\n</mewcode_repo_map>',
+        text='<julycode_repo_map revision="abc123">\ntarget.py:1\n</julycode_repo_map>',
         kind="repo_map",
         snapshot_id="snapshot-secret-id",
     )

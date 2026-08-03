@@ -6,11 +6,11 @@
 |------|------|------|
 | 修改 | `eval/run_eval.py` | 默认在线 CLI、模式参数、真实 Provider 配置加载 |
 | 修改 | `eval/README.md` | 在线默认、离线 smoke、费用和不稳定性说明 |
-| 修改 | `eval/mew_eval/models.py` | 增加 mode、Provider 信息、cache usage、用例标签 |
-| 修改 | `eval/mew_eval/loader.py` | 解析新增用例字段，校验 online/offline 标签 |
-| 修改 | `eval/mew_eval/runner.py` | 支持在线 Provider 注入和离线脚本 Provider |
-| 修改 | `eval/mew_eval/report.py` | 报告输出运行环境、模型和 prompt cache 信息 |
-| 修改 | `eval/mew_eval/provider.py` | 保留离线脚本 Provider，适配 offline 用例目录 |
+| 修改 | `eval/july_eval/models.py` | 增加 mode、Provider 信息、cache usage、用例标签 |
+| 修改 | `eval/july_eval/loader.py` | 解析新增用例字段，校验 online/offline 标签 |
+| 修改 | `eval/july_eval/runner.py` | 支持在线 Provider 注入和离线脚本 Provider |
+| 修改 | `eval/july_eval/report.py` | 报告输出运行环境、模型和 prompt cache 信息 |
+| 修改 | `eval/july_eval/provider.py` | 保留离线脚本 Provider，适配 offline 用例目录 |
 | 新建 | `eval/cases/online/*.json` | 至少 30 个真实模型评测用例 |
 | 新建 | `eval/cases/offline/*.json` | 迁移现有 7 个离线 smoke 用例 |
 | 删除或迁移 | `eval/cases/*.json` | 旧根目录用例迁移到 `offline/` |
@@ -30,7 +30,7 @@
 
 ## T2: 实现在线模式数据结构
 
-**文件：** `eval/mew_eval/models.py`、`eval/mew_eval/__init__.py`  
+**文件：** `eval/july_eval/models.py`、`eval/july_eval/__init__.py`  
 **依赖：** T1  
 **步骤：**
 1. 新增 `EvalRunMode` 和 `EvalProviderInfo`。
@@ -55,7 +55,7 @@
 
 ## T4: 实现 loader 新字段解析
 
-**文件：** `eval/mew_eval/loader.py`  
+**文件：** `eval/july_eval/loader.py`  
 **依赖：** T3  
 **步骤：**
 1. 解析 `tags` 为 tuple。
@@ -105,7 +105,7 @@
 
 ## T8: 实现 runner 在线/离线分支
 
-**文件：** `eval/mew_eval/runner.py`  
+**文件：** `eval/july_eval/runner.py`  
 **依赖：** T7  
 **步骤：**
 1. 根据 `EvalRunOptions.mode` 选择 Provider。
@@ -129,7 +129,7 @@
 
 ## T10: 实现报告运行环境区块
 
-**文件：** `eval/mew_eval/report.py`  
+**文件：** `eval/july_eval/report.py`  
 **依赖：** T9  
 **步骤：**
 1. JSON dataclass 转换自然包含 provider 字段。
@@ -169,7 +169,7 @@
 
 ## T13: 更新离线 Provider 测试路径和语义
 
-**文件：** `tests/test_eval_framework.py`、`eval/mew_eval/provider.py`  
+**文件：** `tests/test_eval_framework.py`、`eval/july_eval/provider.py`  
 **依赖：** T5、T12  
 **步骤：**
 1. 保留 `ScriptedEvalProvider` 单测。
@@ -241,7 +241,7 @@
 **文件：** `eval/results/online/`  
 **依赖：** T16  
 **步骤：**
-1. 如果当前环境存在有效 MewCode 配置和网络，运行 `python eval/run_eval.py --case online_basic_project_summary --output eval/results/online-single --allow-review`。
+1. 如果当前环境存在有效 JulyCode 配置和网络，运行 `python eval/run_eval.py --case online_basic_project_summary --output eval/results/online-single --allow-review`。
 2. 如果缺少配置或网络，记录为环境阻塞，不视为实现失败。
 3. 检查报告包含 online mode、model、provider 和 usage。
 

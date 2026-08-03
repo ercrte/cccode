@@ -5,9 +5,9 @@ from typing import Any
 
 import pytest
 
-from mewcode.config import McpServerConfig
-from mewcode.mcp.client import McpClientSession
-from mewcode.mcp.errors import McpProtocolError, McpToolError
+from julycode.config import McpServerConfig
+from julycode.mcp.client import McpClientSession
+from julycode.mcp.errors import McpProtocolError, McpToolError
 
 
 class FakeTransport:
@@ -64,7 +64,7 @@ async def test_client_initialize_sends_initialize_and_initialized_notification()
     assert transport.requests[0][0] == "initialize"
     assert transport.requests[0][1]["protocolVersion"] == "2025-06-18"
     assert transport.requests[0][1]["capabilities"] == {}
-    assert transport.requests[0][1]["clientInfo"]["name"] == "MewCode"
+    assert transport.requests[0][1]["clientInfo"]["name"] == "JulyCode"
     assert transport.notifications == [("notifications/initialized", None)]
     assert session.initialized is True
 

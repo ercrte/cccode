@@ -4,21 +4,21 @@ import sys
 from pathlib import Path
 from urllib.request import urlopen
 
-from mewcode.config import AppConfig, McpConfig, McpOAuthConfig, McpServerConfig
-from mewcode.context.manager import ContextManager
-from mewcode.mcp.manager import McpManager
-from mewcode.mcp.oauth.client import McpOAuthSession
-from mewcode.mcp.oauth.discovery import OAuthMetadataDiscovery
-from mewcode.mcp.oauth.models import OAuthChallenge
-from mewcode.mcp.oauth.store import MemoryCredentialStore
-from mewcode.permissions.controller import create_permission_controller
-from mewcode.permissions.models import PermissionConfig
-from mewcode.providers.factory import create_provider
-from mewcode.session import ChatSession
-from mewcode.tools.base import ToolContext
-from mewcode.tools.executor import ToolExecutor
-from mewcode.tools.registry import create_default_registry
-from mewcode.tui.app import MewCodeApp
+from julycode.config import AppConfig, McpConfig, McpOAuthConfig, McpServerConfig
+from julycode.context.manager import ContextManager
+from julycode.mcp.manager import McpManager
+from julycode.mcp.oauth.client import McpOAuthSession
+from julycode.mcp.oauth.discovery import OAuthMetadataDiscovery
+from julycode.mcp.oauth.models import OAuthChallenge
+from julycode.mcp.oauth.store import MemoryCredentialStore
+from julycode.permissions.controller import create_permission_controller
+from julycode.permissions.models import PermissionConfig
+from julycode.providers.factory import create_provider
+from julycode.session import ChatSession
+from julycode.tools.base import ToolContext
+from julycode.tools.executor import ToolExecutor
+from julycode.tools.registry import create_default_registry
+from julycode.tui.app import JulyCodeApp
 
 
 def open_fixture_authorization(url: str) -> bool:
@@ -88,7 +88,7 @@ def main() -> None:
     registry = create_default_registry()
     executor = ToolExecutor(registry, ToolContext(cwd=Path.cwd()))
     manager = McpManager(mcp, oauth_session_factory=oauth_factory)
-    app = MewCodeApp(
+    app = JulyCodeApp(
         ChatSession(),
         create_provider(config),
         config,

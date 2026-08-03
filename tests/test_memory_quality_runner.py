@@ -21,12 +21,12 @@ from memory_quality.models import (
 )
 from memory_quality.offline import ScriptedMemoryQualityProvider
 from memory_quality.runner import MemoryQualityRunner
-from mewcode.memory.index import MemoryIndexBuilder
-from mewcode.memory.models import KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
-from mewcode.memory.notes import MemoryNoteStore
-from mewcode.memory.updater import MemoryNoteUpdater
-from mewcode.providers.base import ChatMessage
-from mewcode.session_id import SessionId
+from julycode.memory.index import MemoryIndexBuilder
+from julycode.memory.models import KnowledgeContext, MemoryUpdateJob, SessionMemoryConfig
+from julycode.memory.notes import MemoryNoteStore
+from julycode.memory.updater import MemoryNoteUpdater
+from julycode.providers.base import ChatMessage
+from julycode.session_id import SessionId
 
 
 def critical_expected() -> ExpectedMemory:

@@ -1,15 +1,15 @@
-# MewCode 会话恢复与长期记忆 Plan
+# JulyCode 会话恢复与长期记忆 Plan
 
 ## 架构概览
-本阶段新增 `mewcode.memory` 子系统，负责项目指令加载、JSONL 会话存档、启动恢复、自动笔记和记忆索引。它位于 CLI/TUI、Agent Loop、PromptBuilder 和现有上下文管理之间：CLI 启动时先创建记忆管理器并恢复会话；Agent Loop 每次请求前从记忆管理器读取最新知识上下文；Agent Loop 自然完成后把本轮对话交给记忆管理器后台更新笔记。
+本阶段新增 `julycode.memory` 子系统，负责项目指令加载、JSONL 会话存档、启动恢复、自动笔记和记忆索引。它位于 CLI/TUI、Agent Loop、PromptBuilder 和现有上下文管理之间：CLI 启动时先创建记忆管理器并恢复会话；Agent Loop 每次请求前从记忆管理器读取最新知识上下文；Agent Loop 自然完成后把本轮对话交给记忆管理器后台更新笔记。
 
-项目指令作为运行时知识块加载，不写入 `ChatSession.messages`。加载顺序固定为项目管理目录级、项目根级、用户级，对应 `<project>/.mewcode/AGENTS.md`、`<project>/AGENTS.md`、`~/.mewcode/AGENTS.md`；同一文件内的 `@include <relative-path>` 会在加载阶段展开，展开时限制深度、用 visited 集合防环路，并按作用域拦截越界路径。
+项目指令作为运行时知识块加载，不写入 `ChatSession.messages`。加载顺序固定为项目管理目录级、项目根级、用户级，对应 `<project>/.julycode/AGENTS.md`、`<project>/AGENTS.md`、`~/.julycode/AGENTS.md`；同一文件内的 `@include <relative-path>` 会在加载阶段展开，展开时限制深度、用 visited 集合防环路，并按作用域拦截越界路径。
 
-会话存档使用项目内 `.mewcode/sessions/<session_id>.jsonl`。每条用户、助手、工具消息追加为一行 JSON；上下文压缩后的摘要和近期消息检查点也用追加事件记录在同一个 JSONL 中，不额外维护 meta 文件。会话列表通过扫描 JSONL 计算标题、消息数、最近更新时间和过期状态。
+会话存档使用项目内 `.julycode/sessions/<session_id>.jsonl`。每条用户、助手、工具消息追加为一行 JSON；上下文压缩后的摘要和近期消息检查点也用追加事件记录在同一个 JSONL 中，不额外维护 meta 文件。会话列表通过扫描 JSONL 计算标题、消息数、最近更新时间和过期状态。
 
 会话启动恢复由 `SessionBootstrapper` 编排。默认扫描同一项目的会话目录，清理 30 天以上未活动会话，恢复最近未过期会话；如果用户传入 `--new-session`，则创建空会话。恢复时先跳过坏行，再应用检查点，再用协议校验器截断未配对工具调用或孤立工具结果；如果恢复后的历史超过预算，则复用现有 `ContextManager` 执行一次压缩，压缩仍超限时放弃恢复该会话并启动空会话，同时给出中文告警。
 
-长期记忆分为用户级和项目级两个存储根。用户级在 `~/.mewcode/memory/`，项目级在 `<project>/.mewcode/memory/`；每条笔记是一个带 frontmatter 的 Markdown 文件，分类为用户偏好、纠正反馈、项目知识和参考资料。索引文件由笔记扫描生成，写入各自 `index.md`，并控制在 200 行和 25KB 内。索引在处理用户请求前注入运行时提示，因此模型表现为已经读过这些记忆。
+长期记忆分为用户级和项目级两个存储根。用户级在 `~/.julycode/memory/`，项目级在 `<project>/.julycode/memory/`；每条笔记是一个带 frontmatter 的 Markdown 文件，分类为用户偏好、纠正反馈、项目知识和参考资料。索引文件由笔记扫描生成，写入各自 `index.md`，并控制在 200 行和 25KB 内。索引在处理用户请求前注入运行时提示，因此模型表现为已经读过这些记忆。
 
 自动笔记更新在 Agent Loop 自然完成后触发。`AgentLoopRunner` 只负责提交后台任务，不等待更新完成；更新任务用无工具 LLM 请求生成笔记操作，由 LLM 判断是否创建、更新、合并或跳过，写入后重建索引。更新失败只记录中文告警，不影响 TUI 继续对话。
 
@@ -20,10 +20,10 @@
 @dataclass(frozen=True)
 class SessionMemoryConfig:
     enabled: bool = True
-    project_dir: str = ".mewcode"
+    project_dir: str = ".julycode"
     sessions_dir: str = "sessions"
     memory_dir: str = "memory"
-    user_dir: str = "~/.mewcode"
+    user_dir: str = "~/.julycode"
     instruction_filename: str = "AGENTS.md"
     include_max_depth: int = 5
     auto_restore: bool = True
@@ -33,7 +33,7 @@ class SessionMemoryConfig:
     index_max_bytes: int = 25_000
     auto_notes_enabled: bool = True
 ```
-挂到 `AppConfig.memory`。`project_dir` 是项目内 MewCode 管理目录；`sessions_dir` 和 `memory_dir` 都相对 `project_dir`。`user_dir` 默认展开到用户主目录。
+挂到 `AppConfig.memory`。`project_dir` 是项目内 JulyCode 管理目录；`sessions_dir` 和 `memory_dir` 都相对 `project_dir`。`user_dir` 默认展开到用户主目录。
 
 ### SessionId
 ```python
@@ -174,7 +174,7 @@ class InstructionLoader:
 
     def load(self) -> InstructionBundle: ...
 ```
-按三层路径加载指令，并展开 include。include 语法为独立一行 `@include <relative/path.md>`；相对路径基于当前文件所在目录解析。项目级 include 必须仍在项目根目录内，用户级 include 必须仍在 `~/.mewcode` 内。
+按三层路径加载指令，并展开 include。include 语法为独立一行 `@include <relative/path.md>`；相对路径基于当前文件所在目录解析。项目级 include 必须仍在项目根目录内，用户级 include 必须仍在 `~/.julycode` 内。
 
 ### SessionJsonlStore
 ```python
@@ -292,89 +292,89 @@ class RuntimePromptContext:
     knowledge_context: KnowledgeContext | None = None
 ```
 `PromptBuilder.build_runtime_prompt()` 在现有运行时补充后追加：
-- `<mewcode_project_instructions>`：三层指令，按优先级排列并标明来源。
-- `<mewcode_memory_index>`：用户级和项目级索引，标明 scope。
-- `<mewcode_restore_notice>`：时间跨度提醒和恢复告警。
-- 现有 `<mewcode_context_summary>` 保持独立块。
+- `<julycode_project_instructions>`：三层指令，按优先级排列并标明来源。
+- `<julycode_memory_index>`：用户级和项目级索引，标明 scope。
+- `<julycode_restore_notice>`：时间跨度提醒和恢复告警。
+- 现有 `<julycode_context_summary>` 保持独立块。
 
 ## 模块设计
 
-### `mewcode.session_id`
+### `julycode.session_id`
 **职责：** 生成和校验 `YYYYMMDD-HHMMSS-xxxx` 会话 ID。  
 **对外接口：** `new_session_id()`、`is_valid_session_id(value)`。  
 **依赖：** 标准库 `datetime`、`secrets`、`re`。
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 解析 `memory:` 配置并挂到 `AppConfig.memory`。  
 **对外接口：** 现有 `load_config()`，新增 `_parse_memory()`。  
 **依赖：** `SessionMemoryConfig`。
 
-### `mewcode.session`
+### `julycode.session`
 **职责：** 保持运行期消息历史，并在可选 recorder 存在时追加写 JSONL。  
 **对外接口：** 现有 `ChatSession` 方法保持兼容，新增 `set_recorder()` 和 `append_checkpoint()`。  
 **依赖：** `ContextState`、`PersistentSessionRecorder` 协议。
 
-### `mewcode.memory.models`
+### `julycode.memory.models`
 **职责：** 定义指令、会话存档、恢复报告、记忆笔记、索引和启动结果模型。  
 **对外接口：** 上述 dataclass 和 Literal 类型。  
 **依赖：** Provider 基础消息类型、上下文摘要类型。
 
-### `mewcode.memory.instructions`
+### `julycode.memory.instructions`
 **职责：** 加载三层指令文件和展开 include。  
 **对外接口：** `InstructionLoader.load()`。  
 **依赖：** `pathlib`、`SessionMemoryConfig`。
 
-### `mewcode.memory.session_store`
+### `julycode.memory.session_store`
 **职责：** JSONL 会话追加写、扫描、恢复、过期清理和会话列表计算。  
 **对外接口：** `SessionJsonlStore`、`PersistentSessionRecorder`。  
 **依赖：** `json`、`ChatSession`、`ChatMessage`、`ToolCall`、`ContextSummary`。
 
-### `mewcode.memory.recovery`
+### `julycode.memory.recovery`
 **职责：** 协议安全截断、时间跨度提醒和启动恢复编排。  
 **对外接口：** `SessionHistoryValidator`、`SessionBootstrapper`。  
 **依赖：** `SessionJsonlStore`、`ContextManager`、`PromptBuilder`、`LLMProvider`。
 
-### `mewcode.memory.notes`
+### `julycode.memory.notes`
 **职责：** Markdown 笔记 frontmatter 读写、分类目录和敏感信息过滤。  
 **对外接口：** `MemoryNoteStore`。  
 **依赖：** 标准库；frontmatter 用简单 YAML 头部解析复用现有 `PyYAML`。
 
-### `mewcode.memory.index`
+### `julycode.memory.index`
 **职责：** 从笔记生成和读取用户级、项目级索引，并强制行数和字节上限。  
 **对外接口：** `MemoryIndexBuilder`。  
 **依赖：** `MemoryNoteStore`。
 
-### `mewcode.memory.updater`
+### `julycode.memory.updater`
 **职责：** Agent 自然完成后用无工具 LLM 请求更新自动笔记。  
 **对外接口：** `MemoryNoteUpdater.update()`。  
 **依赖：** `LLMProvider`、`ChatRequest`、`MemoryNoteStore`、`MemoryIndexBuilder`。
 
-### `mewcode.memory.manager`
+### `julycode.memory.manager`
 **职责：** 对外提供启动、运行时知识读取和后台更新任务管理。  
 **对外接口：** `SessionMemoryManager`。  
 **依赖：** memory 子模块、`asyncio`、`logging`。
 
-### `mewcode.prompting.base` 与 `mewcode.prompting.builder`
+### `julycode.prompting.base` 与 `julycode.prompting.builder`
 **职责：** 扩展运行时提示输入并注入项目指令、记忆索引和恢复提醒。  
 **对外接口：** `RuntimePromptContext`、`PromptBuilder.build_bundle()`。  
 **依赖：** `KnowledgeContext`。
 
-### `mewcode.context.manager`
+### `julycode.context.manager`
 **职责：** 保持现有轻量/重量压缩职责；重量压缩成功后通知 session 追加 checkpoint。  
 **对外接口：** `prepare_request()`、`manual_compact()` 保持不变。  
 **依赖：** `ChatSession.append_checkpoint()`。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 请求前注入最新知识上下文；自然完成后调度自动笔记更新。  
 **对外接口：** `AgentLoopRunner` 构造参数新增 `memory_manager: SessionMemoryManager | None`。  
 **依赖：** `SessionMemoryManager`、`MemoryUpdateJob`。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 接收启动恢复结果并显示中文启动告警；创建 AgentLoopRunner 时传入 memory manager。  
-**对外接口：** `MewCodeApp(...)` 构造参数新增 `memory_manager` 和 `restore_report`。  
+**对外接口：** `JulyCodeApp(...)` 构造参数新增 `memory_manager` 和 `restore_report`。  
 **依赖：** `SessionMemoryManager`。
 
-### `mewcode.cli`
+### `julycode.cli`
 **职责：** 解析 `--new-session`，创建记忆管理器并执行启动恢复。  
 **对外接口：** `main(argv=None)`。  
 **依赖：** `argparse`、`SessionMemoryManager`。
@@ -382,7 +382,7 @@ class RuntimePromptContext:
 ## 模块交互
 
 ### 启动流程
-1. 用户运行 `mewcode`，可选 `--new-session`。
+1. 用户运行 `julycode`，可选 `--new-session`。
 2. `cli.main()` 加载配置、创建 Provider、工具注册表、权限控制器和 `ContextManager`。
 3. `cli.main()` 创建 `SessionMemoryManager`，调用 `bootstrap()`。
 4. `SessionMemoryManager` 清理超过 30 天未活动的 JSONL 会话。
@@ -418,13 +418,13 @@ class RuntimePromptContext:
 
 ## 文件组织
 ```text
-mewcode/
+julycode/
 ├── specs/session-memory/
 │   ├── spec.md                         — 已批准需求
 │   ├── plan.md                         — 本技术设计
 │   ├── task.md                         — 后续任务拆解
 │   └── checklist.md                    — 后续验收清单
-├── src/mewcode/
+├── src/julycode/
 │   ├── session_id.py                   — 会话 ID 生成与校验
 │   ├── config.py                       — 解析 memory 配置
 │   ├── session.py                      — ChatSession 绑定 recorder 和 checkpoint
@@ -460,7 +460,7 @@ mewcode/
 │   ├── test_tui_smoke.py               — 启动恢复提示和既有 TUI 行为
 │   └── test_config.py                  — memory 配置解析
 ├── README.md                           — 说明会话恢复、项目指令和记忆目录
-└── .gitignore                          — 忽略 .mewcode/sessions/、.mewcode/memory/ 自动产物
+└── .gitignore                          — 忽略 .julycode/sessions/、.julycode/memory/ 自动产物
 ```
 
 ## 技术决策
@@ -468,9 +468,9 @@ mewcode/
 | 决策点 | 选择 | 理由 |
 |--------|------|------|
 | 指令文件名 | 三层都使用 `AGENTS.md` | 仓库已有 `AGENTS.md`，用户和项目都能直接手写 Markdown，避免新增命名体系 |
-| 指令优先级 | `.mewcode/AGENTS.md` > `AGENTS.md` > `~/.mewcode/AGENTS.md` | 项目专用细节优先，其次项目根通用说明，最后用户通用偏好 |
+| 指令优先级 | `.julycode/AGENTS.md` > `AGENTS.md` > `~/.julycode/AGENTS.md` | 项目专用细节优先，其次项目根通用说明，最后用户通用偏好 |
 | include 语法 | 独立行 `@include <relative-path>` | 易读、易解析、可避免在普通正文中误触发复杂语法 |
-| 会话存储 | `.mewcode/sessions/<id>.jsonl` 追加事件 | 满足追加快、坏行可跳过、无 meta 同步负担，也能记录压缩检查点 |
+| 会话存储 | `.julycode/sessions/<id>.jsonl` 追加事件 | 满足追加快、坏行可跳过、无 meta 同步负担，也能记录压缩检查点 |
 | 会话 ID | `YYYYMMDD-HHMMSS-xxxx` | 可按文件名粗略排序，随机后缀避免同秒冲突 |
 | 恢复默认 | 自动恢复最近未过期会话，`--new-session` 创建空会话 | 贴合“中断后接着用”，同时给用户明确逃生口 |
 | 超限恢复 | 启动时先尝试一次现有上下文压缩 | 复用已验证的摘要和安全边界机制，不新增第二套压缩逻辑 |

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.worktrees import (
+from julycode.worktrees import (
     WorktreeConfig,
     WorktreeDisposition,
     WorktreeError,
@@ -28,7 +28,7 @@ from mewcode.worktrees import (
     validate_relative_name,
     worktree_name,
 )
-from mewcode.subagents.cache import FileReadCache
+from julycode.subagents.cache import FileReadCache
 
 
 def git(cwd: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -45,8 +45,8 @@ def git(cwd: Path, *args: str, check: bool = True) -> subprocess.CompletedProces
 def init_repository(path: Path) -> Path:
     path.mkdir(parents=True)
     git(path, "init", "-q")
-    git(path, "config", "user.name", "MewCode Tests")
-    git(path, "config", "user.email", "mewcode@example.test")
+    git(path, "config", "user.name", "JulyCode Tests")
+    git(path, "config", "user.email", "julycode@example.test")
     (path / "README.md").write_text("base\n", encoding="utf-8")
     git(path, "add", "README.md")
     git(path, "commit", "-qm", "initial")
@@ -58,7 +58,7 @@ async def create_environment_fixture(tmp_path: Path) -> tuple[RepositoryLayout, 
     client = GitClient()
     layout = discover_repository_layout(repository)
     root = layout.storage_root / "reviewer/task-1"
-    branch = "mewcode/reviewer/task-1"
+    branch = "julycode/reviewer/task-1"
     base = await client.head_commit(cwd=repository)
     await client.ensure_local_exclude(repository_root=repository)
     await client.create_worktree(cwd=repository, path=root, branch=branch, base=base)
@@ -133,7 +133,7 @@ def test_repository_layout_supports_subdirectory_start(tmp_path: Path) -> None:
     assert layout.main_cwd == nested.resolve()
     assert layout.repository_root == repository.resolve()
     assert layout.relative_cwd == Path("src/pkg")
-    assert layout.storage_root == (repository / ".mewcode/worktrees").resolve()
+    assert layout.storage_root == (repository / ".julycode/worktrees").resolve()
     assert len(layout.repository_id) == 64
 
 
@@ -169,7 +169,7 @@ def test_resolve_inside_accepts_missing_leaf(tmp_path: Path) -> None:
 def test_generated_names_ignore_task_text() -> None:
     relative = worktree_name("reviewer", "subagent-123-1")
     assert relative == "reviewer/subagent-123-1"
-    assert branch_name(relative) == "mewcode/reviewer/subagent-123-1"
+    assert branch_name(relative) == "julycode/reviewer/subagent-123-1"
 
 
 def test_file_read_cache_isolated_by_absolute_worktree_path(tmp_path: Path) -> None:
@@ -213,7 +213,7 @@ async def test_local_exclude_hides_worktree_storage(tmp_path: Path) -> None:
     repository = init_repository(tmp_path / "repo")
     client = GitClient()
     await client.ensure_local_exclude(repository_root=repository)
-    storage = repository / ".mewcode/worktrees/demo"
+    storage = repository / ".julycode/worktrees/demo"
     storage.mkdir(parents=True)
     (storage / "file.txt").write_text("ignored", encoding="utf-8")
 
@@ -225,13 +225,13 @@ async def test_create_git_worktree_excludes_main_uncommitted_changes(tmp_path: P
     repository = init_repository(tmp_path / "repo")
     client = GitClient()
     (repository / "README.md").write_text("dirty main\n", encoding="utf-8")
-    worktree = repository / ".mewcode/worktrees/reviewer/task-1"
+    worktree = repository / ".julycode/worktrees/reviewer/task-1"
     await client.ensure_local_exclude(repository_root=repository)
 
     await client.create_worktree(
         cwd=repository,
         path=worktree,
-        branch="mewcode/reviewer/task-1",
+        branch="julycode/reviewer/task-1",
         base=await client.head_commit(cwd=repository),
     )
 
@@ -244,12 +244,12 @@ async def test_create_git_worktree_excludes_main_uncommitted_changes(tmp_path: P
 async def test_create_git_worktree_shares_repository_objects(tmp_path: Path) -> None:
     repository = init_repository(tmp_path / "repo")
     client = GitClient()
-    worktree = repository / ".mewcode/worktrees/reviewer/task-1"
+    worktree = repository / ".julycode/worktrees/reviewer/task-1"
     await client.ensure_local_exclude(repository_root=repository)
     await client.create_worktree(
         cwd=repository,
         path=worktree,
-        branch="mewcode/reviewer/task-1",
+        branch="julycode/reviewer/task-1",
         base=await client.head_commit(cwd=repository),
     )
 
@@ -262,14 +262,14 @@ async def test_create_git_worktree_shares_repository_objects(tmp_path: Path) -> 
 async def test_branch_conflict_does_not_reset_existing_branch(tmp_path: Path) -> None:
     repository = init_repository(tmp_path / "repo")
     client = GitClient()
-    branch = "mewcode/reviewer/task-1"
+    branch = "julycode/reviewer/task-1"
     git(repository, "branch", branch)
     original = git(repository, "rev-parse", branch).stdout.strip()
 
     with pytest.raises(WorktreeError, match="分支已存在"):
         await client.create_worktree(
             cwd=repository,
-            path=repository / ".mewcode/worktrees/reviewer/task-1",
+            path=repository / ".julycode/worktrees/reviewer/task-1",
             branch=branch,
             base="HEAD",
         )
@@ -287,9 +287,9 @@ async def test_worktree_inherits_custom_git_hooks(tmp_path: Path) -> None:
     hook.chmod(0o755)
     git(repository, "config", "core.hooksPath", ".githooks")
     client = GitClient()
-    worktree = repository / ".mewcode/worktrees/reviewer/task-1"
+    worktree = repository / ".julycode/worktrees/reviewer/task-1"
     await client.ensure_local_exclude(repository_root=repository)
-    await client.create_worktree(cwd=repository, path=worktree, branch="mewcode/reviewer/task-1", base="HEAD")
+    await client.create_worktree(cwd=repository, path=worktree, branch="julycode/reviewer/task-1", base="HEAD")
     before = git(repository, "config", "--get", "core.hooksPath").stdout.strip()
 
     await client.configure_hooks(main_root=repository, worktree_root=worktree)
@@ -306,9 +306,9 @@ async def test_worktree_inherits_custom_git_hooks(tmp_path: Path) -> None:
 async def test_shared_hooks_need_no_override(tmp_path: Path) -> None:
     repository = init_repository(tmp_path / "repo")
     client = GitClient()
-    worktree = repository / ".mewcode/worktrees/reviewer/task-1"
+    worktree = repository / ".julycode/worktrees/reviewer/task-1"
     await client.ensure_local_exclude(repository_root=repository)
-    await client.create_worktree(cwd=repository, path=worktree, branch="mewcode/reviewer/task-1", base="HEAD")
+    await client.create_worktree(cwd=repository, path=worktree, branch="julycode/reviewer/task-1", base="HEAD")
 
     await client.configure_hooks(main_root=repository, worktree_root=worktree)
 
@@ -320,9 +320,9 @@ async def test_change_state_tracks_dirty_untracked_and_unpushed(tmp_path: Path) 
     repository = init_repository(tmp_path / "repo")
     client = GitClient()
     base = await client.head_commit(cwd=repository)
-    worktree = repository / ".mewcode/worktrees/reviewer/task-1"
+    worktree = repository / ".julycode/worktrees/reviewer/task-1"
     await client.ensure_local_exclude(repository_root=repository)
-    await client.create_worktree(cwd=repository, path=worktree, branch="mewcode/reviewer/task-1", base=base)
+    await client.create_worktree(cwd=repository, path=worktree, branch="julycode/reviewer/task-1", base=base)
 
     clean = await client.change_state(worktree_root=worktree, base=base)
     assert clean == clean.__class__(False, (), 0, None, 0)
@@ -349,8 +349,8 @@ async def test_change_state_detects_pushed_and_later_unpushed_commits(tmp_path: 
     git(repository, "remote", "add", "origin", str(remote))
     client = GitClient()
     base = await client.head_commit(cwd=repository)
-    branch = "mewcode/reviewer/task-1"
-    worktree = repository / ".mewcode/worktrees/reviewer/task-1"
+    branch = "julycode/reviewer/task-1"
+    worktree = repository / ".julycode/worktrees/reviewer/task-1"
     await client.ensure_local_exclude(repository_root=repository)
     await client.create_worktree(cwd=repository, path=worktree, branch=branch, base=base)
     (worktree / "first.txt").write_text("first", encoding="utf-8")
@@ -451,9 +451,9 @@ async def test_copy_paths_and_ignored_copy_are_independent(tmp_path: Path) -> No
     root = layout.storage_root / "reviewer/task-1"
     base = await client.head_commit(cwd=repository)
     await client.ensure_local_exclude(repository_root=repository)
-    await client.create_worktree(cwd=repository, path=root, branch="mewcode/reviewer/task-1", base=base)
+    await client.create_worktree(cwd=repository, path=root, branch="julycode/reviewer/task-1", base=base)
     lease = WorktreeLease(
-        metadata=WorktreeMetadata(1, layout.repository_id, "task-1", "reviewer", "reviewer/task-1", "mewcode/reviewer/task-1", base, datetime.now(timezone.utc).isoformat()),
+        metadata=WorktreeMetadata(1, layout.repository_id, "task-1", "reviewer", "reviewer/task-1", "julycode/reviewer/task-1", base, datetime.now(timezone.utc).isoformat()),
         root=root,
         cwd=root,
         recovered=False,
@@ -531,12 +531,12 @@ async def test_manager_acquire_new_writes_complete_metadata(tmp_path: Path) -> N
 
     raw = json.loads((lease.root / METADATA_FILENAME).read_text(encoding="utf-8"))
     assert lease.recovered is False
-    assert lease.root == (repository / ".mewcode/worktrees/reviewer/task-1").resolve()
+    assert lease.root == (repository / ".julycode/worktrees/reviewer/task-1").resolve()
     assert lease.cwd == lease.root
     assert raw["repository_id"] == manager.layout.repository_id  # type: ignore[union-attr]
     assert raw["task_id"] == "task-1"
     assert raw["role"] == "reviewer"
-    assert raw["branch"] == "mewcode/reviewer/task-1"
+    assert raw["branch"] == "julycode/reviewer/task-1"
     assert raw["base_commit"] == git(repository, "rev-parse", "HEAD").stdout.strip()
     assert datetime.fromisoformat(raw["created_at"]).tzinfo is not None
 
@@ -799,7 +799,7 @@ async def test_cleanup_failure_for_bad_metadata_does_not_stop_other_candidates(t
     creator = WorktreeManager(repository, WorktreeConfig(retention_days=1), clock=lambda: old)
     good = await creator.acquire(task_id="good-1", role="reviewer")
     creator._active.clear()
-    bad = repository / ".mewcode/worktrees/reviewer/bad-1"
+    bad = repository / ".julycode/worktrees/reviewer/bad-1"
     bad.mkdir(parents=True)
     (bad / METADATA_FILENAME).write_text("{bad", encoding="utf-8")
     cleaner = WorktreeManager(

@@ -5,11 +5,11 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from mewcode.context.models import SummaryError
-from mewcode.context.summarizer import HistorySummarizer
-from mewcode.errors import ProviderError
-from mewcode.providers.base import ChatMessage, ChatRequest, StreamEvent
-from mewcode.tools.base import ToolCall
+from julycode.context.models import SummaryError
+from julycode.context.summarizer import HistorySummarizer
+from julycode.errors import ProviderError
+from julycode.providers.base import ChatMessage, ChatRequest, StreamEvent
+from julycode.tools.base import ToolCall
 
 
 class FakeProvider:
@@ -47,7 +47,7 @@ async def test_summarizer_prompt_requires_draft_and_final_summary() -> None:
         provider=provider,
         previous_summary=None,
         messages=[ChatMessage(role="user", content="需求")],
-        external_paths=[".mewcode/context/a.json"],
+        external_paths=[".julycode/context/a.json"],
     )
 
     prompt = provider.requests[0].messages[0].content

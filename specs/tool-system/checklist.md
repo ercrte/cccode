@@ -1,4 +1,4 @@
-# MewCode 工具系统 Checklist
+# JulyCode 工具系统 Checklist
 
 > 每一项通过运行代码或观察行为来验证，聚焦系统行为。
 
@@ -37,13 +37,13 @@
 - [ ] 编排器、会话和 TUI 测试全部通过（验证：运行 `python -m pytest tests/test_agent.py tests/test_session.py tests/test_tui_smoke.py -q`，期望全部通过）
 - [ ] 全部自动化测试通过（验证：运行 `python -m pytest -q`，期望全部通过）
 - [ ] Python 文件无语法错误（验证：运行 `python -m compileall src tests`，期望无编译错误）
-- [ ] 命令入口可导入（验证：运行 `python -c "from mewcode.cli import main; print(callable(main))"`，期望输出 `True`）
+- [ ] 命令入口可导入（验证：运行 `python -c "from julycode.cli import main; print(callable(main))"`，期望输出 `True`）
 - [ ] 项目未配置 lint 命令时记录为不适用；如后续配置 lint，则 lint 检查通过（验证：查看 `pyproject.toml` 是否有 lint 配置；若有则运行对应命令，期望退出码为 0）
 
 ## 端到端场景
-- [ ] 场景 1：OpenAI mock 纯聊天仍流式输出（验证：在 tmux 中启动 `python tests/e2e_mock_openai_server.py 18765`，配置 MewCode 指向该服务，启动 `mewcode`，输入“用一句话解释递归”，观察回复逐步出现且输入区恢复可用）
+- [ ] 场景 1：OpenAI mock 纯聊天仍流式输出（验证：在 tmux 中启动 `python tests/e2e_mock_openai_server.py 18765`，配置 JulyCode 指向该服务，启动 `julycode`，输入“用一句话解释递归”，观察回复逐步出现且输入区恢复可用）
 - [ ] 场景 2：读取文件工具链路（验证：在项目中准备一个文本文件；tmux 中输入“读取这个文件并总结内容：<路径>”，观察界面显示 `read_file` 工具执行，最终回复引用文件内容）
-- [ ] 场景 3：写入文件工具链路（验证：tmux 中输入“创建 tmp/tool-demo.txt，内容是 MewCode tool ok”，观察界面显示 `write_file` 工具执行，最终回复说明写入成功；随后检查目标文件内容符合请求）
+- [ ] 场景 3：写入文件工具链路（验证：tmux 中输入“创建 tmp/tool-demo.txt，内容是 JulyCode tool ok”，观察界面显示 `write_file` 工具执行，最终回复说明写入成功；随后检查目标文件内容符合请求）
 - [ ] 场景 4：修改文件唯一匹配链路（验证：准备只包含一次目标原文的文件；tmux 中输入“把 <路径> 里的旧字符串替换为新字符串”，观察界面显示 `edit_file` 工具执行，最终回复说明替换成功；随后检查文件只发生预期替换）
 - [ ] 场景 5：修改文件匹配不到时不写入（验证：准备不包含目标原文的文件；tmux 中输入修改请求，观察 `edit_file` 返回未匹配失败，最终回复解释未修改；随后检查文件内容保持不变）
 - [ ] 场景 6：修改文件匹配多次时不写入（验证：准备目标原文出现两次的文件；tmux 中输入修改请求，观察 `edit_file` 返回匹配不唯一失败，最终回复解释未修改；随后检查文件内容保持不变）

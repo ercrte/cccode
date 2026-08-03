@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.teams.locking import AtomicJsonFile, FileLock, LockToken
-from mewcode.teams.models import (
+from julycode.teams.locking import AtomicJsonFile, FileLock, LockToken
+from julycode.teams.models import (
     TeamConfig,
     TeamDataError,
     TeamMemberRecord,
@@ -18,8 +18,8 @@ from mewcode.teams.models import (
     member_from_dict,
     task_from_dict,
 )
-from mewcode.teams.paths import TeamPaths, validate_member_name, validate_team_name
-from mewcode.teams.store import TeamStore
+from julycode.teams.paths import TeamPaths, validate_member_name, validate_team_name
+from julycode.teams.store import TeamStore
 from tests.test_worktrees import init_repository
 
 
@@ -32,7 +32,7 @@ def config(**changes) -> TeamConfig:
 def test_team_models_round_trip() -> None:
     member = TeamMemberRecord(
         name="worker", role="reviewer", backend="coroutine", require_approval=True, status="idle",
-        worktree_root="/repo/w", worktree_cwd="/repo/w", branch="mewcode/teams/demo-worker",
+        worktree_root="/repo/w", worktree_cwd="/repo/w", branch="julycode/teams/demo-worker",
         worktree_owner_id="demo-worker", session_path="/home/user/session.jsonl",
         current_task_id=None, pending_approval_id=None,
         created_at="2026-01-01T00:00:00+00:00", updated_at="2026-01-01T00:00:00+00:00",

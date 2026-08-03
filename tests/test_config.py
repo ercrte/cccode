@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from mewcode.config import (
+from julycode.config import (
     AgentConfig,
     AppConfig,
     McpConfig,
@@ -15,14 +15,14 @@ from mewcode.config import (
     load_config,
     resolve_api_key,
 )
-from mewcode.context.models import ContextConfig
-from mewcode.errors import ConfigError, redact_secret
-from mewcode.hooks.models import HookConfig
-from mewcode.memory.models import SessionMemoryConfig
-from mewcode.permissions import PermissionConfig
-from mewcode.subagents.models import SubAgentConfig
-from mewcode.teams.models import TeamConfig
-from mewcode.worktrees import WorktreeConfig
+from julycode.context.models import ContextConfig
+from julycode.errors import ConfigError, redact_secret
+from julycode.hooks.models import HookConfig
+from julycode.memory.models import SessionMemoryConfig
+from julycode.permissions import PermissionConfig
+from julycode.subagents.models import SubAgentConfig
+from julycode.teams.models import TeamConfig
+from julycode.worktrees import WorktreeConfig
 
 
 def write_yaml(path: Path, text: str) -> None:
@@ -43,7 +43,7 @@ def test_redact_secret_masks_common_secret_without_explicit_secret() -> None:
 def test_loads_required_yaml_fields(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -69,7 +69,7 @@ api_key: plain-key
 def test_mcp_config_defaults_to_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -89,7 +89,7 @@ api_key: plain-key
 def test_loads_repo_map_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -114,7 +114,7 @@ def test_rejects_invalid_repo_map_config(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -131,7 +131,7 @@ api_key: plain-key
 def test_loads_hook_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -157,7 +157,7 @@ def test_project_hooks_override_user_hooks(tmp_path: Path, monkeypatch: pytest.M
     home = tmp_path / "home"
     monkeypatch.setattr(Path, "home", lambda: home)
     write_yaml(
-        home / ".mewcode" / "config.yaml",
+        home / ".julycode" / "config.yaml",
         """
 protocol: openai
 model: user-model
@@ -172,7 +172,7 @@ hooks:
 """,
     )
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 model: project-model
 hooks:
@@ -193,7 +193,7 @@ hooks:
 def test_rejects_invalid_hooks_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -215,7 +215,7 @@ hooks:
 def test_loads_memory_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -223,10 +223,10 @@ base_url: https://example.test/v1
 api_key: plain-key
 memory:
   enabled: false
-  project_dir: .custom-mewcode
+  project_dir: .custom-julycode
   sessions_dir: session-log
   memory_dir: notes
-  user_dir: ~/.custom-mewcode
+  user_dir: ~/.custom-julycode
   instruction_filename: RULES.md
   include_max_depth: 4
   auto_restore: false
@@ -243,10 +243,10 @@ memory:
 
     assert config.memory == SessionMemoryConfig(
         enabled=False,
-        project_dir=".custom-mewcode",
+        project_dir=".custom-julycode",
         sessions_dir="session-log",
         memory_dir="notes",
-        user_dir="~/.custom-mewcode",
+        user_dir="~/.custom-julycode",
         instruction_filename="RULES.md",
         include_max_depth=4,
         auto_restore=False,
@@ -286,7 +286,7 @@ def test_rejects_invalid_memory_config(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -305,9 +305,9 @@ def test_readme_mentions_session_memory() -> None:
     readme = (root / "README.md").read_text(encoding="utf-8")
     gitignore = (root / ".gitignore").read_text(encoding="utf-8")
 
-    for text in (".mewcode/sessions/", ".mewcode/memory/", ".mewcode/context/", "--new-session"):
+    for text in (".julycode/sessions/", ".julycode/memory/", ".julycode/context/", "--new-session"):
         assert text in readme
-    for text in (".mewcode/sessions/", ".mewcode/memory/", ".mewcode/context/"):
+    for text in (".julycode/sessions/", ".julycode/memory/", ".julycode/context/"):
         assert text in gitignore
 
 
@@ -326,7 +326,7 @@ def test_readme_documents_worktree_isolation() -> None:
 def test_loads_context_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -344,7 +344,7 @@ context:
   manual_reserve_tokens: 2000
   summary_failure_limit: 4
   chars_per_token: 3.5
-  store_dir: .mewcode/custom-context
+  store_dir: .julycode/custom-context
 """,
     )
 
@@ -362,14 +362,14 @@ context:
         manual_reserve_tokens=2_000,
         summary_failure_limit=4,
         chars_per_token=3.5,
-        store_dir=".mewcode/custom-context",
+        store_dir=".julycode/custom-context",
     )
 
 
 def test_prompt_cache_config_defaults_are_safe(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -382,7 +382,7 @@ api_key: plain-key
 
     assert config.prompt_cache == PromptCacheConfig(
         enabled=True,
-        key_namespace="mewcode",
+        key_namespace="julycode",
         openai_cache_key=True,
         openai_retention=None,
         anthropic_cache_control=True,
@@ -392,7 +392,7 @@ api_key: plain-key
 def test_loads_prompt_cache_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -433,7 +433,7 @@ def test_rejects_invalid_prompt_cache_config(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -450,7 +450,7 @@ api_key: plain-key
 def test_loads_sub_agents_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -469,7 +469,7 @@ sub_agents:
   model_aliases:
     haiku: cheap-model
   plugin_role_roots:
-    - ~/.mewcode/plugin-agents
+    - ~/.julycode/plugin-agents
 """,
     )
 
@@ -483,7 +483,7 @@ sub_agents:
         global_blocked_tools=("delegate_agent", "run_command"),
         background_allowed_tools=("read_file",),
         model_aliases={"haiku": "cheap-model"},
-        plugin_role_roots=("~/.mewcode/plugin-agents",),
+        plugin_role_roots=("~/.julycode/plugin-agents",),
     )
 
 
@@ -493,7 +493,7 @@ def test_defaults_sub_agent_max_iterations_to_40_when_field_is_omitted(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -512,7 +512,7 @@ sub_agents:
 def test_loads_worktree_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -521,7 +521,7 @@ api_key: plain-key
 sub_agents:
   worktree:
     copy_paths:
-      - .mewcode.permissions.local.yaml
+      - .julycode.permissions.local.yaml
     symlink_paths:
       - .venv
     ignored_copy_paths:
@@ -534,7 +534,7 @@ sub_agents:
     config = load_config(tmp_path)
 
     assert config.sub_agents.worktree == WorktreeConfig(
-        copy_paths=(".mewcode.permissions.local.yaml",),
+        copy_paths=(".julycode.permissions.local.yaml",),
         symlink_paths=(".venv",),
         ignored_copy_paths=(".env",),
         cleanup_interval_seconds=45.0,
@@ -561,7 +561,7 @@ def test_rejects_invalid_worktree_config(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -586,7 +586,7 @@ sub_agents:
         "sub_agents:\n  global_blocked_tools: delegate_agent",
         "sub_agents:\n  background_allowed_tools:\n    - ''",
         "sub_agents:\n  model_aliases: []",
-        "sub_agents:\n  plugin_role_roots: ~/.mewcode/agents",
+        "sub_agents:\n  plugin_role_roots: ~/.julycode/agents",
     ],
 )
 def test_rejects_invalid_sub_agents_config(
@@ -596,7 +596,7 @@ def test_rejects_invalid_sub_agents_config(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -626,7 +626,7 @@ def test_rejects_invalid_context_config(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -643,7 +643,7 @@ api_key: plain-key
 def test_loads_stdio_mcp_server_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -673,7 +673,7 @@ mcp_servers:
 def test_loads_http_mcp_server_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -716,7 +716,7 @@ def test_rejects_invalid_mcp_server_config(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -735,7 +735,7 @@ def test_mcp_config_expands_environment_values(tmp_path: Path, monkeypatch: pyte
     monkeypatch.setenv("MCP_TOKEN", "secret-token")
     monkeypatch.setenv("MCP_PORT", "8765")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -766,7 +766,7 @@ def test_mcp_config_rejects_missing_environment_value(tmp_path: Path, monkeypatc
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     monkeypatch.delenv("MCP_MISSING_TOKEN", raising=False)
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -794,7 +794,7 @@ mcp_servers:
 def test_loads_agent_max_iterations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -813,7 +813,7 @@ agent:
 def test_loads_permissions_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -832,7 +832,7 @@ permissions:
 def test_rejects_invalid_permissions_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -850,7 +850,7 @@ permissions:
 def test_rejects_invalid_agent_max_iterations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -868,7 +868,7 @@ agent:
 def test_missing_required_field_raises_config_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -886,7 +886,7 @@ def test_project_config_overrides_user_config(tmp_path: Path, monkeypatch: pytes
     project.mkdir()
     monkeypatch.setattr(Path, "home", lambda: home)
     write_yaml(
-        home / ".mewcode" / "config.yaml",
+        home / ".julycode" / "config.yaml",
         """
 protocol: openai
 model: user-model
@@ -895,7 +895,7 @@ api_key: user-key
 """,
     )
     write_yaml(
-        project / ".mewcode.yaml",
+        project / ".julycode.yaml",
         """
 protocol: anthropic
 model: project-model
@@ -917,7 +917,7 @@ def test_project_mcp_servers_override_user_servers_by_name(tmp_path: Path, monke
     project.mkdir()
     monkeypatch.setattr(Path, "home", lambda: home)
     write_yaml(
-        home / ".mewcode" / "config.yaml",
+        home / ".julycode" / "config.yaml",
         """
 protocol: openai
 model: user-model
@@ -933,7 +933,7 @@ mcp_servers:
 """,
     )
     write_yaml(
-        project / ".mewcode.yaml",
+        project / ".julycode.yaml",
         """
 model: project-model
 mcp_servers:
@@ -956,23 +956,23 @@ mcp_servers:
 
 
 def test_api_key_can_reference_environment_variable(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MEWCODE_TEST_KEY", "resolved-key")
-    assert resolve_api_key("${MEWCODE_TEST_KEY}") == "resolved-key"
+    monkeypatch.setenv("JULYCODE_TEST_KEY", "resolved-key")
+    assert resolve_api_key("${JULYCODE_TEST_KEY}") == "resolved-key"
 
 
 def test_missing_environment_api_key_is_clear_and_redacted(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("MEWCODE_MISSING_KEY", raising=False)
+    monkeypatch.delenv("JULYCODE_MISSING_KEY", raising=False)
     with pytest.raises(ConfigError) as exc_info:
-        resolve_api_key("${MEWCODE_MISSING_KEY}")
+        resolve_api_key("${JULYCODE_MISSING_KEY}")
     message = str(exc_info.value)
-    assert "MEWCODE_MISSING_KEY" in message
-    assert "${MEWCODE_MISSING_KEY}" not in message
+    assert "JULYCODE_MISSING_KEY" in message
+    assert "${JULYCODE_MISSING_KEY}" not in message
 
 
 def test_unknown_protocol_is_rejected(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: other
 model: test-model
@@ -990,21 +990,21 @@ def test_readme_documents_context_management() -> None:
 
     assert "context:" in text
     assert "/compact" in text
-    assert ".mewcode/context/" in text
+    assert ".julycode/context/" in text
 
 
 def test_readme_documents_team_collaboration() -> None:
     text = Path("README.md").read_text(encoding="utf-8")
 
     assert "teams:" in text
-    assert "~/.mewcode/teams/<team>/" in text
+    assert "~/.julycode/teams/<team>/" in text
     assert "require_approval" in text
     assert "coroutine" in text
     assert "不会自动合并" in text
 
 
 def test_cli_reports_config_error_without_secret(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
-    from mewcode import cli
+    from julycode import cli
 
     secret = "sk-cli-secret-1234567890"
 
@@ -1024,7 +1024,7 @@ def test_teams_config_loads_defaults_and_explicit_values(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -1062,7 +1062,7 @@ def test_teams_config_rejects_invalid_values(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model
@@ -1085,7 +1085,7 @@ def test_mcp_http_oauth_config_expands_preregistered_client(
     monkeypatch.setenv("GITHUB_MCP_CLIENT_ID", "client-id")
     monkeypatch.setenv("GITHUB_MCP_CLIENT_SECRET", "client-secret-value")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -1119,7 +1119,7 @@ def test_mcp_http_disabled_oauth_keeps_static_authorization_header(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         """
 protocol: openai
 model: test-model
@@ -1162,7 +1162,7 @@ def test_mcp_oauth_config_rejects_conflicts(
 ) -> None:
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
     write_yaml(
-        tmp_path / ".mewcode.yaml",
+        tmp_path / ".julycode.yaml",
         f"""
 protocol: openai
 model: test-model

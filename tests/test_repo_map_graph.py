@@ -7,10 +7,10 @@ import random
 import subprocess
 import sys
 
-from mewcode.repo_map import FileFingerprint, ScannedFile
-from mewcode.repo_map.graph import RepoGraphBuilder
-from mewcode.repo_map.parser import PythonSymbolParser
-from mewcode.repo_map.ranking import rank_symbols
+from julycode.repo_map import FileFingerprint, ScannedFile
+from julycode.repo_map.graph import RepoGraphBuilder
+from julycode.repo_map.parser import PythonSymbolParser
+from julycode.repo_map.ranking import rank_symbols
 
 
 def _parse(path: str, text: str, paths: tuple[str, ...]):
@@ -92,9 +92,9 @@ def test_rendered_map_is_identical_across_python_hash_seeds() -> None:
     script = """
 from pathlib import Path
 from tests.test_repo_map_graph import _fixture_files
-from mewcode.repo_map.graph import RepoGraphBuilder
-from mewcode.repo_map.ranking import rank_symbols
-from mewcode.repo_map.renderer import RepoMapRenderer
+from julycode.repo_map.graph import RepoGraphBuilder
+from julycode.repo_map.ranking import rank_symbols
+from julycode.repo_map.renderer import RepoMapRenderer
 
 files = _fixture_files()
 graph = RepoGraphBuilder().build(files)

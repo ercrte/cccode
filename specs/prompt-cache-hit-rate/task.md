@@ -4,10 +4,10 @@
 
 | 操作 | 文件 | 职责 |
 |------|------|------|
-| 修改 | `src/mewcode/config.py` | 新增 `PromptCacheConfig` 并解析 `prompt_cache` 配置 |
-| 修改 | `src/mewcode/prompting/builder.py` | 拆分可缓存运行时前缀和动态运行时补充 |
-| 修改 | `src/mewcode/providers/openai.py` | 生成缓存友好的 system 消息、发送缓存参数、兼容降级 |
-| 修改 | `src/mewcode/providers/anthropic.py` | 把 `cache_control` 放到最后一个可缓存前缀块 |
+| 修改 | `src/julycode/config.py` | 新增 `PromptCacheConfig` 并解析 `prompt_cache` 配置 |
+| 修改 | `src/julycode/prompting/builder.py` | 拆分可缓存运行时前缀和动态运行时补充 |
+| 修改 | `src/julycode/providers/openai.py` | 生成缓存友好的 system 消息、发送缓存参数、兼容降级 |
+| 修改 | `src/julycode/providers/anthropic.py` | 把 `cache_control` 放到最后一个可缓存前缀块 |
 | 修改 | `README.md` | 说明缓存优化配置、观测方式和限制 |
 | 修改 | `tests/test_config.py` | 覆盖配置默认值、显式配置和非法配置 |
 | 修改 | `tests/test_prompting.py` | 覆盖运行时提示拆分和动态内容后置 |
@@ -28,7 +28,7 @@
 
 ## T2: 实现 Prompt Cache 配置解析
 
-**文件：** `src/mewcode/config.py`  
+**文件：** `src/julycode/config.py`  
 **依赖：** T1  
 **步骤：**
 1. 新增 `PromptCacheRetention` 类型和 `PromptCacheConfig` dataclass。
@@ -52,7 +52,7 @@
 
 ## T4: 实现运行时提示拆分
 
-**文件：** `src/mewcode/prompting/builder.py`  
+**文件：** `src/julycode/prompting/builder.py`  
 **依赖：** T3  
 **步骤：**
 1. 将允许工具摘要从动态运行时块迁移到 `runtime_cache_prefix` 块。
@@ -77,7 +77,7 @@
 
 ## T6: 实现 OpenAI 缓存参数和消息拆分
 
-**文件：** `src/mewcode/providers/openai.py`  
+**文件：** `src/julycode/providers/openai.py`  
 **依赖：** T5  
 **步骤：**
 1. 调整 `_prompt_messages()`，把 `stable_blocks` 和 `runtime_blocks` 中 `cacheable=True` 的块合并为第一个 system 消息。
@@ -90,7 +90,7 @@
 
 ## T7: 增加并实现 OpenAI 兼容降级
 
-**文件：** `tests/test_openai_provider.py`、`src/mewcode/providers/openai.py`  
+**文件：** `tests/test_openai_provider.py`、`src/julycode/providers/openai.py`  
 **依赖：** T6  
 **步骤：**
 1. 添加测试模拟首个请求返回 400 且错误正文包含 `prompt_cache_key` 或 `prompt_cache_retention`，第二个请求成功。
@@ -114,7 +114,7 @@
 
 ## T9: 实现 Anthropic 缓存断点调整
 
-**文件：** `src/mewcode/providers/anthropic.py`  
+**文件：** `src/julycode/providers/anthropic.py`  
 **依赖：** T8  
 **步骤：**
 1. 新增 `_cache_prefix_blocks()`，返回稳定块和 `cacheable=True` 的运行时块。
@@ -143,7 +143,7 @@
 **步骤：**
 1. 在“结构化系统提示与缓存观测”章节补充可缓存运行时前缀、OpenAI `prompt_cache_key`、可选 retention 和 Anthropic 显式断点。
 2. 增加 `prompt_cache` YAML 配置示例。
-3. 明确说明实际命中受供应商、模型、请求长度、请求间隔、TTL 和完全一致前缀影响，MewCode 不保证每次命中。
+3. 明确说明实际命中受供应商、模型、请求长度、请求间隔、TTL 和完全一致前缀影响，JulyCode 不保证每次命中。
 
 **验证：** 运行 `python -m pytest tests/test_config.py::test_readme_mentions_session_memory -q`，期望 README 相关回归仍通过；人工查看 README 章节包含 `prompt_cache_key`、`prompt_cache_retention`、`cache_control`。
 
@@ -163,9 +163,9 @@
 **文件：** 无代码文件；使用本地运行环境  
 **依赖：** T12、已批准的 `checklist.md`  
 **步骤：**
-1. 在 tmux 中启动 MewCode。
+1. 在 tmux 中启动 JulyCode。
 2. 输入真实对话请求，例如“请查看 README 里关于缓存的说明，并告诉我当前项目如何观测缓存命中”。
-3. 观察 MewCode 是否调用读取或搜索工具，并生成中文回复。
+3. 观察 JulyCode 是否调用读取或搜索工具，并生成中文回复。
 4. 对照 `checklist.md` 逐项记录通过或失败证据。
 
 **验证：** 在验收报告中记录 tmux 会话观察结果，期望工具调用正常、回复正常、状态栏或 usage 事件能展示缓存状态。

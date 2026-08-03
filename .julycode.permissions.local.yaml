@@ -1,0 +1,4 @@
+rules:
+  Bash(grep -n "mcp\|McpManager" /home/cui/julycode/src/julycode/agent.py): allow
+  Bash(grep -n "mcp\|McpManager" /home/cui/julycode/src/julycode/session.py): allow
+  Bash(ls /home/cui/julycode/src/julycode/): allow

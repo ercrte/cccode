@@ -1,6 +1,6 @@
-# MewCode
+# JulyCode
 
-MewCode 是一个终端 AI 编程助手。当前阶段实现全屏 TUI 对话、本地工具系统和 Agent Loop：用户输入任务后，MewCode 调用配置的大模型后端，流式展示回复，并允许模型在同一次任务中循环调用工具、观察结果、继续调整，直到完成或触发停止条件。
+JulyCode 是一个终端 AI 编程助手。当前阶段实现全屏 TUI 对话、本地工具系统和 Agent Loop：用户输入任务后，JulyCode 调用配置的大模型后端，流式展示回复，并允许模型在同一次任务中循环调用工具、观察结果、继续调整，直到完成或触发停止条件。
 
 ## 安装
 
@@ -15,13 +15,13 @@ python -m pip install -e ".[dev]"
 用户级配置默认读取：
 
 ```text
-~/.mewcode/config.yaml
+~/.julycode/config.yaml
 ```
 
 项目级配置默认读取当前目录向上的首个：
 
 ```text
-.mewcode.yaml
+.julycode.yaml
 ```
 
 当两者同时存在时，项目级配置覆盖用户级配置中的同名字段。
@@ -61,7 +61,7 @@ repo_map:
   max_tokens: 2000
 ```
 
-也可以用 `repo_map: false` 或 `repo_map.enabled: false` 完全关闭。预算不足、索引尚未准备好或仓库中没有 `.py`/`.pyi` 文件时，MewCode 会安全省略整块地图，不阻塞普通请求。
+也可以用 `repo_map: false` 或 `repo_map.enabled: false` 完全关闭。预算不足、索引尚未准备好或仓库中没有 `.py`/`.pyi` 文件时，JulyCode 会安全省略整块地图，不阻塞普通请求。
 
 Git 项目以 Worktree 根目录为范围，包含 tracked 文件以及未被 ignore 的 untracked Python 文件；非 Git 目录使用安全遍历。索引不跟随 symlink，不会越出项目根目录。源码变化按内容哈希产生新的 workspace revision：只读工具后同一快照保持不变，编辑、删除或命令可能修改源码后，下一次模型调用会取得新 revision 的地图。
 
@@ -96,9 +96,9 @@ mcp_servers:
       Authorization: Bearer ${MCP_API_TOKEN}
 ```
 
-stdio 的 `env` 值、Streamable HTTP 的 `url` 和 `headers` 值支持 `${VAR}` 展开，也支持出现在字符串片段中，例如 `Bearer ${MCP_API_TOKEN}`。引用的环境变量未设置或为空时，MewCode 会在启动阶段报告配置错误。
+stdio 的 `env` 值、Streamable HTTP 的 `url` 和 `headers` 值支持 `${VAR}` 展开，也支持出现在字符串片段中，例如 `Bearer ${MCP_API_TOKEN}`。引用的环境变量未设置或为空时，JulyCode 会在启动阶段报告配置错误。
 
-需要 OAuth 2.1 的远程 MCP Server 可以启用 `oauth`。MewCode 遵循 MCP `2025-06-18` 的 Protected Resource Metadata、Authorization Server Metadata、Authorization Code + PKCE S256 和 Resource Indicators 流程；优先使用动态客户端注册（DCR），Server 不支持 DCR 时回退到配置的预注册客户端：
+需要 OAuth 2.1 的远程 MCP Server 可以启用 `oauth`。JulyCode 遵循 MCP `2025-06-18` 的 Protected Resource Metadata、Authorization Server Metadata、Authorization Code + PKCE S256 和 Resource Indicators 流程；优先使用动态客户端注册（DCR），Server 不支持 DCR 时回退到配置的预注册客户端：
 
 ```yaml
 mcp_servers:
@@ -111,7 +111,7 @@ mcp_servers:
       scopes: [read, write]
 ```
 
-启动时未找到有效 token 或收到 401，MewCode 只把该 Server 标为“需要授权”，不会自动打开浏览器。输入 `/mcp auth remote_oauth` 后，MewCode 才会在 `127.0.0.1` 随机端口启动 `/oauth/callback`，显示授权 URL 并尝试打开浏览器；授权成功后无需重启即可加载工具。输入 `/mcp logout remote_oauth` 会删除本地凭据并移除该 Server 的工具，`/status` 可查看每个 OAuth Server 的公开状态。
+启动时未找到有效 token 或收到 401，JulyCode 只把该 Server 标为“需要授权”，不会自动打开浏览器。输入 `/mcp auth remote_oauth` 后，JulyCode 才会在 `127.0.0.1` 随机端口启动 `/oauth/callback`，显示授权 URL 并尝试打开浏览器；授权成功后无需重启即可加载工具。输入 `/mcp logout remote_oauth` 会删除本地凭据并移除该 Server 的工具，`/status` 可查看每个 OAuth Server 的公开状态。
 
 OAuth token、refresh token 和动态注册得到的客户端 secret 优先保存在系统 Keyring；Keyring 不可用或锁定时只保存在当前进程内，并显示告警，不会写入明文 token 文件。原有 `Authorization: Bearer ${MCP_API_TOKEN}` 的 PAT 配置继续可用，但同一个 Server 不能同时启用 OAuth 和静态 `Authorization` Header。
 
@@ -128,16 +128,16 @@ mcp_servers:
       scopes: [repo, read:user]
 ```
 
-在 GitHub App/OAuth App 中将回调地址注册为 `http://127.0.0.1/oauth/callback`；实际授权时 MewCode 会使用相同 host/path 的随机本机端口。当前版本不实现 Device Flow、SSH 跨机器回调、远端 token revoke、自动 scope step-up，也不实现 MCP `2025-11-25` 的 CIMD/OIDC 扩展。纯 SSH 环境可继续使用 PAT Header，或在浏览器和 MewCode 位于同一台机器时使用 OAuth。
+在 GitHub App/OAuth App 中将回调地址注册为 `http://127.0.0.1/oauth/callback`；实际授权时 JulyCode 会使用相同 host/path 的随机本机端口。当前版本不实现 Device Flow、SSH 跨机器回调、远端 token revoke、自动 scope step-up，也不实现 MCP `2025-11-25` 的 CIMD/OIDC 扩展。纯 SSH 环境可继续使用 PAT Header，或在浏览器和 JulyCode 位于同一台机器时使用 OAuth。
 
-MCP 工具使用按需加载，避免大型工具目录持续占用上下文。MewCode 启动时仍会连接 Server 并发现完整工具目录，但新用户轮次默认只向模型暴露轻量的 `search_mcp_tools`。模型需要 MCP 能力时先按自然语言意图检索，下一次模型迭代只加载相关候选的完整定义；单次最多 5 个候选，同一轮再次检索会替换上一批，轮次结束后全部清空。
+MCP 工具使用按需加载，避免大型工具目录持续占用上下文。JulyCode 启动时仍会连接 Server 并发现完整工具目录，但新用户轮次默认只向模型暴露轻量的 `search_mcp_tools`。模型需要 MCP 能力时先按自然语言意图检索，下一次模型迭代只加载相关候选的完整定义；单次最多 5 个候选，同一轮再次检索会替换上一批，轮次结束后全部清空。
 
 实际 MCP 工具继续使用 `server__tool` 全局名，例如 `local_demo` Server 的 `echo` 工具为 `local_demo__echo`，从而避免覆盖内置工具或其他 Server 的同名工具。检索只读取本地已发现目录，不触发远端业务操作或权限确认；实际 MCP 工具仍按有副作用工具处理，并继续经过 Plan Mode、权限、调度和 Hook。未配置 MCP Server 时不会注册 `search_mcp_tools`，因此不会增加额外上下文开销。
 
 ## 启动
 
 ```bash
-mewcode
+julycode
 ```
 
 进入全屏界面后，在底部输入问题并按回车发送。使用 `Ctrl+C` 或 `Esc` 退出。
@@ -145,12 +145,12 @@ mewcode
 默认启动会恢复当前项目最近 30 天内的会话。如果想临时开启一个不带历史的空会话：
 
 ```bash
-mewcode --new-session
+julycode --new-session
 ```
 
 ## 斜杠命令
 
-输入以 `/` 开头时，MewCode 会优先按本地命令处理；未命中命令时会提示使用 `/help`，不会把未知斜杠输入发给模型。命令名大小写不敏感，支持别名和 Tab 补全：单个匹配会直接补全，多个匹配会显示候选菜单。
+输入以 `/` 开头时，JulyCode 会优先按本地命令处理；未命中命令时会提示使用 `/help`，不会把未知斜杠输入发给模型。命令名大小写不敏感，支持别名和 Tab 补全：单个匹配会直接补全，多个匹配会显示候选菜单。
 
 状态栏会显示当前持久对话模式：`[DEFAULT]` 是默认执行模式，`[PLAN]` 是计划模式。`/plan` 只切换到计划模式，后续普通输入会以只读工具策略交给 AI；`/do` 只切回默认模式，不执行旧的待执行计划。
 
@@ -177,13 +177,13 @@ mewcode --new-session
 
 ## Skill
 
-Skill 用来封装可复用的 AI 操作。MewCode 启动时只把 Skill 名称和一句说明放进运行时上下文；当模型判断需要某个 Skill 时，会调用系统工具 `load_skill` 加载完整 SOP 和目录型 Skill 的专属工具。用户也可以直接输入对应斜杠命令，例如 `/review README.md`。
+Skill 用来封装可复用的 AI 操作。JulyCode 启动时只把 Skill 名称和一句说明放进运行时上下文；当模型判断需要某个 Skill 时，会调用系统工具 `load_skill` 加载完整 SOP 和目录型 Skill 的专属工具。用户也可以直接输入对应斜杠命令，例如 `/review README.md`。
 
 Skill 按三层目录加载，同名按优先级覆盖：
 
 ```text
-<项目>/.mewcode/skills/
-~/.mewcode/skills/
+<项目>/.julycode/skills/
+~/.julycode/skills/
 内置 Skill
 ```
 
@@ -240,14 +240,14 @@ my-skill/
 角色定义是 Markdown + YAML frontmatter。项目角色目录为：
 
 ```text
-<项目>/.mewcode/agents/
+<项目>/.julycode/agents/
 ```
 
 加载优先级为：
 
 ```text
-<项目>/.mewcode/agents/
-~/.mewcode/agents/
+<项目>/.julycode/agents/
+~/.julycode/agents/
 内置角色
 插件角色目录
 ```
@@ -297,7 +297,7 @@ frontmatter 字段：
 sub_agents:
   worktree:
     copy_paths:
-      - .mewcode.permissions.local.yaml
+      - .julycode.permissions.local.yaml
     symlink_paths:
       - .venv
     ignored_copy_paths:
@@ -312,11 +312,11 @@ sub_agents:
 
 三类配置都只接受仓库根目录相对路径，不支持 glob、独立目标、仓库外源或初始化 shell 命令。默认每小时检查一次，清理超过 7 天且确认安全的目录。
 
-任务结束时，无修改且无新增提交的 Worktree 会自动删除；存在未提交、未跟踪或新增提交时会保留，并把目录、分支和原因返回主 Agent。MewCode 不会自动提交、推送、合并或丢弃改动，分支合并仍由上层使用 Git 完成。
+任务结束时，无修改且无新增提交的 Worktree 会自动删除；存在未提交、未跟踪或新增提交时会保留，并把目录、分支和原因返回主 Agent。JulyCode 不会自动提交、推送、合并或丢弃改动，分支合并仍由上层使用 Git 完成。
 
 ## 长期团队协作
 
-MewCode 可以把当前主 Agent 作为 Team Lead，维护一个跨会话存在的团队。团队功能默认开启，可调整文件锁和事件等待参数：
+JulyCode 可以把当前主 Agent 作为 Team Lead，维护一个跨会话存在的团队。团队功能默认开启，可调整文件锁和事件等待参数：
 
 ```yaml
 teams:
@@ -334,7 +334,7 @@ teams:
 团队数据按名称保存在：
 
 ```text
-~/.mewcode/teams/<team>/
+~/.julycode/teams/<team>/
   team.json
   tasks.json
   approvals.json
@@ -376,25 +376,25 @@ sub_agents:
     sonnet: claude-sonnet-4-6
     opus: claude-opus-4-6
   plugin_role_roots:
-    - ~/.mewcode/plugin-agents
+    - ~/.julycode/plugin-agents
 ```
 
 本阶段不做 Worktree 文件隔离、多 Agent 团队编排，也不做后台任务跨会话持久化。应用退出时未完成后台任务会被清理。
 
 ## Agent Loop 与工具
 
-MewCode 会把核心工具暴露给当前模型；如果配置了 MCP Server，则额外暴露 `search_mcp_tools`，远端工具在检索命中后按当前用户轮次加载：
+JulyCode 会把核心工具暴露给当前模型；如果配置了 MCP Server，则额外暴露 `search_mcp_tools`，远端工具在检索命中后按当前用户轮次加载：
 
-- `read_file`：读取 UTF-8 文本文件内容。
+- `read_file`：读取 UTF-8 文本文件内容；可用 1-based `offset` 指定起始行，用 `limit` 指定最多读取行数，并返回实际范围、总行数和是否还有后续内容。
 - `write_file`：创建或覆盖写入 UTF-8 文本文件。
 - `edit_file`：按原文唯一匹配替换文件内容；匹配不到或匹配多次都不会写入。
-- `run_command`：在当前项目目录执行本地命令，返回退出码、标准输出和标准错误。
-- `find_files`：按 glob 模式查找文件路径。
-- `search_code`：搜索代码内容并返回匹配文件、行列和文本摘要。
+- `run_command`：在当前项目目录按 argv 执行单个本地命令，返回退出码、标准输出和标准错误；不经过 Shell，不支持管道、重定向、`cd` 或复合命令。
+- `find_files`：按 glob 模式查找文件路径；默认遵守 Git ignore，并排除 `.julycode`、缓存、依赖和构建目录。
+- `search_code`：搜索代码内容并返回匹配文件、行列和文本摘要；默认使用与 `find_files` 相同的忽略范围，显式指定项目内非根文件或目录时可搜索被忽略目标。
 - `search_mcp_tools`：按任务意图检索 MCP 工具，下一迭代加载最多 5 个候选。
 - `delegate_agent`：把独立子任务委派给子 Agent；主 Agent 中稳定暴露，子 Agent 中默认不可用以防无限嵌套。
 
-Agent Loop 会按 ReAct 风格工作：模型先输出文本或工具调用，MewCode 执行工具并把结果回灌给模型，然后继续下一轮，直到模型不再请求工具并给出最终回复。一次模型响应中包含多个工具调用时，读类工具可以并发执行；写入、修改和命令工具会按顺序串行执行。
+Agent Loop 会按 ReAct 风格工作：模型先输出文本或工具调用，JulyCode 执行工具并把结果回灌给模型，然后继续下一轮，直到模型不再请求工具并给出最终回复。一次模型响应中包含多个工具调用时，读类工具可以并发执行；写入、修改和命令工具会按顺序串行执行。
 
 `/status` 的 MCP 摘要会区分已发现工具数和当前轮次暴露工具数。前者表示启动时从 Server 获取的目录规模，后者最多为本轮最近一次检索命中的 5 个候选；任务结束后当前轮次暴露数恢复为 0。
 
@@ -417,7 +417,7 @@ agent:
 
 ## 上下文管理
 
-MewCode 会在每次模型请求前做上下文管理，避免长任务因为历史过大而超过模型窗口。第一层是轻量预防：当工具结果过大，系统会把完整结果保存到项目内 `.mewcode/context/<session_id>/tool-results/`，对话里只保留预览、规模信息和可重新读取的路径。后续模型如果需要完整细节，应使用 `read_file` 读取这个路径。
+JulyCode 会在每次模型请求前做上下文管理，避免长任务因为历史过大而超过模型窗口。第一层是轻量预防：当工具结果过大，系统会把完整结果保存到项目内 `.julycode/context/<session_id>/tool-results/`，对话里只保留预览、规模信息和可重新读取的路径。后续模型如果需要完整细节，应使用 `read_file` 读取这个路径。
 
 第二层是重量兜底：当整体会话接近上下文窗口上限时，系统会生成结构化摘要，压缩较早历史，并保留最近约 1 万 Token 或至少最近 5 条消息原文。摘要会附带边界提示，提醒模型不要凭摘要或预览脑补代码细节。
 
@@ -436,33 +436,33 @@ context:
   manual_reserve_tokens: 3000
   summary_failure_limit: 3
   chars_per_token: 4.0
-  store_dir: .mewcode/context
+  store_dir: .julycode/context
 ```
 
 用户也可以在 TUI 中输入 `/compact` 手动触发压缩。手动压缩不会作为普通任务发给模型；系统会直接显示压缩报告或说明当前历史较短无需压缩。
 
 ## 会话恢复与长期记忆
 
-MewCode 启动时会加载三层项目指令文件，并按优先级注入模型上下文：
+JulyCode 启动时会加载三层项目指令文件，并按优先级注入模型上下文：
 
-- `.mewcode/AGENTS.md`：项目管理目录级，优先级最高。
+- `.julycode/AGENTS.md`：项目管理目录级，优先级最高。
 - `AGENTS.md`：项目根级，优先级次之。
-- `~/.mewcode/AGENTS.md`：用户级，优先级最低。
+- `~/.julycode/AGENTS.md`：用户级，优先级最低。
 
 指令文件支持 `@include <相对路径>` 引用同项目内的其他 Markdown 文件。加载器会限制嵌套深度、检测循环引用，并拦截跳出项目目录的路径。
 
-会话历史以 JSONL 追加写入 `.mewcode/sessions/`，每个会话一个文件，ID 形如 `YYYYMMDD-HHMMSS-xxxx`。恢复时会跳过坏行，遇到未配对工具调用会截断到安全边界；如果历史过大，会先尝试一次上下文压缩。超过 30 天未活动的会话会定期清理。
+会话历史以 JSONL 追加写入 `.julycode/sessions/`，每个会话一个文件，ID 形如 `YYYYMMDD-HHMMSS-xxxx`。恢复时会跳过坏行，遇到未配对工具调用会截断到安全边界；如果历史过大，会先尝试一次上下文压缩。超过 30 天未活动的会话会定期清理。
 
 长期记忆分用户级和项目级存储：
 
-- 用户级：`~/.mewcode/memory/`
-- 项目级：`.mewcode/memory/`
+- 用户级：`~/.julycode/memory/`
+- 项目级：`.julycode/memory/`
 
-每条记忆是一份带 frontmatter 的 Markdown 文件，分类为 `preference`、`correction`、`project_knowledge`、`reference`。系统会维护各自的 `index.md`，并控制在 200 行和 25KB 内。每轮 Agent Loop 自然结束后，MewCode 会在后台用一次无工具模型请求更新自动笔记；失败只记录告警，不影响当前对话。
+每条记忆是一份带 frontmatter 的 Markdown 文件，分类为 `preference`、`correction`、`project_knowledge`、`reference`。系统会维护各自的 `index.md`，并控制在 200 行和 25KB 内。每轮 Agent Loop 自然结束后，JulyCode 会在后台用一次无工具模型请求更新自动笔记；失败只记录告警，不影响当前对话。
 
 自动提取采用保守策略：只有用户明确表达或确认、且跨任务持续有效的信息才会落盘。新笔记会记录用户原话证据、作用域、类别和置信度；关键偏好还必须包含“以后、始终、默认、必须、禁止”等明确长期约束，并达到配置的置信阈值。临时要求、模型猜测、助手或工具单独提供的内容以及敏感凭据不会成为长期记忆。旧格式笔记仍可兼容读取。
 
-`mewcode --new-session` 只关闭最近会话消息恢复，不会关闭长期记忆：新会话的普通消息历史为空，但首个模型请求仍会加载同一项目和用户的长期记忆。因此可以严格验证跨会话继承，而不是依赖旧对话历史。
+`julycode --new-session` 只关闭最近会话消息恢复，不会关闭长期记忆：新会话的普通消息历史为空，但首个模型请求仍会加载同一项目和用户的长期记忆。因此可以严格验证跨会话继承，而不是依赖旧对话历史。
 
 可以通过配置关闭或调整记忆功能：
 
@@ -490,11 +490,11 @@ python eval/run_memory_eval.py --mode online --output eval/results/memory-qualit
 
 完整在线评测约发起 200 次模型请求，会消耗真实额度。报告包含整体 Precision/Recall/F1、关键偏好 Precision/Recall、首轮理解正确率和背景重复说明减少率。
 
-`.mewcode/context/`、`.mewcode/sessions/` 和 `.mewcode/memory/` 都是本地自动产物，默认已在 `.gitignore` 中忽略。
+`.julycode/context/`、`.julycode/sessions/` 和 `.julycode/memory/` 都是本地自动产物，默认已在 `.gitignore` 中忽略。
 
 ## 权限系统
 
-MewCode 在执行本地工具前会经过权限系统，核心防御包括高危命令黑名单、项目路径沙箱、可配置规则、权限模式和用户确认。权限拒绝会作为工具失败结果回灌给模型，Agent Loop 不会仅因为一次权限拒绝就终止，模型可以改用更安全的方案继续。
+JulyCode 在执行本地工具前会经过权限系统，核心防御包括高危命令黑名单、项目路径沙箱、可配置规则、权限模式和用户确认。权限拒绝会作为工具失败结果回灌给模型，Agent Loop 不会仅因为一次权限拒绝就终止，模型可以改用更安全的方案继续。
 
 权限模式通过 `permissions.mode` 配置：
 
@@ -510,9 +510,9 @@ permissions:
 权限规则使用单独 YAML 文件：
 
 ```text
-~/.mewcode/permissions.yaml          # 用户级
-.mewcode.permissions.yaml            # 项目级
-.mewcode.permissions.local.yaml      # 本地级
+~/.julycode/permissions.yaml          # 用户级
+.julycode.permissions.yaml            # 项目级
+.julycode.permissions.local.yaml      # 本地级
 ```
 
 优先级为：会话级 > 本地级 > 项目级 > 用户级。规则写在 `rules` 对象中，格式为 `工具名(模式): allow|deny`，支持精确和 glob 匹配。命令工具兼容 `Bash(...)` 写法：
@@ -528,7 +528,7 @@ rules:
 
 ## Hook
 
-Hook 用来在 Agent 生命周期事件上挂自动动作。规则写在主配置的 `hooks:` 字段中；项目级 `.mewcode.yaml` 的 `hooks` 会整体覆盖用户级 `~/.mewcode/config.yaml` 的 `hooks`。每条规则由 `event`、可选 `if` 和 `action` 组成，按声明顺序执行。
+Hook 用来在 Agent 生命周期事件上挂自动动作。规则写在主配置的 `hooks:` 字段中；项目级 `.julycode.yaml` 的 `hooks` 会整体覆盖用户级 `~/.julycode/config.yaml` 的 `hooks`。每条规则由 `event`、可选 `if` 和 `action` 组成，按声明顺序执行。
 
 ```yaml
 hooks:
@@ -572,9 +572,9 @@ hooks:
     action:
       type: http
       method: POST
-      url: http://127.0.0.1:9000/mewcode-hook
+      url: http://127.0.0.1:9000/julycode-hook
       json:
-        source: mewcode
+        source: julycode
     background: true
 
   - name: future-worker
@@ -595,34 +595,34 @@ Hook 自身失败只记录状态，不会中断 Agent Loop 或让 TUI 崩溃。H
 
 ## 结构化系统提示与缓存观测
 
-MewCode 会为每次模型请求构造结构化系统提示。稳定提示按固定优先级组织为身份、系统约束、任务模式、动作执行、工具使用、语气风格和文本输出七个模块；这些内容不包含当前工作目录、用户消息或密钥，便于供应商复用提示缓存。
+JulyCode 会为每次模型请求构造结构化系统提示。稳定提示按固定优先级组织为身份、系统约束、任务模式、动作执行、工具使用、语气风格和文本输出七个模块；这些内容不包含当前工作目录、用户消息或密钥，便于供应商复用提示缓存。
 
-运行时补充会拆成两类系统级补充。可缓存运行时前缀包含允许工具摘要和项目指令等相对稳定内容，会放在动态内容之前；动态运行时补充通过 `<mewcode_runtime_context>` 标签注入，包含当前工作目录、Agent 模式、轮次、当前用户目标、Hook 注入、记忆索引、恢复提示和上下文摘要。运行时补充不会作为普通用户消息写入会话历史。
+运行时补充会拆成两类系统级补充。可缓存运行时前缀包含允许工具摘要和项目指令等相对稳定内容，会放在动态内容之前；动态运行时补充通过 `<julycode_runtime_context>` 标签注入，包含当前工作目录、Agent 模式、轮次、当前用户目标、Hook 注入、记忆索引、恢复提示和上下文摘要。运行时补充不会作为普通用户消息写入会话历史。
 
 缓存优化可以在主配置中调整：
 
 ```yaml
 prompt_cache:
   enabled: true
-  key_namespace: mewcode
+  key_namespace: julycode
   openai_cache_key: true
   openai_retention: 24h
   anthropic_cache_control: true
 ```
 
-OpenAI 协议默认会为稳定提示、可缓存运行时前缀和工具定义生成短 hash 形式的 `prompt_cache_key`，不会把原始提示、路径、用户输入或密钥写入 key；`prompt_cache_retention` 仅在显式配置 `openai_retention` 时发送。若 OpenAI 兼容接口明确拒绝缓存参数，MewCode 会重试一次不带缓存参数的同一请求。
+OpenAI 协议默认会为稳定提示、可缓存运行时前缀和工具定义生成短 hash 形式的 `prompt_cache_key`，不会把原始提示、路径、用户输入或密钥写入 key；`prompt_cache_retention` 仅在显式配置 `openai_retention` 时发送。若 OpenAI 兼容接口明确拒绝缓存参数，JulyCode 会重试一次不带缓存参数的同一请求。
 
 Anthropic 协议会把 `cache_control` 放在最后一个可缓存前缀块上，动态运行时补充不设置 `cache_control`，避免每轮变化内容导致持续写入但很少读取缓存。关闭 `prompt_cache.enabled` 或 `anthropic_cache_control` 后，请求仍会正常发送，只是不带显式缓存断点。
 
 工具规则会同时出现在全局系统提示和工具描述中，例如优先使用专用读取/查找/搜索工具、编辑前先读取或搜索目标文件、谨慎使用完整写入和本地命令。工具失败结果会回灌给模型，模型应根据失败原因调整下一步。
 
-Provider 返回 usage 时，MewCode 会尝试解析缓存观测字段。OpenAI 协议读取 `cached_tokens`；Anthropic 协议读取缓存创建和缓存读取 token 字段。状态栏可能显示 `Cache: hit`、`Cache: write`、`Cache: miss`、`Cache: unknown` 或 `Cache: unsupported`。当供应商没有返回缓存字段时，请求仍会正常完成，缓存状态显示为 unknown。
+Provider 返回 usage 时，JulyCode 会尝试解析缓存观测字段。OpenAI 协议读取 `cached_tokens`；Anthropic 协议读取缓存创建和缓存读取 token 字段。状态栏可能显示 `Cache: hit`、`Cache: write`、`Cache: miss`、`Cache: unknown` 或 `Cache: unsupported`。当供应商没有返回缓存字段时，请求仍会正常完成，缓存状态显示为 unknown。
 
-实际缓存命中仍取决于供应商、模型、请求长度、请求间隔、缓存 TTL、路由策略和完全一致的前缀。MewCode 只提高命中概率并保留观测结果，不保证每次请求都命中。
+实际缓存命中仍取决于供应商、模型、请求长度、请求间隔、缓存 TTL、路由策略和完全一致的前缀。JulyCode 只提高命中概率并保留观测结果，不保证每次请求都命中。
 
 ## Plan Mode
 
-MewCode 的 Plan Mode 是持久模式切换：输入 `/plan` 后进入 `[PLAN]`，后续普通输入只开放读取、查找和搜索类工具，让模型了解现状并生成计划；输入 `/do` 后回到 `[DEFAULT]`，后续普通输入恢复完整工具能力。
+JulyCode 的 Plan Mode 是持久模式切换：输入 `/plan` 后进入 `[PLAN]`，后续普通输入只开放读取、查找和搜索类工具，让模型了解现状并生成计划；输入 `/do` 后回到 `[DEFAULT]`，后续普通输入恢复完整工具能力。
 
 `/plan` 和 `/do` 本身不会作为普通用户消息发送给模型，也不会创建或执行待执行计划。模式约束通过运行时补充注入，不污染用户对话历史，也不会破坏稳定提示缓存。
 

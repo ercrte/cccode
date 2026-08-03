@@ -2,22 +2,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mewcode.context.models import ContextSummary
-from mewcode.hooks.models import HookPromptInjection
-from mewcode.memory.models import InstructionBlock, InstructionBundle, KnowledgeContext, MemoryIndex, RestoreReport
-from mewcode.mcp.search import McpPromptContext, McpServerToolSummary
-from mewcode.prompting.builder import PromptBuilder, runtime_instruction_level
-from mewcode.prompting.base import GeneratedContextBlock, PromptBundle, RuntimePromptContext
-from mewcode.prompting.modules import stable_prompt_modules
-from mewcode.subagents.models import (
+from julycode.context.models import ContextSummary
+from julycode.hooks.models import HookPromptInjection
+from julycode.memory.models import InstructionBlock, InstructionBundle, KnowledgeContext, MemoryIndex, RestoreReport
+from julycode.mcp.search import McpPromptContext, McpServerToolSummary
+from julycode.prompting.builder import PromptBuilder, runtime_instruction_level
+from julycode.prompting.base import GeneratedContextBlock, PromptBundle, RuntimePromptContext
+from julycode.prompting.modules import stable_prompt_modules
+from julycode.subagents.models import (
     ActiveSubAgentPrompt,
     SubAgentBackgroundSummary,
     SubAgentPromptContext,
     SubAgentRoleSummary,
     SubAgentRoleWarning,
 )
-from mewcode.tools.base import ToolSpec
-from mewcode.teams.models import MemberSummary, TaskSummary, TeamPromptContext
+from julycode.tools.base import ToolSpec
+from julycode.teams.models import MemberSummary, TaskSummary, TeamPromptContext
 
 
 def tool_spec(name: str, safety: str = "read_only") -> ToolSpec:
@@ -34,7 +34,7 @@ def runtime_context(
     mode: str = "normal",
     iteration: int = 1,
     context_summary: ContextSummary | None = None,
-    cwd: Path = Path("/home/cui/mewcode"),
+    cwd: Path = Path("/home/cui/julycode"),
     knowledge_context: KnowledgeContext | None = None,
     hook_injections: tuple[HookPromptInjection, ...] = (),
     sub_agent_context: SubAgentPromptContext | None = None,
@@ -101,7 +101,7 @@ def test_generated_context_block_preserves_ephemeral_untrusted_semantics() -> No
     block = GeneratedContextBlock(
         name="repo_map",
         title="仓库地图",
-        text="<mewcode_repo_map />",
+        text="<julycode_repo_map />",
         kind="repo_map",
         snapshot_id="snapshot-1",
     )
@@ -118,9 +118,14 @@ def test_stable_modules_include_tool_rules() -> None:
     text = "\n".join(module.text for module in stable_prompt_modules())
 
     assert "优先使用专用工具" in text
+    assert "offset/limit" in text
+    assert "不知道准确文件名时使用 find_files" in text
+    assert "需要查找符号、配置、代码或文本时使用 search_code" in text
+    assert "不得用 run_command 包装 grep、find、sed 或 cat" in text
     assert "编辑前先读取或搜索目标文件" in text
     assert "write_file 会创建或覆盖完整文件" in text
     assert "run_command 会执行本地命令" in text
+    assert "构建、测试、验证或用户明确要求运行命令时使用" in text
     assert "工具失败结果是下一步决策依据" in text
 
 
@@ -147,9 +152,9 @@ def test_runtime_prompt_uses_tagged_context() -> None:
     assert block.cacheable is False
     assert prefix.stable is False
     assert prefix.cacheable is True
-    assert "<mewcode_runtime_context>" in block.text
-    assert "</mewcode_runtime_context>" in block.text
-    assert "环境信息：cwd=/home/cui/mewcode" in block.text
+    assert "<julycode_runtime_context>" in block.text
+    assert "</julycode_runtime_context>" in block.text
+    assert "环境信息：cwd=/home/cui/julycode" in block.text
     assert "模式状态：normal full 1/8" in block.text
     assert "允许工具：read_file(read_only), write_file(side_effect)" in prefix.text
     assert "允许工具：" not in block.text
@@ -164,7 +169,7 @@ def test_runtime_prompt_includes_compact_mcp_server_summary() -> None:
         )
     )
 
-    assert "<mewcode_mcp>" in text
+    assert "<julycode_mcp>" in text
     assert "search_mcp_tools" in text
     assert "github(45)" in text
     assert "demo(2)" in text
@@ -173,7 +178,7 @@ def test_runtime_prompt_includes_compact_mcp_server_summary() -> None:
 
 
 def test_runtime_prompt_omits_mcp_block_without_context() -> None:
-    assert "<mewcode_mcp>" not in runtime_dynamic_text(runtime_context())
+    assert "<julycode_mcp>" not in runtime_dynamic_text(runtime_context())
 
 
 def test_runtime_prompt_uses_full_refresh_and_brief_levels() -> None:
@@ -233,7 +238,7 @@ def test_runtime_prompt_includes_context_summary() -> None:
 
     block_text = runtime_dynamic_text(runtime_context(context_summary=summary))
 
-    assert "<mewcode_context_summary>" in block_text
+    assert "<julycode_context_summary>" in block_text
     assert "当前目标：继续实现上下文管理" in block_text
 
 
@@ -256,7 +261,7 @@ def test_runtime_prompt_includes_sub_agent_summaries() -> None:
 
     block_text = runtime_dynamic_text(runtime_context(sub_agent_context=sub_agent_context))
 
-    assert "<mewcode_sub_agents>" in block_text
+    assert "<julycode_sub_agents>" in block_text
     assert "delegate_agent" in block_text
     assert "- reviewer: 审查代码" in block_text
     assert "subagent-1" in block_text
@@ -312,18 +317,18 @@ def test_runtime_prompt_includes_sub_agent_worktree_paths_and_boundary() -> None
             role_body="完成指定修改。",
             task="修改 src",
             isolation="worktree",
-            cwd=Path("/repo/.mewcode/worktrees/writer/subagent-4"),
+            cwd=Path("/repo/.julycode/worktrees/writer/subagent-4"),
             main_cwd=Path("/repo"),
-            branch="mewcode/writer/subagent-4",
+            branch="julycode/writer/subagent-4",
         )
     )
 
     block_text = runtime_dynamic_text(runtime_context(sub_agent_context=sub_agent_context))
 
     assert 'isolation="worktree"' in block_text
-    assert "Worktree 隔离目录：/repo/.mewcode/worktrees/writer/subagent-4" in block_text
+    assert "Worktree 隔离目录：/repo/.julycode/worktrees/writer/subagent-4" in block_text
     assert "主 Agent 工作目录：/repo" in block_text
-    assert "Worktree 分支：mewcode/writer/subagent-4" in block_text
+    assert "Worktree 分支：julycode/writer/subagent-4" in block_text
     assert "不得访问主 Agent 工作目录" in block_text
 
 
@@ -334,13 +339,13 @@ def test_runtime_prompt_includes_context_boundary_notice() -> None:
         created_at="now",
         source_message_count=3,
         kept_message_count=2,
-        external_paths=(".mewcode/context/a.json",),
+        external_paths=(".julycode/context/a.json",),
     )
 
     block_text = runtime_dynamic_text(runtime_context(context_summary=summary))
 
     assert "不能按摘要脑补代码" in block_text
-    assert ".mewcode/context/a.json" in block_text
+    assert ".julycode/context/a.json" in block_text
 
 
 def test_team_prompt_renders_lead_roster_tasks_and_constraints() -> None:
@@ -355,7 +360,7 @@ def test_team_prompt_renders_lead_roster_tasks_and_constraints() -> None:
 
     block_text = runtime_dynamic_text(runtime_context(team_context=team))
 
-    assert '<mewcode_team name="demo" actor="lead"' in block_text
+    assert '<julycode_team name="demo" actor="lead"' in block_text
     assert "worker: role=reviewer status=running task=task-1" in block_text
     assert "task-1: 实现功能 status=in_progress assignee=worker" in block_text
     assert "先把用户目标拆成带依赖任务写入共享清单" in block_text
@@ -381,20 +386,20 @@ def test_team_prompt_renders_member_role_body_and_constraints() -> None:
 
 
 def test_runtime_prompt_without_team_has_no_team_block() -> None:
-    assert "<mewcode_team" not in runtime_dynamic_text(runtime_context())
+    assert "<julycode_team" not in runtime_dynamic_text(runtime_context())
 
 
 def test_runtime_prompt_omits_summary_block_when_absent() -> None:
-    assert "<mewcode_context_summary>" not in runtime_dynamic_text(runtime_context())
+    assert "<julycode_context_summary>" not in runtime_dynamic_text(runtime_context())
 
 
 def test_runtime_prompt_includes_project_instructions_by_priority() -> None:
     knowledge = KnowledgeContext(
         instructions=InstructionBundle(
             blocks=(
-                InstructionBlock("project_private", 0, Path("/repo/.mewcode/AGENTS.md"), "私有规则"),
+                InstructionBlock("project_private", 0, Path("/repo/.julycode/AGENTS.md"), "私有规则"),
                 InstructionBlock("project_root", 1, Path("/repo/AGENTS.md"), "项目规则"),
-                InstructionBlock("user", 2, Path("/home/u/.mewcode/AGENTS.md"), "用户规则"),
+                InstructionBlock("user", 2, Path("/home/u/.julycode/AGENTS.md"), "用户规则"),
             )
         )
     )
@@ -402,16 +407,16 @@ def test_runtime_prompt_includes_project_instructions_by_priority() -> None:
     prefix_text = runtime_cache_prefix_text(runtime_context(knowledge_context=knowledge))
     dynamic_text = runtime_dynamic_text(runtime_context(knowledge_context=knowledge))
 
-    assert "<mewcode_project_instructions>" in prefix_text
+    assert "<julycode_project_instructions>" in prefix_text
     assert prefix_text.index("私有规则") < prefix_text.index("项目规则") < prefix_text.index("用户规则")
     assert "scope=project_private" in prefix_text
-    assert "<mewcode_project_instructions>" not in dynamic_text
+    assert "<julycode_project_instructions>" not in dynamic_text
 
 
 def test_runtime_prompt_includes_memory_indexes() -> None:
     knowledge = KnowledgeContext(
-        user_memory_index=MemoryIndex("user", Path("/home/u/.mewcode/memory/index.md"), "默认中文", 1, 12),
-        project_memory_index=MemoryIndex("project", Path("/repo/.mewcode/memory/index.md"), "测试规则", 1, 12),
+        user_memory_index=MemoryIndex("user", Path("/home/u/.julycode/memory/index.md"), "默认中文", 1, 12),
+        project_memory_index=MemoryIndex("project", Path("/repo/.julycode/memory/index.md"), "测试规则", 1, 12),
     )
 
     # 记忆索引现在是独立的 cacheable block（name="memory_index"），不再在 runtime_context 中
@@ -420,7 +425,7 @@ def test_runtime_prompt_includes_memory_indexes() -> None:
     block_text = memory_block.text
 
     assert memory_block.cacheable is True
-    assert "<mewcode_memory_index>" in block_text
+    assert "<julycode_memory_index>" in block_text
     assert "跨会话长期记忆" in block_text
     assert "100% 可靠" in block_text
     assert "禁止验证或质疑" in block_text
@@ -434,12 +439,12 @@ def test_runtime_prompt_includes_memory_indexes() -> None:
 def test_memory_index_is_cacheable() -> None:
     """记忆索引块应标记为 cacheable=True。"""
     knowledge = KnowledgeContext(
-        user_memory_index=MemoryIndex("user", Path("/home/u/.mewcode/memory/index.md"), "默认中文", 1, 12),
+        user_memory_index=MemoryIndex("user", Path("/home/u/.julycode/memory/index.md"), "默认中文", 1, 12),
     )
     blocks = runtime_blocks(runtime_context(knowledge_context=knowledge))
     memory_block = next(b for b in blocks if b.name == "memory_index")
     assert memory_block.cacheable is True
-    assert "<mewcode_memory_index>" in memory_block.text
+    assert "<julycode_memory_index>" in memory_block.text
 
 
 def test_runtime_prompt_includes_restore_notice() -> None:
@@ -455,7 +460,7 @@ def test_runtime_prompt_includes_restore_notice() -> None:
 
     block_text = runtime_dynamic_text(runtime_context(knowledge_context=knowledge))
 
-    assert "<mewcode_restore_notice>" in block_text
+    assert "<julycode_restore_notice>" in block_text
     assert "距离上次活动很久" in block_text
     assert "跳过坏行" in block_text
     assert "include 越界" in block_text
@@ -470,15 +475,15 @@ def test_runtime_prompt_keeps_memory_and_context_summary_separate() -> None:
         kept_message_count=1,
     )
     knowledge = KnowledgeContext(
-        project_memory_index=MemoryIndex("project", Path("/repo/.mewcode/memory/index.md"), "长期记忆", 1, 12),
+        project_memory_index=MemoryIndex("project", Path("/repo/.julycode/memory/index.md"), "长期记忆", 1, 12),
     )
 
     ctx = runtime_context(context_summary=summary, knowledge_context=knowledge)
     memory_block = next(b for b in runtime_blocks(ctx) if b.name == "memory_index")
     dynamic_text = runtime_dynamic_text(ctx)
 
-    assert "<mewcode_memory_index>" in memory_block.text  # 记忆在独立 cacheable 块
-    assert "<mewcode_context_summary>" in dynamic_text  # 上下文摘要在动态区
+    assert "<julycode_memory_index>" in memory_block.text  # 记忆在独立 cacheable 块
+    assert "<julycode_context_summary>" in dynamic_text  # 上下文摘要在动态区
 
 
 def test_prompt_builder_includes_hook_injections() -> None:
@@ -486,10 +491,10 @@ def test_prompt_builder_includes_hook_injections() -> None:
         runtime_context(hook_injections=(HookPromptInjection("hook-1", "必须先说明 Hook 上下文"),))
     )
 
-    assert "<mewcode_hook_instructions>" in block_text
+    assert "<julycode_hook_instructions>" in block_text
     assert "来源：hook-1" in block_text
     assert "必须先说明 Hook 上下文" in block_text
 
 
 def test_prompt_builder_omits_hook_injections_when_absent() -> None:
-    assert "<mewcode_hook_instructions>" not in runtime_dynamic_text(runtime_context())
+    assert "<julycode_hook_instructions>" not in runtime_dynamic_text(runtime_context())

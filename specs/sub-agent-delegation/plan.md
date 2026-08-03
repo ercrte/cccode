@@ -1,7 +1,7 @@
-# MewCode 子 Agent 委派 Plan
+# JulyCode 子 Agent 委派 Plan
 
 ## 架构概览
-本阶段新增 `mewcode.subagents` 子系统，承载角色定义、委派工具、子 Agent 运行、后台任务和结果通知。主 Agent 只看到一个稳定工具 `delegate_agent`；角色摘要和后台状态通过运行时提示注入，不通过增删工具实现。`delegate_agent` 根据 `type` 参数分流定义式和 Fork 式委派。
+本阶段新增 `julycode.subagents` 子系统，承载角色定义、委派工具、子 Agent 运行、后台任务和结果通知。主 Agent 只看到一个稳定工具 `delegate_agent`；角色摘要和后台状态通过运行时提示注入，不通过增删工具实现。`delegate_agent` 根据 `type` 参数分流定义式和 Fork 式委派。
 
 定义式子 Agent 使用角色定义启动。角色定义由 Markdown + YAML frontmatter 组成，加载优先级为项目级、用户级、内置级、插件级。定义式运行时创建空白 `ChatSession`，把角色正文作为子 Agent 运行时提示持续注入，只追加本次子任务用户消息。
 
@@ -75,9 +75,9 @@ class SubAgentRoleRoots:
 ```
 默认路径：
 ```text
-<项目>/.mewcode/agents/
-~/.mewcode/agents/
-mewcode.subagents.builtin
+<项目>/.julycode/agents/
+~/.julycode/agents/
+julycode.subagents.builtin
 config.sub_agents.plugin_role_roots
 ```
 
@@ -316,79 +316,79 @@ class CommandContext(Protocol):
 
 ## 模块设计
 
-### `mewcode.subagents.models`
+### `julycode.subagents.models`
 **职责：** 定义角色、委派、后台任务、结果、提示上下文和配置报告等数据结构。  
 **对外接口：** 上述 `SubAgentRoleDefinition`、`SubAgentInvocation`、`SubAgentResult`、`BackgroundSubAgentRecord` 等。  
-**依赖：** `dataclasses`、`pathlib`、`typing`、`mewcode.providers.base.TokenUsage`。
+**依赖：** `dataclasses`、`pathlib`、`typing`、`julycode.providers.base.TokenUsage`。
 
-### `mewcode.subagents.loader`
+### `julycode.subagents.loader`
 **职责：** 发现和解析角色 Markdown 文件。复用 Skill Loader 的 frontmatter 解析思路，但字段和来源优先级按子 Agent 需求实现。  
 **对外接口：** `default_sub_agent_roots(cwd, plugin_roots=())`、`SubAgentRoleLoader.discover()`。  
-**依赖：** `yaml`、`importlib.resources`、`mewcode.subagents.models`。
+**依赖：** `yaml`、`importlib.resources`、`julycode.subagents.models`。
 
-### `mewcode.subagents.manager`
+### `julycode.subagents.manager`
 **职责：** 子 Agent 总控。维护角色目录、当前父上下文、后台任务表、前台等待任务、通知回调和生命周期关闭。  
 **对外接口：** `SubAgentManager.refresh_if_changed()`、`delegate()`、`background_current_foreground()`、`background_snapshot()`、`close()`。  
 **依赖：** `AgentLoopRunner`、`SubAgentRunnerFactory`、`ToolRegistry`、`ToolExecutor`、`ChatSession`、`ProviderResolver`。
 
-### `mewcode.subagents.runtime`
+### `julycode.subagents.runtime`
 **职责：** 创建并运行子 Agent。负责定义式空白会话、Fork 父历史快照、子上下文隔离、角色模型和权限模式解析、结果聚合和停止原因映射。  
 **对外接口：** `SubAgentRunnerFactory.create_runner()`、`run_sub_agent_to_result()`。  
 **依赖：** `ChatSession`、`AgentLoopRunner`、`ContextManager`、`PermissionController`、`PromptBuilder`、`ToolPolicy`、`HookManager`。
 
-### `mewcode.subagents.tools`
+### `julycode.subagents.tools`
 **职责：** 提供稳定的 `delegate_agent` 工具。  
 **对外接口：** `DELEGATE_AGENT_TOOL_NAME`、`DelegateAgentTool`。  
 **依赖：** `ToolSpec`、`ToolContext`、`SubAgentManager`。
 
-### `mewcode.subagents.cache`
+### `julycode.subagents.cache`
 **职责：** 提供独立文件读取缓存。  
 **对外接口：** `FileReadCache`、`FileReadCacheEntry`。  
 **依赖：** `pathlib`。
 
-### `mewcode.subagents.builtin`
+### `julycode.subagents.builtin`
 **职责：** 提供内置定义式角色文件。初始内置 `code-searcher.md` 和 `reviewer.md`，默认只允许读类工具。  
 **对外接口：** 包资源，由 `SubAgentRoleLoader` 读取。  
 **依赖：** 无运行时逻辑。
 
-### `mewcode.tools.scheduler`
+### `julycode.tools.scheduler`
 **职责：** 扩展工具过滤能力，并在被过滤工具被请求时返回结构化失败。  
 **对外接口：** 扩展 `ToolPolicy` 构造参数和失败结果内容。  
 **依赖：** `SubAgentToolFilter` 使用 `TYPE_CHECKING` 或轻量协议避免循环导入。
 
-### `mewcode.agent`
+### `julycode.agent`
 **职责：** 主/子 Agent Loop 的共同执行器。新增子 Agent 提示上下文、工具过滤、父上下文绑定和独立文件缓存传递。  
 **对外接口：** `AgentLoopRunner` 构造参数扩展；`TurnEvent` 可选增加 `sub_agent_event` 事件。  
 **依赖：** `SubAgentManager`、`SubAgentPromptContext`、`FileReadCache`。
 
-### `mewcode.prompting`
+### `julycode.prompting`
 **职责：** 在运行时提示中注入可用子 Agent 角色摘要、后台任务摘要，以及子 Agent 自身的角色正文或 Fork 约束。  
 **对外接口：** `RuntimePromptContext` 增加 `sub_agent_context` 字段。  
-**依赖：** `mewcode.subagents.models`。
+**依赖：** `julycode.subagents.models`。
 
-### `mewcode.config`
+### `julycode.config`
 **职责：** 解析 `sub_agents` 配置，提供后台阈值、工具黑白名单、模型别名和插件角色根目录。  
 **对外接口：** `SubAgentConfig` 挂到 `AppConfig.sub_agents`。  
-**依赖：** `mewcode.subagents.models` 或配置专属 dataclass。
+**依赖：** `julycode.subagents.models` 或配置专属 dataclass。
 
-### `mewcode.tui.app`
+### `julycode.tui.app`
 **职责：** 创建 `SubAgentManager`，注册 `DelegateAgentTool`，刷新角色目录，显示后台通知，支持手动切后台，关闭时清理后台任务。  
 **对外接口：** `sub_agent_snapshot()`、`background_current_sub_agent()`、`action_background_sub_agent()`。  
 **依赖：** `SubAgentManager`、`DelegateAgentTool`。
 
-### `mewcode.commands`
+### `julycode.commands`
 **职责：** 在 `/status` 中显示子 Agent 摘要；新增 `/agents` 查看可用角色和后台任务详情；新增 `/background` 用于当前前台子 Agent 手动切后台。  
 **对外接口：** `CommandSubAgentSnapshot`、`/agents` 命令、`/background` 命令。  
 **依赖：** `CommandContext` 协议。
 
-### `mewcode.tools.base` 和 `mewcode.tools.builtin`
+### `julycode.tools.base` 和 `julycode.tools.builtin`
 **职责：** `ToolContext` 增加可选 `read_cache`；`ReadFileTool` 使用缓存但保持原返回字段兼容。  
 **对外接口：** `ToolContext(read_cache: FileReadCache | None = None)`。  
 **依赖：** `TYPE_CHECKING` 引用缓存类型。
 
-### `mewcode.skills`
+### `julycode.skills`
 **职责：** 独立 Skill 执行改为复用定义式子 Agent 的运行基础设施，继续保留原有用户可见语义。  
-**对外接口：** `SkillManager` 不新增公开接口；`MewCodeApp._run_isolated_skill()` 改为委派到子 Agent 隔离运行器。  
+**对外接口：** `SkillManager` 不新增公开接口；`JulyCodeApp._run_isolated_skill()` 改为委派到子 Agent 隔离运行器。  
 **依赖：** `SubAgentRunnerFactory` 或一层内部适配器。
 
 ## 模块交互
@@ -406,7 +406,7 @@ class CommandContext(Protocol):
 
 ## 文件组织
 ```text
-src/mewcode/
+src/julycode/
 ├── agent.py                         — 扩展 Runner 构造参数、父上下文绑定和子 Agent 提示上下文
 ├── cli.py                           — 创建并注入 SubAgentManager
 ├── config.py                        — 解析 sub_agents 配置
@@ -446,7 +446,7 @@ tests/
 ├── test_tui_smoke.py                — /background、后台完成通知和 /status 展示
 └── e2e_mock_openai_server.py        — 增加委派工具调用脚本化响应
 
-pyproject.toml                       — 包含 mewcode.subagents.builtin 的 *.md 包数据
+pyproject.toml                       — 包含 julycode.subagents.builtin 的 *.md 包数据
 README.md                            — 记录角色定义格式和基础配置
 ```
 
@@ -457,7 +457,7 @@ README.md                            — 记录角色定义格式和基础配置
 | 角色格式 | Markdown + YAML frontmatter，正文作为持续提示 | 与 Skill 格式一致，便于人工维护，也满足角色生命周期提示要求 |
 | 角色加载优先级 | 项目 > 用户 > 内置 > 插件，first-wins | 直接对应 spec；实现上沿用 Skill Loader 的覆盖思路 |
 | Fork 历史继承 | 复制父会话当前消息快照，不引用同一个列表 | 保证 Fork 能看到父历史，同时不会把子消息写回主历史 |
-| Fork prompt cache | 保留相同稳定提示块和历史前缀，记录供应商 cache 用量 | MewCode 不能强制供应商命中缓存，只能最大化可缓存前缀并观测结果 |
+| Fork prompt cache | 保留相同稳定提示块和历史前缀，记录供应商 cache 用量 | JulyCode 不能强制供应商命中缓存，只能最大化可缓存前缀并观测结果 |
 | 状态隔离 | 每个子 Agent 新建 session、context manager、permission controller、read cache、hook runtime state | 隔离消息、权限、上下文外置路径、Token anchor、缓存和 Hook prompt injection 状态 |
 | 基础设施共享 | 共享 provider/provider_resolver、Hook 配置与动作执行能力、registry、cwd | 避免重复连接和重复发现工具，同时不共享会污染上下文的运行时状态 |
 | 前台转后台 | 子任务始终以 asyncio task 运行；前台只是等待它完成 | 同一机制覆盖显式后台、超时后台和手动切后台 |

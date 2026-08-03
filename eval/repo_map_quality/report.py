@@ -5,7 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from repo_map_quality.models import RepoMapQualityReport
-from mewcode.errors import redact_secret
+from julycode.errors import redact_secret
 
 
 def write_json_report(report: RepoMapQualityReport, path: Path) -> None:
@@ -19,7 +19,7 @@ def write_json_report(report: RepoMapQualityReport, path: Path) -> None:
 def write_markdown_report(report: RepoMapQualityReport, path: Path) -> None:
     summary = report.summary
     lines = [
-        "# MewCode Repo Map 质量评测报告",
+        "# JulyCode Repo Map 质量评测报告",
         "",
         "## 运行信息",
         "",

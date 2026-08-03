@@ -1,11 +1,11 @@
 # Agent Evaluation Online Mode Plan
 
 ## 架构概览
-评测框架从“单一离线脚本模式”升级为“双模式运行器”：`online` 使用 MewCode 当前配置创建真实 Provider，并作为 CLI 默认模式；`offline` 使用现有 `ScriptedEvalProvider`，只服务 smoke、单测和无 API key 环境下的回归检查。两种模式共享用例加载、真实 `AgentLoopRunner`、工具、权限、上下文、评分和报告模块。
+评测框架从“单一离线脚本模式”升级为“双模式运行器”：`online` 使用 JulyCode 当前配置创建真实 Provider，并作为 CLI 默认模式；`offline` 使用现有 `ScriptedEvalProvider`，只服务 smoke、单测和无 API key 环境下的回归检查。两种模式共享用例加载、真实 `AgentLoopRunner`、工具、权限、上下文、评分和报告模块。
 
 用例目录拆分为 `eval/cases/online/` 和 `eval/cases/offline/`。在线目录包含至少 30 个默认用例，prompt 面向真实模型，不依赖 `EVAL_CASE` 脚本标记；离线目录保留现有 7 个脚本化用例，用于快速验证评测框架。CLI 未显式指定 `--cases` 时按模式自动选择目录：在线默认 `eval/cases/online`，离线默认 `eval/cases/offline`。
 
-在线 Provider 由 `mewcode.config.load_config()` 和 `mewcode.providers.factory.create_provider()` 创建。CLI 层负责加载配置并在失败时返回配置错误；runner 层只接收已创建的 Provider、配置元信息和模式选项。测试不触网：通过注入 fake online Provider 验证在线路径，通过 mock 配置错误验证错误分支。
+在线 Provider 由 `julycode.config.load_config()` 和 `julycode.providers.factory.create_provider()` 创建。CLI 层负责加载配置并在失败时返回配置错误；runner 层只接收已创建的 Provider、配置元信息和模式选项。测试不触网：通过注入 fake online Provider 验证在线路径，通过 mock 配置错误验证错误分支。
 
 报告结果增加运行元信息，包含模式、protocol、model、provider、prompt cache 配置与 usage 汇总。每条用例继续记录工具轨迹、停止原因、错误、最终回复和人工复核项。自动评分仍只依赖可观察证据；主观项继续标记 `needs_review`。
 
@@ -98,7 +98,7 @@ python eval/run_eval.py --mode online --output eval/results/latest --allow-revie
 python eval/run_eval.py --mode offline --output eval/results/offline --allow-review
 python eval/run_eval.py --case online_read_architecture --allow-review
 ```
-**依赖：** `mew_eval.loader`、`mew_eval.runner`、`mew_eval.report`、`mewcode.config.load_config`、`mewcode.providers.factory.create_provider`。
+**依赖：** `july_eval.loader`、`july_eval.runner`、`july_eval.report`、`julycode.config.load_config`、`julycode.providers.factory.create_provider`。
 
 新增参数：
 - `--mode {online,offline}`，默认 `online`。
@@ -108,7 +108,7 @@ python eval/run_eval.py --case online_read_architecture --allow-review
 
 在线配置错误返回退出码 `2`，并打印“在线评测配置错误”。有用例失败或错误返回 `1`。只有 `needs_review` 时，传 `--allow-review` 才返回 `0`。
 
-### `eval/mew_eval/runner.py`
+### `eval/july_eval/runner.py`
 **职责：** 根据模式创建或使用 Provider，执行真实 Agent loop，收集 trace 和 usage。  
 **对外接口：**
 ```python
@@ -119,12 +119,12 @@ async def run_suite(cases, metrics, options) -> EvalSuiteResult
 
 在线模式要求 `options.provider` 非空，且同一 suite 复用同一个 Provider 实例；离线模式继续按脚本 Provider 运行。runner 不读取用户配置和环境变量，避免测试时隐式触网。
 
-### `eval/mew_eval/models.py`
+### `eval/july_eval/models.py`
 **职责：** 扩展数据结构以表达模式、Provider 信息、cache usage 和用例标签。  
 **对外接口：** dataclass 类型导出。  
-**依赖：** 标准库和 `mewcode.providers.base.LLMProvider` 的类型提示。
+**依赖：** 标准库和 `julycode.providers.base.LLMProvider` 的类型提示。
 
-### `eval/mew_eval/loader.py`
+### `eval/july_eval/loader.py`
 **职责：** 加载在线/离线用例目录，解析新增字段。  
 **对外接口：**
 ```python
@@ -135,7 +135,7 @@ load_cases(path)
 
 校验新增字段：`tags` 必须是字符串数组；`online_only` 与 `offline_only` 不应同时为 true。
 
-### `eval/mew_eval/report.py`
+### `eval/july_eval/report.py`
 **职责：** JSON 和 Markdown 报告输出，包含在线 Provider 和 prompt cache 字段。  
 **对外接口：**
 ```python
@@ -146,7 +146,7 @@ write_markdown_report(result, path)
 
 Markdown 新增“运行环境”区块，展示模式、protocol、model、provider、prompt cache 配置、总 usage 和 cache 状态分布。
 
-### `eval/mew_eval/provider.py`
+### `eval/july_eval/provider.py`
 **职责：** 保留离线脚本化 Provider，只服务 offline smoke。  
 **对外接口：** `ScriptedEvalProvider`。  
 **依赖：** Provider 协议和工具调用模型。
@@ -236,14 +236,14 @@ CLI
 
 ## 文件组织
 ```text
-mewcode/
+julycode/
 ├── eval/
 │   ├── README.md                         — 更新在线默认、费用和离线 smoke 说明
 │   ├── run_eval.py                       — 新增 --mode、在线配置加载和默认目录解析
 │   ├── cases/
 │   │   ├── online/                       — 至少 30 个真实模型默认用例
 │   │   └── offline/                      — 现有 7 个脚本化 smoke 用例
-│   ├── mew_eval/
+│   ├── july_eval/
 │   │   ├── models.py                     — 增加 mode、provider info、cache usage、case tags
 │   │   ├── loader.py                     — 解析新增字段和目录结构
 │   │   ├── provider.py                   — 保留脚本化 Provider
