@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from julycode.errors import redact_secret
-from julycode.worktrees.models import WorktreeChangeState, WorktreeError
+from julycode.worktrees.models import GitMergeOutcome, GitOperation, WorktreeChangeState, WorktreeError
 
 
 @dataclass(frozen=True)
@@ -66,6 +66,40 @@ class GitClient:
         result = await self._checked(("rev-parse", "HEAD"), cwd=cwd, stage="head")
         return result.stdout
 
+    async def current_branch(self, *, cwd: Path) -> str | None:
+        result = await self.run(("symbolic-ref", "--quiet", "--short", "HEAD"), cwd=cwd)
+        if result.returncode == 0:
+            return result.stdout
+        if result.returncode == 1:
+            return None
+        self._raise_result("branch", result)
+        return None
+
+    async def is_clean(self, *, cwd: Path) -> bool:
+        result = await self._checked(
+            ("status", "--porcelain=v1", "--untracked-files=all"),
+            cwd=cwd,
+            stage="status",
+        )
+        return not result.stdout
+
+    async def operation(self, *, cwd: Path) -> GitOperation:
+        markers: tuple[tuple[str, GitOperation], ...] = (
+            ("MERGE_HEAD", "merge"),
+            ("rebase-merge", "rebase"),
+            ("rebase-apply", "rebase"),
+            ("CHERRY_PICK_HEAD", "cherry_pick"),
+            ("REVERT_HEAD", "revert"),
+        )
+        for marker, operation in markers:
+            result = await self._checked(("rev-parse", "--git-path", marker), cwd=cwd, stage="operation")
+            path = Path(result.stdout)
+            if not path.is_absolute():
+                path = cwd.resolve() / path
+            if path.exists():
+                return operation
+        return "none"
+
     async def commit_exists(self, *, cwd: Path, commit: str) -> bool:
         result = await self.run(("cat-file", "-e", f"{commit}^{{commit}}"), cwd=cwd)
         if result.returncode == 0:
@@ -75,6 +109,23 @@ class GitClient:
         self._raise_result("commit_check", result)
         return False
 
+    async def commit_parents(self, *, cwd: Path, commit: str) -> tuple[str, ...]:
+        if not await self.commit_exists(cwd=cwd, commit=commit):
+            raise WorktreeError("commit_parents", f"提交不存在或不是 commit: {commit}")
+        result = await self._checked(
+            ("rev-list", "--parents", "-n", "1", commit),
+            cwd=cwd,
+            stage="commit_parents",
+        )
+        fields = result.stdout.split()
+        if not fields or fields[0] != await self.head_object_id(cwd=cwd, value=commit):
+            raise WorktreeError("commit_parents", "Git 返回的提交父节点格式无效")
+        return tuple(fields[1:])
+
+    async def head_object_id(self, *, cwd: Path, value: str) -> str:
+        result = await self._checked(("rev-parse", f"{value}^{{commit}}"), cwd=cwd, stage="commit_check")
+        return result.stdout
+
     async def is_ancestor(self, *, cwd: Path, ancestor: str, descendant: str) -> bool:
         result = await self.run(("merge-base", "--is-ancestor", ancestor, descendant), cwd=cwd)
         if result.returncode == 0:
@@ -83,6 +134,65 @@ class GitClient:
             return False
         self._raise_result("ancestor_check", result)
         return False
+
+    async def fast_forward(self, *, cwd: Path, target: str) -> str:
+        if await self.current_branch(cwd=cwd) is None:
+            raise WorktreeError("fast_forward", "游离 HEAD 不允许发布")
+        if await self.operation(cwd=cwd) != "none":
+            raise WorktreeError("fast_forward", "工作树存在进行中的 Git 操作")
+        if not await self.is_clean(cwd=cwd):
+            raise WorktreeError("fast_forward", "工作树不干净")
+        expected = await self.head_object_id(cwd=cwd, value=target)
+        await self._checked(("merge", "--ff-only", expected), cwd=cwd, stage="fast_forward")
+        actual = await self.head_commit(cwd=cwd)
+        if actual != expected or not await self.is_clean(cwd=cwd):
+            raise WorktreeError("fast_forward", "快进后 Git 状态与预期不一致")
+        return actual
+
+    async def merge_no_ff(self, *, cwd: Path, source: str, message: str) -> GitMergeOutcome:
+        if await self.operation(cwd=cwd) != "none":
+            raise WorktreeError("merge", "工作树存在进行中的 Git 操作")
+        if not await self.is_clean(cwd=cwd):
+            raise WorktreeError("merge", "工作树不干净")
+        source_commit = await self.head_object_id(cwd=cwd, value=source)
+        before = await self.head_commit(cwd=cwd)
+        if await self.is_ancestor(cwd=cwd, ancestor=source_commit, descendant=before):
+            return GitMergeOutcome("already_integrated", before, before)
+        result = await self.run(
+            ("merge", "--no-ff", "--no-edit", "--no-gpg-sign", "-m", message, source_commit),
+            cwd=cwd,
+        )
+        if result.returncode == 0:
+            after = await self.head_commit(cwd=cwd)
+            parents = await self.commit_parents(cwd=cwd, commit=after)
+            if parents != (before, source_commit) or not await self.is_clean(cwd=cwd):
+                return GitMergeOutcome("failed", before, after, detail="合并提交父节点或工作区状态异常")
+            return GitMergeOutcome("merged", before, after)
+
+        conflicts = await self._conflict_paths(cwd=cwd)
+        if not conflicts:
+            detail = redact_secret(result.stderr or result.stdout or f"exit={result.returncode}")
+            return GitMergeOutcome("failed", before, await self.head_commit(cwd=cwd), detail=detail[:1000])
+        try:
+            await self.abort_merge(cwd=cwd)
+        except WorktreeError as exc:
+            return GitMergeOutcome("failed", before, await self.head_commit(cwd=cwd), conflicts, str(exc))
+        after = await self.head_commit(cwd=cwd)
+        if after != before or await self.operation(cwd=cwd) != "none" or not await self.is_clean(cwd=cwd):
+            return GitMergeOutcome("failed", before, after, conflicts, "冲突中止后未恢复到原状态")
+        return GitMergeOutcome("conflicted", before, after, conflicts)
+
+    async def abort_merge(self, *, cwd: Path) -> None:
+        result = await self.run(("merge", "--abort"), cwd=cwd)
+        if result.returncode != 0:
+            self._raise_result("merge_abort", result)
+
+    async def _conflict_paths(self, *, cwd: Path) -> tuple[str, ...]:
+        result = await self.run(("diff", "--name-only", "--diff-filter=U", "-z"), cwd=cwd)
+        if result.returncode != 0:
+            self._raise_result("merge_conflict", result)
+        paths = [part for part in result.stdout.split("\0") if part]
+        return tuple(sorted(dict.fromkeys(paths)))
 
     async def branch_exists(self, *, cwd: Path, branch: str) -> bool:
         result = await self.run(("show-ref", "--verify", "--quiet", f"refs/heads/{branch}"), cwd=cwd)

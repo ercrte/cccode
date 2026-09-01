@@ -78,6 +78,14 @@ class TeamPaths:
         return resolve_inside(self.root, "tasks.lock")
 
     @property
+    def integration_file(self) -> Path:
+        return resolve_inside(self.root, "integration.json")
+
+    @property
+    def integration_lock(self) -> Path:
+        return resolve_inside(self.root, "integration.lock")
+
+    @property
     def approvals_file(self) -> Path:
         return resolve_inside(self.root, "approvals.json")
 

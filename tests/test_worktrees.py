@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from julycode.worktrees import (
+    GitMergeOutcome,
     WorktreeConfig,
     WorktreeDisposition,
     WorktreeError,
@@ -80,6 +81,87 @@ def test_worktree_models_have_expected_defaults() -> None:
     assert WorktreeConfig().cleanup_interval_seconds == 3600.0
     assert WorktreeLease
     assert WorktreeDisposition
+
+
+def test_git_merge_outcome_model() -> None:
+    outcome = GitMergeOutcome("merged", "a" * 40, "b" * 40)
+    assert outcome.conflict_paths == ()
+    assert outcome.detail == ""
+
+
+@pytest.mark.asyncio
+async def test_current_branch_and_git_is_clean(tmp_path: Path) -> None:
+    repository = init_repository(tmp_path / "repo")
+    client = GitClient()
+    branch = git(repository, "branch", "--show-current").stdout.strip()
+    assert await client.current_branch(cwd=repository) == branch
+    assert await client.is_clean(cwd=repository)
+    (repository / "untracked.txt").write_text("new", encoding="utf-8")
+    assert not await client.is_clean(cwd=repository)
+    (repository / "untracked.txt").unlink()
+    git(repository, "checkout", "--detach", "-q")
+    assert await client.current_branch(cwd=repository) is None
+
+
+@pytest.mark.asyncio
+async def test_commit_parents_and_git_fast_forward(tmp_path: Path) -> None:
+    repository = init_repository(tmp_path / "repo")
+    client = GitClient()
+    root = await client.head_commit(cwd=repository)
+    assert await client.commit_parents(cwd=repository, commit=root) == ()
+    git(repository, "checkout", "-qb", "next")
+    (repository / "next.txt").write_text("next", encoding="utf-8")
+    git(repository, "add", "next.txt")
+    git(repository, "commit", "-qm", "next")
+    target = await client.head_commit(cwd=repository)
+    git(repository, "checkout", "-q", "master")
+    assert await client.fast_forward(cwd=repository, target=target) == target
+    assert (repository / "next.txt").read_text(encoding="utf-8") == "next"
+
+
+@pytest.mark.asyncio
+async def test_merge_no_ff_success_and_already_integrated(tmp_path: Path) -> None:
+    repository = init_repository(tmp_path / "repo")
+    client = GitClient()
+    base = await client.head_commit(cwd=repository)
+    worktree = tmp_path / "source"
+    await client.create_worktree(cwd=repository, path=worktree, branch="source", base=base)
+    (worktree / "source.txt").write_text("source", encoding="utf-8")
+    git(worktree, "add", "source.txt")
+    git(worktree, "commit", "-qm", "source")
+    source = await client.head_commit(cwd=worktree)
+
+    outcome = await client.merge_no_ff(cwd=repository, source=source, message="merge source")
+    assert outcome.status == "merged"
+    assert await client.commit_parents(cwd=repository, commit=outcome.head_after) == (base, source)
+    repeated = await client.merge_no_ff(cwd=repository, source=source, message="again")
+    assert repeated.status == "already_integrated"
+    assert repeated.head_after == outcome.head_after
+
+
+@pytest.mark.asyncio
+async def test_merge_conflict_aborts(tmp_path: Path) -> None:
+    repository = init_repository(tmp_path / "repo")
+    client = GitClient()
+    base = await client.head_commit(cwd=repository)
+    source_root = tmp_path / "source"
+    await client.create_worktree(cwd=repository, path=source_root, branch="source", base=base)
+    (source_root / "README.md").write_text("source\n", encoding="utf-8")
+    git(source_root, "add", "README.md")
+    git(source_root, "commit", "-qm", "source")
+    source = await client.head_commit(cwd=source_root)
+    (repository / "README.md").write_text("main\n", encoding="utf-8")
+    git(repository, "add", "README.md")
+    git(repository, "commit", "-qm", "main")
+    before = await client.head_commit(cwd=repository)
+
+    outcome = await client.merge_no_ff(cwd=repository, source=source, message="conflict")
+
+    assert outcome.status == "conflicted"
+    assert outcome.conflict_paths == ("README.md",)
+    assert await client.head_commit(cwd=repository) == before
+    assert await client.operation(cwd=repository) == "none"
+    assert await client.is_clean(cwd=repository)
 
 
 @pytest.mark.parametrize(
@@ -539,6 +621,54 @@ async def test_manager_acquire_new_writes_complete_metadata(tmp_path: Path) -> N
     assert raw["branch"] == "julycode/reviewer/task-1"
     assert raw["base_commit"] == git(repository, "rev-parse", "HEAD").stdout.strip()
     assert datetime.fromisoformat(raw["created_at"]).tzinfo is not None
+
+
+@pytest.mark.asyncio
+async def test_explicit_base_acquire_and_recovery(tmp_path: Path) -> None:
+    repository = init_repository(tmp_path / "repo")
+    base = git(repository, "rev-parse", "HEAD").stdout.strip()
+    (repository / "later.txt").write_text("later", encoding="utf-8")
+    git(repository, "add", "later.txt")
+    git(repository, "commit", "-qm", "later")
+    manager = WorktreeManager(repository, WorktreeConfig())
+
+    lease = await manager.acquire(
+        task_id="integration-1", role="integration", retention="persistent", base_commit=base
+    )
+    assert await manager.git.head_commit(cwd=lease.root) == base
+    await manager.release(lease)
+    recovered = await manager.acquire(
+        task_id="integration-1", role="integration", retention="persistent", base_commit=base
+    )
+    assert recovered.recovered
+    await manager.release(recovered)
+    with pytest.raises(WorktreeError, match="base_commit"):
+        await manager.acquire(
+            task_id="integration-1",
+            role="integration",
+            retention="persistent",
+            base_commit=git(repository, "rev-parse", "HEAD").stdout.strip(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_delete_merged_internal_worktree(tmp_path: Path) -> None:
+    repository = init_repository(tmp_path / "repo")
+    manager = WorktreeManager(repository, WorktreeConfig())
+    base = await manager.git.head_commit(cwd=repository)
+    lease = await manager.acquire(
+        task_id="integration-1", role="integration", retention="persistent", base_commit=base
+    )
+    (lease.root / "new.txt").write_text("new", encoding="utf-8")
+    git(lease.root, "add", "new.txt")
+    git(lease.root, "commit", "-qm", "integrated")
+    integrated = await manager.git.head_commit(cwd=lease.root)
+    await manager.git.fast_forward(cwd=repository, target=integrated)
+
+    disposition = await manager.delete_merged(lease, merged_into=integrated)
+
+    assert disposition.status == "cleaned"
+    assert not lease.root.exists()
 
 
 @pytest.mark.asyncio

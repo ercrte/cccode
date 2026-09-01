@@ -256,8 +256,11 @@ def _team_context_lines(context: RuntimePromptContext) -> list[str]:
         for member in team.roster:
             lines.append(
                 f"- {member.name}: role={member.role} status={member.status} "
-                f"task={member.current_task_id or '无'}"
+                f"task={member.current_task_id or '无'} sync={member.sync_status} "
+                f"sync_head={member.sync_head or '无'}"
             )
+            if member.sync_error:
+                lines.append(f"  同步提示：{member.sync_error}")
     if team.tasks:
         lines.append("共享任务：")
         for task in team.tasks:
@@ -266,11 +269,27 @@ def _team_context_lines(context: RuntimePromptContext) -> list[str]:
                 f"depends={','.join(task.dependencies) or '无'}"
             )
     if team.actor_kind == "lead":
+        if team.integration is not None:
+            integration = team.integration
+            lines.append(
+                f"自动集成：round={integration.round_number or '无'} phase={integration.phase} "
+                f"target={integration.target_branch or '未捕获'} head={integration.integration_head or '无'}"
+            )
+            if integration.accepted_tasks:
+                accepted = ",".join(
+                    f"{item.task_id}@{item.attempt}" for item in integration.accepted_tasks
+                )
+                lines.append(f"已进入内部基线：{accepted}")
+            if integration.failure is not None:
+                lines.append(f"集成失败：{integration.failure.message}")
+                if integration.failure.conflict_paths:
+                    lines.append("冲突路径：" + ", ".join(integration.failure.conflict_paths))
         lines.extend(
             (
                 "Lead 约束：先把用户目标拆成带依赖任务写入共享清单，再派生成员。",
                 "有未完成任务时使用 team_wait 等待事件并处理审批、失败和依赖解锁。",
-                "全部任务完成后汇总成员分支；本阶段不得声称已经自动合并。",
+                "代码任务完成时由系统先进入内部基线；全部任务完成后由完成守卫一次性安全发布到 Lead。",
+                "在完成守卫明确报告发布成功前，不得声称已经自动合并。",
             )
         )
     else:
@@ -278,8 +297,12 @@ def _team_context_lines(context: RuntimePromptContext) -> list[str]:
             (
                 "成员约束：只处理共享清单中已领取的任务，不得派生或管理其他成员。",
                 "通过 team_message 与 Lead 或其他成员直接协作，结束前更新任务状态。",
+                "不得自行合并 Lead；代码任务领取时系统会同步内部基线，完成时系统自动集成提交。",
             )
         )
+        own = next((member for member in team.roster if member.name == team.actor_name), None)
+        if own is not None and own.sync_status == "blocked":
+            lines.append("成员同步已阻塞：在修复同步问题前不能领取新的代码任务。")
         if team.current_task is not None:
             lines.append(
                 f"当前任务：{team.current_task.id} {team.current_task.title} status={team.current_task.status}"

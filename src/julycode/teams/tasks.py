@@ -4,7 +4,7 @@ import uuid
 from dataclasses import asdict, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from julycode.teams.locking import AtomicJsonFile, FileLock
 from julycode.teams.models import (
@@ -25,18 +25,30 @@ from julycode.teams.paths import TeamPaths
 from julycode.teams.store import TeamStore
 from julycode.worktrees.git import GitClient
 
+if TYPE_CHECKING:
+    from julycode.teams.integration import TeamIntegrationService
+
 
 TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled"})
 
 
 class TaskService:
-    def __init__(self, team_name: str, store: TeamStore, config: TeamConfig | None = None, *, git: GitClient | None = None) -> None:
+    def __init__(
+        self,
+        team_name: str,
+        store: TeamStore,
+        config: TeamConfig | None = None,
+        *,
+        git: GitClient | None = None,
+        integration: TeamIntegrationService | None = None,
+    ) -> None:
         self.team_name = team_name
         self.store = store
         self.config = config or store.config
         self.paths = TeamPaths.for_team(team_name, base=store.root)
         self.file = AtomicJsonFile(self.paths.tasks_file, FileLock(self.paths.tasks_lock, self.config))
         self.git = git or GitClient()
+        self.integration = integration
 
     async def create(self, actor: TeamActor, draft: TaskDraft) -> TeamTask:
         await self._validate_actor(actor)
@@ -46,6 +58,7 @@ class TaskService:
         if not title:
             raise TeamDataError("任务标题不能为空")
         task_id = f"task-{uuid.uuid4().hex[:12]}"
+        integration_round = await self.integration.assign_round() if self.integration is not None else 1
         now = _now()
         task = TeamTask(
             id=task_id,
@@ -58,6 +71,7 @@ class TaskService:
             created_by=actor.name,
             created_at=now,
             updated_at=now,
+            integration_round=integration_round,
         )
 
         def mutate(raw: dict[str, Any]) -> dict[str, Any]:
@@ -92,6 +106,13 @@ class TaskService:
             raise TeamDataError("完成任务必须使用 complete，以校验结果和代码提交")
         if patch.status in {"blocked", "in_progress", "awaiting_approval", "failed"}:
             raise TeamDataError(f"任务状态 {patch.status} 必须由对应状态机操作产生")
+        before = await self.get(task_id)
+        reset_terminal = patch.status == "pending" and before.status in TERMINAL_STATUSES
+        reset_round = (
+            await self.integration.assign_round()
+            if reset_terminal and self.integration is not None
+            else before.integration_round
+        )
 
         def mutate(raw: dict[str, Any]) -> dict[str, Any]:
             tasks, outbox = self._parse_document(raw)
@@ -121,6 +142,8 @@ class TaskService:
                     commit=None,
                     result=None,
                     failure_reason=None,
+                    attempt=(task.attempt + 1 if task.status in TERMINAL_STATUSES else task.attempt),
+                    integration_round=(reset_round if task.status in TERMINAL_STATUSES else task.integration_round),
                 )
             tasks[task_id] = updated
             self._validate_graph(tasks)
@@ -131,6 +154,9 @@ class TaskService:
 
     async def delete(self, actor: TeamActor, task_id: str) -> None:
         await self._validate_actor(actor)
+        task = await self.get(task_id)
+        if self.integration is not None:
+            await self.integration.validate_task_delete(task)
 
         def mutate(raw: dict[str, Any]) -> dict[str, Any]:
             tasks, outbox = self._parse_document(raw)
@@ -155,7 +181,10 @@ class TaskService:
         start_commit: str | None = None
         task_before = await self.get(task_id)
         if task_before.kind == "code":
-            start_commit = await self.git.head_commit(cwd=member.cwd)
+            if self.integration is not None:
+                start_commit = await self.integration.prepare_code_claim(member_record, task_before)
+            else:
+                start_commit = await self.git.head_commit(cwd=member.cwd)
 
         def mutate(raw: dict[str, Any]) -> dict[str, Any]:
             tasks, outbox = self._parse_document(raw)
@@ -175,10 +204,11 @@ class TaskService:
 
         updated = await self.file.mutate(mutate)
         task = self._parse_document(updated)[0][task_id]
+        latest_member = await self.store.get_member(self.team_name, member.name)
         await self.store.update_member(
             self.team_name,
             replace(
-                member_record,
+                latest_member,
                 status=("awaiting_approval" if member_record.require_approval else "running"),
                 current_task_id=task_id,
                 updated_at=_now(),
@@ -190,6 +220,10 @@ class TaskService:
     async def complete(self, member: TeamActor, task_id: str, result: TaskResult) -> TeamTask:
         await self._validate_actor(member)
         task = await self.get(task_id)
+        if task.status == "completed":
+            if result.commit is None or task.commit == result.commit:
+                return task
+            raise TeamDataError("任务已经接受其他 commit")
         if task.assignee != member.name or task.status != "in_progress":
             raise TeamDataError("只有正在执行该任务的成员可以完成任务")
         text = result.result.strip()
@@ -209,7 +243,49 @@ class TaskService:
             if not await self.git.is_ancestor(cwd=member.cwd, ancestor=task.start_commit, descendant=commit):
                 raise TeamDataError("结果 commit 不在任务起点之后")
 
+            if self.integration is not None:
+                integrated_result = TaskResult(text, commit)
+
+                async def complete_task(source_commit: str) -> TeamTask:
+                    latest = await self.get(task.id)
+                    if latest.status == "completed":
+                        if latest.commit != source_commit:
+                            raise TeamDataError("恢复任务已完成但 commit 不匹配")
+                        return latest
+                    return await self._finish(
+                        member,
+                        latest,
+                        "completed",
+                        text,
+                        None,
+                        source_commit,
+                    )
+
+                return await self.integration.integrate_code_task(
+                    member, task, integrated_result, complete_task
+                )
+
         return await self._finish(member, task, "completed", text, None, commit)
+
+    async def complete_recovered(
+        self,
+        task_id: str,
+        attempt: int,
+        result: str,
+        commit: str,
+    ) -> TeamTask:
+        task = await self.get(task_id)
+        if task.attempt != attempt:
+            raise TeamDataError("恢复任务 attempt 与持久意图不匹配")
+        if task.status == "completed":
+            if task.commit != commit:
+                raise TeamDataError("恢复任务已有不同 commit")
+            return task
+        if task.status != "in_progress" or not task.assignee:
+            raise TeamDataError("恢复任务不在可完成状态")
+        member = await self.store.get_member(self.team_name, task.assignee)
+        actor = TeamActor(self.team_name, member.name, "member", Path(member.worktree_cwd))
+        return await self._finish(actor, task, "completed", result, None, commit)
 
     async def fail(self, member: TeamActor, task_id: str, reason: str) -> TeamTask:
         await self._validate_actor(member)

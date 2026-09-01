@@ -10,6 +10,7 @@ from julycode.providers.base import ChatMessage
 from julycode.session import ChatSession
 from julycode.teams.approvals import ApprovalService
 from julycode.teams.events import TeamOutboxDispatcher
+from julycode.teams.integration import TeamIntegrationService
 from julycode.teams.mailbox import MailboxService
 from julycode.teams.models import (
     BroadcastResult,
@@ -30,6 +31,8 @@ from julycode.teams.policy import ApprovalGate, TeamAudienceGate, TeamMemberRole
 from julycode.teams.store import TeamStore
 from julycode.teams.tasks import TaskService
 from julycode.tools.base import RuntimePrincipal
+from julycode.worktrees.manager import WorktreeManager
+from julycode.worktrees.models import WorktreeConfig
 
 if TYPE_CHECKING:
     from julycode.subagents.models import SubAgentRoleDefinition
@@ -38,6 +41,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class TeamServices:
+    integration: TeamIntegrationService
     tasks: TaskService
     approvals: ApprovalService
     mailbox: MailboxService
@@ -52,11 +56,13 @@ class TeamManager:
         *,
         store: TeamStore | None = None,
         runtime: TeamRuntimeSupervisor | None = None,
+        worktrees: WorktreeManager | None = None,
     ) -> None:
         self.main_cwd = main_cwd.resolve()
         self.config = config or TeamConfig()
         self.store = store or TeamStore(self.main_cwd, self.config)
         self.runtime = runtime
+        self.worktrees = worktrees or WorktreeManager(self.main_cwd, WorktreeConfig())
         self.active_team: str | None = None
         self._services: dict[str, TeamServices] = {}
         self._event = asyncio.Event()
@@ -76,9 +82,10 @@ class TeamManager:
             raise TeamDataError(f"当前已激活团队: {self.active_team}")
         record = await self.store.create(name)
         self.active_team = record.name
-        self._service(record.name)
+        services = self._service(record.name)
+        await services.integration.recover(services.tasks)
         await self._refresh_prompt(record.name)
-        return TeamSnapshot(record)
+        return TeamSnapshot(record, integration=await services.integration.snapshot())
 
     async def list_teams(self) -> tuple[TeamSummary, ...]:
         return await self.store.list()
@@ -91,13 +98,18 @@ class TeamManager:
         record = await self.store.load(name)
         self.active_team = record.name
         services = self._service(record.name)
+        await services.integration.recover(services.tasks)
         recovery = await self.store.reconcile_interrupted(record.name)
         for task_id in recovery.released_task_ids:
             await services.tasks.release_interrupted(task_id, "成员进程中断，任务等待重新指派。")
         await services.approvals.reconcile()
         await services.dispatcher.flush()
         await self._refresh_prompt(record.name)
-        return TeamSnapshot(await self.store.load(record.name), await services.tasks.list())
+        return TeamSnapshot(
+            await self.store.load(record.name),
+            await services.tasks.list(),
+            integration=await services.integration.snapshot(),
+        )
 
     async def close_team(self) -> None:
         self.active_team = None
@@ -107,7 +119,12 @@ class TeamManager:
         services = self._service(team_name)
         record = await self.store.load(team_name)
         lead = TeamActor(team_name, "lead", "lead", self.main_cwd)
-        return TeamSnapshot(record, await services.tasks.list(), len(await services.mailbox.unread(lead)))
+        return TeamSnapshot(
+            record,
+            await services.tasks.list(),
+            len(await services.mailbox.unread(lead)),
+            await services.integration.snapshot(),
+        )
 
     async def actor_for(self, principal: RuntimePrincipal) -> TeamActor:
         if principal.kind == "main":
@@ -177,6 +194,7 @@ class TeamManager:
             tuple(record.members.values()),
             await services.mailbox.unread(lead),
             timed_out,
+            await services.integration.snapshot(),
         )
         await self._refresh_prompt(team_name)
         return snapshot
@@ -222,16 +240,21 @@ class TeamManager:
     async def shutdown(self) -> None:
         if self.runtime is not None:
             await self.runtime.shutdown()
+        for services in self._services.values():
+            await services.integration.close()
 
     def _service(self, team_name: str) -> TeamServices:
         existing = self._services.get(team_name)
         if existing is not None:
             return existing
-        tasks = TaskService(team_name, self.store)
+        integration = TeamIntegrationService(
+            team_name, self.main_cwd, self.store, self.worktrees
+        )
+        tasks = TaskService(team_name, self.store, integration=integration)
         approvals = ApprovalService(team_name, self.store, tasks)
         mailbox = MailboxService(team_name, self.store, approvals)
         dispatcher = TeamOutboxDispatcher(team_name, mailbox, (self.store, tasks, approvals))
-        services = TeamServices(tasks, approvals, mailbox, dispatcher)
+        services = TeamServices(integration, tasks, approvals, mailbox, dispatcher)
         self._services[team_name] = services
         return services
 
@@ -239,14 +262,29 @@ class TeamManager:
         record = await self.store.load(team_name)
         services = self._service(team_name)
         tasks = await services.tasks.list()
+        integration = await services.integration.snapshot()
         roster = tuple(
-            MemberSummary(member.name, member.role, member.status, member.current_task_id)
+            MemberSummary(
+                member.name,
+                member.role,
+                member.status,
+                member.current_task_id,
+                member.sync_status,
+                member.sync_head,
+                member.sync_error,
+            )
             for member in record.members.values()
         )
         summaries = tuple(TaskSummary(task.id, task.title, task.status, task.assignee, task.dependencies) for task in tasks)
         lead = TeamActor(team_name, "lead", "lead", self.main_cwd)
         self._prompt_cache[(team_name, "lead")] = TeamPromptContext(
-            team_name, "lead", "lead", roster, summaries, len(await services.mailbox.unread(lead))
+            team_name,
+            "lead",
+            "lead",
+            roster,
+            summaries,
+            len(await services.mailbox.unread(lead)),
+            integration=integration,
         )
         for member in record.members.values():
             actor = TeamActor(team_name, member.name, "member", Path(member.worktree_cwd))
@@ -263,6 +301,7 @@ class TeamManager:
                 current_task,
                 approval,
                 self._role_bodies.get((team_name, member.name)),
+                integration,
             )
 
     def _require_active(self) -> str:
@@ -313,12 +352,15 @@ class _LeadLoopController:
         if failed:
             detail = "\n".join(f"- {task.id} {task.title}: {task.failure_reason or task.status}" for task in failed)
             return CompletionDecision(True, replace(message, content=f"团队目标尚未达成：\n{detail}"))
-        branches = []
-        record = await self.manager.store.load(self.team_name)
-        for member in record.members.values():
-            branches.append(f"- {member.name}: {member.branch}")
-        suffix = "\n\n团队任务已全部完成。待集成分支：\n" + ("\n".join(branches) or "- 无")
-        suffix += "\n本阶段未自动执行 Git 合并。"
+        finalized = await services.integration.finalize(tasks)
+        if finalized.status == "waiting":
+            return CompletionDecision(False, message, finalized.message)
+        if finalized.status == "blocked":
+            return CompletionDecision(
+                True,
+                replace(message, content=f"团队任务已完成，但自动发布被阻止：{finalized.message}"),
+            )
+        suffix = "\n\n" + finalized.message
         return CompletionDecision(True, replace(message, content=message.content.rstrip() + suffix))
 
 

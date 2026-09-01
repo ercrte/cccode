@@ -1000,7 +1000,11 @@ def test_readme_documents_team_collaboration() -> None:
     assert "~/.julycode/teams/<team>/" in text
     assert "require_approval" in text
     assert "coroutine" in text
-    assert "不会自动合并" in text
+    assert "内部 Worktree" in text
+    assert "--no-ff" in text
+    assert "--ff-only" in text
+    assert "操作意图 → Git 事实 → 完成记录" in text
+    assert "不执行 push、PR、force" in text
 
 
 def test_cli_reports_config_error_without_secret(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:

@@ -64,6 +64,7 @@ class WorktreeManager:
         task_id: str,
         role: str,
         retention: str = "ephemeral",
+        base_commit: str | None = None,
     ) -> WorktreeLease:
         if retention not in {"ephemeral", "persistent"}:
             raise WorktreeError("acquire", f"未知 Worktree retention: {retention}")
@@ -84,6 +85,7 @@ class WorktreeManager:
                     relative_name=relative_name,
                     branch=branch,
                     retention=retention,
+                    base_commit=base_commit,
                 )
                 cwd = self._lease_cwd(target, layout)
                 lease = WorktreeLease(metadata=metadata, root=target, cwd=cwd, recovered=True)
@@ -96,7 +98,12 @@ class WorktreeManager:
                     "repository",
                     f"Git 仓库根与文件系统边界不一致: {git_root} != {layout.repository_root}",
                 )
-            base = await self.git.head_commit(cwd=layout.repository_root)
+            if base_commit is None:
+                base = await self.git.head_commit(cwd=layout.repository_root)
+            else:
+                if not await self.git.commit_exists(cwd=layout.repository_root, commit=base_commit):
+                    raise WorktreeError("acquire", f"显式基线不是当前仓库中的提交: {base_commit}")
+                base = await self.git.head_object_id(cwd=layout.repository_root, value=base_commit)
             metadata = WorktreeMetadata(
                 version=METADATA_VERSION,
                 repository_id=layout.repository_id,
@@ -179,6 +186,57 @@ class WorktreeManager:
                 state=state,
                 allow_pushed_commits=allow_pushed_commits,
                 owner_task_id=None,
+            )
+
+    async def delete_merged(
+        self,
+        lease: WorktreeLease,
+        *,
+        merged_into: str,
+    ) -> WorktreeDisposition:
+        """只清理已安全发布的内部集成 Worktree。"""
+        lock = self._lock_for(lease.root)
+        async with lock:
+            layout = self._require_layout()
+            resolved_root = lease.root.resolve()
+            try:
+                resolved_root.relative_to(layout.storage_root)
+            except ValueError as exc:
+                raise WorktreeError("delete", f"目标不在 Worktree 根目录内: {resolved_root}") from exc
+            metadata = self._read_metadata(resolved_root)
+            if metadata != lease.metadata:
+                raise WorktreeError("delete", "磁盘元数据与 lease 不一致")
+            state = await self.git.change_state(
+                worktree_root=resolved_root,
+                base=lease.metadata.base_commit,
+            )
+            if lease.metadata.role != "integration":
+                return self._retained(lease, "仅内部集成 Worktree 可使用已合并清理", state)
+            if self._active.get(lease.metadata.task_id) != lease.root:
+                return self._retained(lease, "调用方未持有活动 lease", state)
+            if not await self.git.is_clean(cwd=lease.root):
+                return self._retained(lease, "工作树不干净，拒绝清理", state)
+            if await self.git.operation(cwd=lease.root) != "none":
+                return self._retained(lease, "存在进行中的 Git 操作，拒绝清理", state)
+            head = await self.git.head_commit(cwd=lease.root)
+            if not await self.git.commit_exists(cwd=lease.root, commit=merged_into):
+                return self._retained(lease, "发布目标提交不存在", state)
+            if not await self.git.is_ancestor(cwd=lease.root, ancestor=head, descendant=merged_into):
+                return self._retained(lease, "内部 HEAD 尚未合入发布目标", state)
+            try:
+                await self.git.remove_worktree(main_root=layout.repository_root, path=resolved_root)
+                await self.git.delete_branch(main_root=layout.repository_root, branch=metadata.branch)
+            except Exception as exc:
+                return self._retained(lease, f"删除未完整完成: {exc}", state)
+            finally:
+                self._active.pop(metadata.task_id, None)
+            return WorktreeDisposition(
+                status="cleaned",
+                root=lease.root,
+                cwd=lease.cwd,
+                branch=metadata.branch,
+                reason="内部成果已发布，Worktree 已清理",
+                state=state,
             )
 
     async def cleanup_expired(self) -> CleanupReport:
@@ -366,6 +424,7 @@ class WorktreeManager:
         relative_name: str,
         branch: str,
         retention: str = "ephemeral",
+        base_commit: str | None = None,
     ) -> None:
         layout = self._require_layout()
         expected = {
@@ -380,6 +439,8 @@ class WorktreeManager:
         for field, value in expected.items():
             if getattr(metadata, field) != value:
                 raise WorktreeError("recovery", f"恢复元数据 {field} 不匹配")
+        if base_commit is not None and metadata.base_commit != base_commit:
+            raise WorktreeError("recovery", "恢复元数据 base_commit 与显式基线不匹配")
         if _OBJECT_ID_RE.fullmatch(metadata.base_commit) is None:
             raise WorktreeError("recovery", "恢复元数据 base_commit 无效")
         self._parse_datetime(metadata.created_at)

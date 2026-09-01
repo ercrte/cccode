@@ -2,13 +2,20 @@ from typing import TYPE_CHECKING, Any
 
 from julycode.teams.models import (
     ApprovalRecord,
+    IntegrationFailure,
+    IntegrationRoundRecord,
+    IntegratedTaskRecord,
     MessageDraft,
+    TaskAttemptRef,
     TeamActor,
     TeamConfig,
     TeamMemberRecord,
     TeamMessage,
     TeamRecord,
     TeamTask,
+    TeamIntegrationFinalizeResult,
+    TeamIntegrationState,
+    TeamIntegrationSummary,
 )
 
 if TYPE_CHECKING:
@@ -16,6 +23,9 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ApprovalRecord",
+    "IntegrationFailure",
+    "IntegrationRoundRecord",
+    "IntegratedTaskRecord",
     "MessageDraft",
     "TeamActor",
     "TeamConfig",
@@ -24,6 +34,10 @@ __all__ = [
     "TeamManager",
     "TeamRecord",
     "TeamTask",
+    "TaskAttemptRef",
+    "TeamIntegrationFinalizeResult",
+    "TeamIntegrationState",
+    "TeamIntegrationSummary",
     "MANAGE_TEAM_TOOL",
     "MANAGE_TEAM_MEMBER_TOOL",
     "TEAM_TASK_TOOL",

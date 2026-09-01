@@ -506,7 +506,8 @@ def _memory_operations(text: str) -> str:
 def _team_e2e_tool_calls(body: dict[str, Any]) -> list[dict[str, Any]] | None:
     """为 tmux 验收提供确定性的长期团队工具脚本。"""
     messages = body.get("messages", [])
-    if not _contains_user_text(messages, "团队端到端"):
+    conflict = _contains_user_text(messages, "团队冲突端到端")
+    if not conflict and not _contains_user_text(messages, "团队端到端"):
         return None
     system_text = "\n".join(
         str(message.get("content", ""))
@@ -514,9 +515,112 @@ def _team_e2e_tool_calls(body: dict[str, Any]) -> list[dict[str, Any]] | None:
         if message.get("role") in {"system", "developer"}
     )
     member_match = re.search(r'<julycode_team name="([^"]+)" actor="([^"]+)" kind="member">', system_text)
+    if conflict:
+        if member_match:
+            return _team_conflict_member_calls(messages, member_match.group(2))
+        return _team_conflict_lead_calls(messages)
     if member_match:
         return _team_member_calls(messages, member_match.group(2))
     return _team_lead_calls(messages)
+
+
+def _team_conflict_lead_calls(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    calls = _assistant_calls(messages)
+    if not any(name == "manage_team" and args.get("action") == "create" for name, args in calls):
+        return [{"name": "manage_team", "arguments": {"action": "create", "name": "conflict-team"}}]
+    created = [
+        data
+        for data in _tool_result_data(messages, "team_task")
+        if isinstance(data, dict) and data.get("id") and data.get("created_by") == "lead"
+    ]
+    create_calls = [args for name, args in calls if name == "team_task" and args.get("action") == "create"]
+    if len(create_calls) < 2:
+        actor = "alice" if not create_calls else "bob"
+        return [{"name": "team_task", "arguments": {
+            "action": "create",
+            "title": f"冲突修改 {actor}",
+            "description": "修改 shared.txt 同一行",
+            "kind": "code",
+            "dependencies": [],
+        }}]
+    spawn_calls = [args for name, args in calls if name == "manage_team_member" and args.get("action") == "spawn"]
+    if len(spawn_calls) < 2:
+        actor = "alice" if not spawn_calls else "bob"
+        return [{"name": "manage_team_member", "arguments": {
+            "action": "spawn", "name": actor, "role": "team-writer",
+            "backend": "coroutine", "require_approval": False,
+        }}]
+    assignments = [
+        args for name, args in calls
+        if name == "team_message" and args.get("protocol") == "task_assignment"
+    ]
+    if not assignments and len(created) >= 2:
+        return [
+            {"name": "team_message", "arguments": {
+                "action": "send", "recipient": "alice", "protocol": "task_assignment",
+                "task_id": created[0]["id"], "body": "团队冲突端到端：修改 shared.txt 并提交。",
+            }},
+            {"name": "team_message", "arguments": {
+                "action": "send", "recipient": "bob", "protocol": "task_assignment",
+                "task_id": created[1]["id"], "body": "团队冲突端到端：修改 shared.txt 并提交。",
+            }},
+        ]
+    tasks = _known_tasks(messages)
+    if len(created) >= 2 and all(
+        tasks.get(str(item["id"]), item).get("status") in {"completed", "failed"}
+        for item in created
+    ):
+        return []
+    return [{"name": "team_wait", "arguments": {"timeout_seconds": 0.2}}]
+
+
+def _team_conflict_member_calls(
+    messages: list[dict[str, Any]], actor: str
+) -> list[dict[str, Any]]:
+    assignment = _latest_team_message(messages, "task_assignment")
+    if not assignment or not assignment.get("task"):
+        return []
+    task_id = assignment["task"]
+    calls = _assistant_calls(messages)
+    task = _known_tasks(messages).get(task_id)
+    if task is None or task.get("assignee") != actor:
+        return [{"name": "team_task", "arguments": {"action": "claim", "task_id": task_id}}]
+    if task.get("status") in {"completed", "failed"}:
+        return []
+    if task.get("status") != "in_progress":
+        return []
+    complete_called = any(
+        name == "team_task" and args.get("action") == "complete" and args.get("task_id") == task_id
+        for name, args in calls
+    )
+    if complete_called:
+        conflict_error = next(
+            (
+                str(message.get("content", ""))
+                for message in reversed(messages)
+                if message.get("role") == "tool" and "内部集成冲突" in str(message.get("content", ""))
+            ),
+            "内部集成冲突: shared.txt；成员与内部 Worktree 已保留",
+        )
+        return [{"name": "team_task", "arguments": {
+            "action": "fail", "task_id": task_id, "reason": conflict_error,
+        }}]
+    actor_calls = [(name, args) for name, args in calls if name in {"write_file", "run_command"}]
+    if not any(name == "write_file" and args.get("path") == "shared.txt" for name, args in actor_calls):
+        return [{"name": "write_file", "arguments": {
+            "path": "shared.txt", "content": f"{actor} conflict\n",
+        }}]
+    commands = [str(args.get("command", "")) for name, args in actor_calls if name == "run_command"]
+    if "git add shared.txt" not in commands:
+        return [{"name": "run_command", "arguments": {"command": "git add shared.txt"}}]
+    commit_command = f"git commit -m conflict-{actor}"
+    if commit_command not in commands:
+        return [{"name": "run_command", "arguments": {"command": commit_command}}]
+    if "git rev-parse HEAD" not in commands:
+        return [{"name": "run_command", "arguments": {"command": "git rev-parse HEAD"}}]
+    return [{"name": "team_task", "arguments": {
+        "action": "complete", "task_id": task_id, "result": f"{actor} 修改 shared.txt 完成",
+    }}]
 
 
 def _team_lead_calls(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -542,7 +646,7 @@ def _team_lead_calls(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if len(create_calls) == 2 and len(created) >= 2:
         return [{"name": "team_task", "arguments": {
             "action": "create", "title": "依赖汇总", "description": "汇总两个代码任务",
-            "kind": "research", "dependencies": [created[0]["id"], created[1]["id"]],
+            "kind": "code", "dependencies": [created[0]["id"], created[1]["id"]],
         }}]
 
     spawn_calls = [args for name, args in calls if name == "manage_team_member" and args.get("action") == "spawn"]
@@ -651,20 +755,22 @@ def _team_member_calls(messages: list[dict[str, Any]], actor: str) -> list[dict[
             "action": "send", "recipient": peer, "protocol": "message", "task_id": task_id,
             "body": f"{actor} 已领取 {task_id}，完成后请直接查看共享任务。",
         }}]
-    if task.get("kind") == "research":
-        return [{"name": "team_task", "arguments": {
-            "action": "complete", "task_id": task_id, "result": "两个并行代码任务均已提交并完成。",
-        }}]
-
-    path = f"team-{actor}.txt"
+    dependent = task.get("title") == "依赖汇总"
+    if dependent and not any(
+        name == "read_file" and args.get("path") == "team-bob.txt" for name, args in calls
+    ):
+        return [{"name": "read_file", "arguments": {"path": "team-bob.txt"}}]
+    path = "team-summary.txt" if dependent else f"team-{actor}.txt"
+    content = "alice read bob result and summarized\n" if dependent else f"{actor} team e2e\n"
     actor_calls = [(name, args) for name, args in calls if args.get("task_id") == task_id or name in {"write_file", "run_command"}]
     if not any(name == "write_file" and args.get("path") == path for name, args in actor_calls):
-        return [{"name": "write_file", "arguments": {"path": path, "content": f"{actor} team e2e\n"}}]
+        return [{"name": "write_file", "arguments": {"path": path, "content": content}}]
     commands = [str(args.get("command", "")) for name, args in actor_calls if name == "run_command"]
     if f"git add {path}" not in commands:
         return [{"name": "run_command", "arguments": {"command": f"git add {path}"}}]
-    if f"git commit -m team-{actor}" not in commands:
-        return [{"name": "run_command", "arguments": {"command": f"git commit -m team-{actor}"}}]
+    commit_command = f"git commit -m team-{actor}-{task_id}"
+    if commit_command not in commands:
+        return [{"name": "run_command", "arguments": {"command": commit_command}}]
     if "git rev-parse HEAD" not in commands:
         return [{"name": "run_command", "arguments": {"command": "git rev-parse HEAD"}}]
     return [{"name": "team_task", "arguments": {

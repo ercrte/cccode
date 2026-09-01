@@ -71,6 +71,17 @@ class TeamStore:
             await AtomicJsonFile(paths.tasks_file, FileLock(paths.tasks_lock, self.config)).replace(
                 {"schema_version": 1, "revision": 1, "tasks": [], "outbox": []}
             )
+            await AtomicJsonFile(
+                paths.integration_file, FileLock(paths.integration_lock, self.config)
+            ).replace(
+                {
+                    "schema_version": 1,
+                    "revision": 1,
+                    "next_round": 1,
+                    "current": None,
+                    "history": [],
+                }
+            )
             await AtomicJsonFile(paths.approvals_file, FileLock(paths.approvals_lock, self.config)).replace(
                 {"schema_version": 1, "revision": 1, "approvals": [], "outbox": []}
             )
@@ -161,6 +172,48 @@ class TeamStore:
             return record.members[member]
         except KeyError as exc:
             raise TeamDataError(f"未知团队成员: {member}") from exc
+
+    async def update_member_sync(
+        self,
+        team: str,
+        member_name: str,
+        *,
+        status: str,
+        head: str | None,
+        error: str | None,
+    ) -> TeamMemberRecord:
+        """只更新同步字段，避免覆盖运行时刚写入的成员状态。"""
+        validate_member_name(member_name)
+        if status not in {"current", "pending", "blocked"}:
+            raise TeamDataError(f"未知成员同步状态: {status}")
+        paths = TeamPaths.for_team(team, base=self.root)
+        store = AtomicJsonFile(paths.team_file, FileLock(paths.team_lock, self.config))
+        updated: TeamMemberRecord | None = None
+
+        def mutate(raw: dict[str, Any]) -> dict[str, Any]:
+            nonlocal updated
+            record = self._parse_record(raw)
+            try:
+                current = record.members[member_name]
+            except KeyError as exc:
+                raise TeamDataError(f"未知团队成员: {member_name}") from exc
+            updated = replace(
+                current,
+                sync_status=status,  # type: ignore[arg-type]
+                sync_head=head,
+                sync_error=error,
+                updated_at=_now(),
+            )
+            members = {**record.members, member_name: updated}
+            raw["members"] = {name: asdict(value) for name, value in sorted(members.items())}
+            raw["revision"] = record.revision + 1
+            raw["updated_at"] = _now()
+            return raw
+
+        await store.mutate(mutate)
+        if updated is None:
+            raise TeamDataError("成员同步状态更新失败")
+        return updated
 
     async def reconcile_interrupted(self, team: str) -> RecoveryReport:
         paths = TeamPaths.for_team(team, base=self.root)

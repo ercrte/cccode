@@ -157,6 +157,7 @@ class JulyCodeApp(App[None]):
             self.executor.context.cwd,
             config.teams,
             store=TeamStore(self.executor.context.cwd, config.teams),
+            worktrees=self.sub_agent_manager.worktree_manager,
         )
         if self.team_manager.runtime is None:
             team_runner_factory = TeamMemberRunnerFactory(

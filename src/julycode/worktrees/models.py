@@ -7,6 +7,17 @@ from typing import Literal
 
 WorktreeDispositionStatus = Literal["cleaned", "retained"]
 CleanupItemStatus = Literal["cleaned", "skipped", "failed"]
+GitOperation = Literal["none", "merge", "rebase", "cherry_pick", "revert"]
+GitMergeStatus = Literal["merged", "already_integrated", "conflicted", "failed"]
+
+
+@dataclass(frozen=True)
+class GitMergeOutcome:
+    status: GitMergeStatus
+    head_before: str
+    head_after: str
+    conflict_paths: tuple[str, ...] = ()
+    detail: str = ""
 
 
 @dataclass(frozen=True)

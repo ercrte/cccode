@@ -119,8 +119,8 @@ permission_mode: permissive
     snapshot = await app.team_manager.status()
     assert len(snapshot.tasks) == 3
     assert all(task.status == "completed" for task in snapshot.tasks)
-    assert {task.kind for task in snapshot.tasks} == {"code", "research"}
-    assert all(task.commit for task in snapshot.tasks if task.kind == "code")
+    assert {task.kind for task in snapshot.tasks} == {"code"}
+    assert all(task.commit for task in snapshot.tasks)
     assert set(snapshot.team.members) == {"alice", "bob"}
     assert all(member.status == "idle" for member in snapshot.team.members.values())
     approval = await app.team_manager._service("e2e-team").approvals.current_for_member(
@@ -129,7 +129,16 @@ permission_mode: permissive
         )
     )
     assert approval is not None and approval.status == "approved"
-    assert "本阶段未自动执行 Git 合并" in rendered
+    assert "已一次性发布到 master" in rendered
+    assert snapshot.integration is not None and snapshot.integration.phase == "published"
+    published_history = (
+        await app.team_manager._service("e2e-team").integration.state_store.load_or_create()
+    ).history
+    assert len(published_history) == 1
+    assert published_history[0].phase == "published"
+    assert len(published_history[0].accepted) == 3
+    assert (repository / "team-bob.txt").exists()
+    assert (repository / "team-summary.txt").read_text(encoding="utf-8") == "alice read bob result and summarized\n"
 
     mailbox_root = home / ".julycode" / "teams" / "e2e-team" / "mailboxes"
     direct_messages = []
@@ -176,3 +185,75 @@ permission_mode: permissive
     unread = await second.team_manager._service("e2e-team").mailbox.unread(lead)
     assert any(message.protocol == "member_resumed" and message.sender == "alice" for message in unread)
     assert any("恢复原上下文" in message.body for message in unread)
+
+
+@pytest.mark.asyncio
+async def test_real_tui_team_conflict_keeps_lead_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = init_repository(tmp_path / "repo")
+    (repository / "shared.txt").write_text("base\n", encoding="utf-8")
+    role_dir = repository / ".julycode" / "agents"
+    role_dir.mkdir(parents=True)
+    (role_dir / "team-writer.md").write_text(
+        """---
+name: team-writer
+description: 实现并提交团队代码任务。
+tools_allow: [read_file, write_file, run_command]
+tools_deny: []
+model: inherit
+max_iterations: 20
+permission_mode: permissive
+---
+只处理已领取的团队任务。
+""",
+        encoding="utf-8",
+    )
+    git(repository, "add", "shared.txt", ".julycode/agents/team-writer.md")
+    git(repository, "commit", "-qm", "conflict fixture")
+    lead_before = git(repository, "rev-parse", "HEAD").stdout.strip()
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setattr(Path, "home", lambda: home)
+    config = AppConfig(
+        protocol="openai",
+        model="mock-team",
+        base_url="http://mock.invalid/v1",
+        api_key="test-key",
+        agent=AgentConfig(max_iterations=40),
+        permissions=PermissionConfig(mode="permissive"),
+        context=ContextConfig(enabled=False),
+        memory=SessionMemoryConfig(enabled=False),
+        sub_agents=SubAgentConfig(default_max_iterations=20),
+    )
+    registry = create_default_registry()
+    executor = ToolExecutor(registry, ToolContext(repository))
+    app = JulyCodeApp(ChatSession(), InProcessTeamMockProvider(config), config, registry, executor)
+    app.set_permission_controller(create_permission_controller(repository, config.permissions, app))
+
+    async with app.run_test(size=(180, 50)) as pilot:
+        composer = app.query_one(Composer)
+        composer.value = "团队冲突端到端：让两个成员同时修改 shared.txt 的同一行并报告冲突。"
+        await pilot.press("enter")
+        for _ in range(1500):
+            if app._generation_task is None and not composer.disabled:
+                break
+            await asyncio.sleep(0.01)
+        else:
+            raise AssertionError("团队冲突端到端任务在 15 秒内未完成")
+        rendered = "\n".join(str(view.body.content) for view in app.query(MessageView))
+
+    snapshot = await app.team_manager.status()
+    statuses = {task.status for task in snapshot.tasks}
+    assert statuses == {"completed", "failed"}
+    assert snapshot.integration is not None and snapshot.integration.phase == "blocked"
+    assert snapshot.integration.failure is not None
+    assert snapshot.integration.failure.conflict_paths == ("shared.txt",)
+    assert git(repository, "rev-parse", "HEAD").stdout.strip() == lead_before
+    assert (repository / "shared.txt").read_text(encoding="utf-8") == "base\n"
+    assert "shared.txt" in rendered
+    assert snapshot.integration.failure.member_name is not None
+    assert Path(snapshot.integration.failure.conflict_paths[0]).name == "shared.txt"
+    state = await app.team_manager._service("conflict-team").integration.state_store.load_or_create()
+    assert state.current is not None
+    assert Path(state.current.integration_root or "").exists()

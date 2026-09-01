@@ -317,9 +317,16 @@ class TeamRuntimeSupervisor:
         )
         self._runners[key] = runner
         now = _now()
+        current_member = await self.store.get_member(team_name, member.name)
         await self.store.update_member(
             team_name,
-            replace(member, status="running", updated_at=now, last_active_at=now, last_error=None),
+            replace(
+                current_member,
+                status="running",
+                updated_at=now,
+                last_active_at=now,
+                last_error=None,
+            ),
         )
         if restore.restored:
             await self._emit_member_event(team_name, member, "member_resumed", f"成员 {member.name} 已恢复上下文。")
